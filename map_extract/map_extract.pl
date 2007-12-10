@@ -25,11 +25,17 @@ my $dwarf_pid;
 #my $map_y_count = 0x01458584;
 #my $map_z_count = 0x01458588;
 
-my $df_offset = 0x0089438C;     # v0.27.169.33b
-my $map_offset = 0x01459568;
-my $map_x_count = 0x01459580;
-my $map_y_count = 0x01459584;
-my $map_z_count = 0x01459588;
+#my $df_offset = 0x0089438C;     # v0.27.169.33b
+#my $map_offset = 0x01459568;
+#my $map_x_count = 0x01459580;
+#my $map_y_count = 0x01459584;
+#my $map_z_count = 0x01459588;
+
+my $df_offset = 0x0089B3BC;     # v0.27.169.33e
+my $map_offset = 0x01461560;
+my $map_x_count = 0x01461578;
+my $map_y_count = 0x0146157C;
+my $map_z_count = 0x01461580;
 
 my $tile_type_offset        = 0x005E;
 my $tile_designation_offset = 0x0260;
@@ -59,7 +65,7 @@ $proc = Win32::Process::Memory->new({ pid  => $dwarf_pid, access => 'read/query'
 croak "Couldn't open memory access to Dwarf Fortress." unless ( $proc );
 
 $proc->get_buf( $df_offset, 14, my $df_name );
-croak "Wrong DF version." unless ( $df_name eq "Dwarf Fortress" );
+croak "Wrong DF version. v0.27.169.33e needed." unless ( $df_name eq "Dwarf Fortress" );
 
 print "Processing map data.\n";
 
@@ -148,12 +154,12 @@ sub print_files {
     $map_name =~ /.*?(\w+).*?/;
     $map_name = $1;
     
-    my $page = "$map_name|$xcount|$ycount|$zcount\n";
-    my $page2 = "$map_name|$xcount|$ycount|$zcount\n";
+    my $page = "$map_name|$xcount|$ycount\n";
+    my $page2 = "$map_name|$xcount|$ycount\n";
     
     for my $z ( 0..$zcount-1 ) {
-        my $map1 = "-" . $z . "-\n";
-        my $map2 = "-" . $z . "-\n";
+        my $map1 = sprintf ("-%03d-\n", $z);
+        my $map2 = sprintf ("-%03d-\n", $z);
         my $allocated;
         for my $y ( 0..($ycount*16)-1 ) {
             my $line1;
