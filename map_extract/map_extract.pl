@@ -57,18 +57,18 @@ my %list = Win32::Process::List->new()->GetProcesses();
 for my $key ( keys %list ) {
     $dwarf_pid = $key   if ( $list{$key} =~ /dwarfort.exe/ );
 }
-croak "Couldn't find PID." unless ( $dwarf_pid );
+croak "Couldn't find process ID, make sure DF is running and a savegame is loaded." unless ( $dwarf_pid );
 
 ### lower priority of dwarf fortress ###########################################
 ################################################################################
 Win32::Process::Open( my $dwarf_process, $dwarf_pid, 1 );
 $dwarf_process->SetPriorityClass( IDLE_PRIORITY_CLASS );
-croak "Couldn't lower process priority." unless ( $dwarf_process );
+croak "Couldn't lower process priority, this is really odd and shouldn't happen, try running as administrator or poke Mithaldu/Xenofur." unless ( $dwarf_process );
 
 ### actually read stuff from memory ############################################
 ################################################################################
 $proc = Win32::Process::Memory->new({ pid  => $dwarf_pid, access => 'read/query' });   # open process with read access
-croak "Couldn't open memory access to Dwarf Fortress." unless ( $proc );
+croak "Couldn't open memory access to Dwarf Fortress, this is really odd and shouldn't happen, try running as administrator or poke Mithaldu/Xenofur." unless ( $proc );
 
 $proc->get_buf( $df_offset, 14, my $df_name );
 croak "Wrong DF version. v0.27.169.33e needed." unless ( $df_name eq "Dwarf Fortress" );
@@ -93,7 +93,7 @@ sub loadmap {
     @full_map_data=[];                              # array to hold the full extracted map data
 
     $map_base = $proc->get_u32($map_offset);        # checking whether the game has a map already
-    croak "Map data is not yet available." unless ( $map_base );
+    croak "Map data is not yet available, make sure you have a game loaded." unless ( $map_base );
 
     $xcount = $proc->get_u32($map_x_count);         # find out how much data we're dealing with
     $ycount = $proc->get_u32($map_y_count);
