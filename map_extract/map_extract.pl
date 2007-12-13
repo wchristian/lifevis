@@ -31,6 +31,12 @@ my $dwarf_pid;
 #my $map_y_count = 0x01459584;
 #my $map_z_count = 0x01459588;
 
+#my $df_offset = 0x0089A3A4;     # v0.27.169.33d
+#my $map_offset = 0x01460560;
+#my $map_x_count = 0x01460578;
+#my $map_y_count = 0x0146057C;
+#my $map_z_count = 0x01460580;
+
 my $df_offset = 0x0089B3BC;     # v0.27.169.33e
 my $map_offset = 0x01461560;
 my $map_x_count = 0x01461578;
