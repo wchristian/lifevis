@@ -12,36 +12,60 @@ use Compress::Zlib;
 
 ### set up variables ###########################################################
 ################################################################################
-my $dwarf_pid;
-#my $df_offset = 0x0089238C;     # v0.27.169.32a
-#my $map_offset = 0x01457520;
-#my $map_x_count = 0x01457538;
-#my $map_y_count = 0x0145753C;
-#my $map_z_count = 0x01457540;
+my ($dwarf_pid, $pe_timestamp, $ver, $input);
 
-#my $df_offset = 0x0089338C;     # v0.27.169.33a
-#my $map_offset = 0x01458568;
-#my $map_x_count = 0x01458580;
-#my $map_y_count = 0x01458584;
-#my $map_z_count = 0x01458588;
+my $pe_timestamp_offset = 0x004000F8;
 
-#my $df_offset = 0x0089438C;     # v0.27.169.33b
-#my $map_offset = 0x01459568;
-#my $map_x_count = 0x01459580;
-#my $map_y_count = 0x01459584;
-#my $map_z_count = 0x01459588;
-
-#my $df_offset = 0x0089A3A4;     # v0.27.169.33d
-#my $map_offset = 0x01460560;
-#my $map_x_count = 0x01460578;
-#my $map_y_count = 0x0146057C;
-#my $map_z_count = 0x01460580;
-
-my $df_offset = 0x0089B3BC;     # v0.27.169.33e
-my $map_offset = 0x01461560;
-my $map_x_count = 0x01461578;
-my $map_y_count = 0x0146157C;
-my $map_z_count = 0x01461580;
+my @offsets = (
+    {
+        version => "v0.27.169.33a",
+        PE => 0x4729DA32,
+        map_loc => 0x01458568,
+        x_count => 0x01458580,
+        y_count => 0x01458584,
+        z_count => 0x01458588
+    },
+    {
+        version => "v0.27.169.33b",
+        PE => 0x473E7E49,
+        map_loc => 0x01459568,
+        x_count => 0x01459580,
+        y_count => 0x01459584,
+        z_count => 0x01459588
+    },
+    {
+        version => "v0.27.169.33c",
+        PE => 0x47480E76,
+        map_loc => 0x0145F560,
+        x_count => 0x0145F578,
+        y_count => 0x0145F57C,
+        z_count => 0x0145F580
+    },
+    {
+        version => "v0.27.169.33d",
+        PE => 0x475099AA,
+        map_loc => 0x01460560,
+        x_count => 0x01460578,
+        y_count => 0x0146057C,
+        z_count => 0x01460580
+    },
+    {
+        version => "v0.27.169.33e",
+        PE => 0x475B7526,
+        map_loc => 0x01461560,
+        x_count => 0x01461578,
+        y_count => 0x0146157C,
+        z_count => 0x01461580
+    },
+    {
+        version => "v0.27.169.33f",
+        PE => 0x4763710C,
+        map_loc => 0x01462568,
+        x_count => 0x01462580,
+        y_count => 0x01462584,
+        z_count => 0x01462588
+    },
+);
 
 my $tile_type_offset        = 0x005E;
 my $tile_designation_offset = 0x0260;
@@ -70,8 +94,18 @@ croak "Couldn't lower process priority, this is really odd and shouldn't happen,
 $proc = Win32::Process::Memory->new({ pid  => $dwarf_pid, access => 'read/query' });   # open process with read access
 croak "Couldn't open memory access to Dwarf Fortress, this is really odd and shouldn't happen, try running as administrator or poke Mithaldu/Xenofur." unless ( $proc );
 
-$proc->get_buf( $df_offset, 14, my $df_name );
-croak "Wrong DF version. v0.27.169.33e needed." unless ( $df_name eq "Dwarf Fortress" );
+
+### Let's Pla... erm, figure out what version this is ##########################
+################################################################################
+$pe_timestamp = $proc->get_u32( $pe_timestamp_offset );
+for my $i ( 0..$#offsets ) {
+    if ( $offsets[$i]{PE} == $pe_timestamp ) {
+        print "We seem to be using: DF $offsets[$i]{version}\nIf this is correct, press enter. If not, please CTRL+C now and contact Xenofur/Mithaldu, as you might risk disastrous and hilarious results.\n";
+        $input = <STDIN>;
+        $ver = $i;
+        last;
+    }
+}
 
 print "Processing map data.\n";
 
@@ -80,7 +114,7 @@ loadmap();
 undef $proc;                                                # close process
 
 print "Press enter to close...";
-my $in = <STDIN>;
+$input = <STDIN>;
 
 ################################################################################
 
@@ -91,13 +125,13 @@ sub loadmap {
     my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
     my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
     @full_map_data=[];                              # array to hold the full extracted map data
-
-    $map_base = $proc->get_u32($map_offset);        # checking whether the game has a map already
+    
+    $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );        # checking whether the game has a map already
     croak "Map data is not yet available, make sure you have a game loaded." unless ( $map_base );
 
-    $xcount = $proc->get_u32($map_x_count);         # find out how much data we're dealing with
-    $ycount = $proc->get_u32($map_y_count);
-    $zcount = $proc->get_u32($map_z_count);
+    $xcount = $proc->get_u32( $offsets[$ver]{x_count} );         # find out how much data we're dealing with
+    $ycount = $proc->get_u32( $offsets[$ver]{y_count} );
+    $zcount = $proc->get_u32( $offsets[$ver]{z_count} );
                                                     # get the offsets of the address storages for each x-slice and cycle through
     @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
     for my $bx ( 0..$#xoffsets ) {
