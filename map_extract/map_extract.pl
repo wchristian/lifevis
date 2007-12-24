@@ -65,6 +65,14 @@ my @offsets = (
         y_count => 0x01462584,
         z_count => 0x01462588
     },
+    {
+        version => "v0.27.169.33g",
+        PE => 0x476CA6CE,
+        map_loc => 0x01469680,
+        x_count => 0x01469698,
+        y_count => 0x0146969C,
+        z_count => 0x014696A0
+    },
 );
 
 my $tile_type_offset        = 0x005E;
