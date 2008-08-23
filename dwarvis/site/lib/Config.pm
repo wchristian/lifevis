@@ -40,11 +40,11 @@ sub import {
     return;
 }
 
-die "Perl lib version (v5.8.8) doesn't match executable version ($])"
+die "Perl lib version (5.10.0) doesn't match executable version ($])"
     unless $^V;
 
-$^V eq v5.8.8
-    or die "Perl lib version (v5.8.8) doesn't match executable version (" .
+$^V eq 5.10.0
+    or die "Perl lib version (5.10.0) doesn't match executable version (" .
 	sprintf("v%vd",$^V) . ")";
 
 
@@ -79,7 +79,7 @@ sub __unused {
 
 # tie returns the object, so the value returned to require will be true.
 tie %Config, 'Config', {
-    archlibexp => '..\\lib',
+    archlibexp => 'C:\Perl\\lib',
     archname => 'MSWin32-x86-multi-thread',
     d_readlink => undef,
     d_symlink => undef,
@@ -93,12 +93,12 @@ tie %Config, 'Config', {
     osname => 'MSWin32',
     osvers => '5.00',
     path_sep => ';',
-    privlibexp => '..\\lib',
-    scriptdir => '..\\bin',
-    sitearchexp => '..\\site\\lib',
-    sitelibexp => '..\\site\\lib',
+    privlibexp => 'C:\Perl\\lib',
+    scriptdir => 'C:\Perl\\bin',
+    sitearchexp => 'C:\Perl\\site\\lib',
+    sitelibexp => 'C:\Perl\\site\\lib',
     so => 'dll',
     useithreads => 'define',
     usevendorprefix => undef,
-    version => '5.8.8',
+    version => '5.10.0',
 };

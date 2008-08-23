@@ -15,34 +15,9 @@ package DynaLoader;
 #
 # Tim.Bunce@ig.co.uk, August 1994
 
-# Sadly we can't remove this in 5.8.x *either*, because we had being using
-# vars, and vars.pm requires warnings::register requires warnings requires
-# Carp, and at that point we're covering up buggy code that does require Carp;
-# Carp::croak "..."; without brackets. Only now will 5.10.0 actually manage
-# to ship a DynaLoader that doesn't indirectly load Carp;
-require Carp;
-
 BEGIN {
-    $VERSION = '1.0801';
-}
-
-# See http://rt.perl.org/rt3//Public/Bug/Display.html?id=32539
-# for why we need this. Basically any embedded code will have 1.05 hard-coded
-# in it as the XS_VERSION to check against. If a shared libperl is upgraded,
-# then it will pull in a newer DynaLoader.pm file, because the shared libperl
-# provides the paths for @INC. The file in @INC provides the
-# $DynaLoader::XS_VERSION that the existing embedded code checks against, so
-# we must keep this value constant, else bootstrap_DynaLoader will croak()
-# Whilst moving bootstrap_DynaLoader to the shared libperl is the correct
-# long-term fix, it doesn't help current installations, as they're still
-# going to find the boot_DynaLoader linked to them (with its hard-coded 1.05)
-# (It's found via a passed in function pointer in the xsinit parameter to
-# perl_parse, and in turn that is typically the static function xs_init
-# defined in the same place as the caller to perl_parse, and at the same time,
-# so compiled in and installed as binaries now deployed.)
-
-BEGIN {
-    $XS_VERSION = '1.05';
+    $VERSION = '1.0803';
+    $XS_VERSION = '1.0802';
 }
 
 require AutoLoader;
@@ -66,10 +41,8 @@ $dl_debug = $ENV{PERL_DL_DEBUG} || 0 unless defined $dl_debug;
 
 sub dl_load_flags { 0x00 }
 
-# ($dl_dlext, $dlsrc)
-#         = @Config::Config{'dlext', 'dlsrc'};
-  ($dl_dlext, $dlsrc) = ('dll', 'dl_win32.xs')
-;
+($dl_dlext, $dl_so, $dlsrc) = @Config::Config{qw(dlext so dlsrc)};
+
 
 $do_expand = 0;
 
@@ -174,7 +147,7 @@ sub bootstrap {
     my $modpname = join('/',@modparts);
 
     print STDERR "DynaLoader::bootstrap for $module ",
-		       "(auto/$modpname/$modfname.dll)\n"
+		       "(auto/$modpname/$modfname.$dl_dlext)\n"
 	if $dl_debug;
 
     foreach (@INC) {
@@ -186,7 +159,7 @@ sub bootstrap {
 	next unless -d $dir; # skip over uninteresting directories
 	
 	# check for common cases to avoid autoload of dl_findfile
-	my $try =  "$dir/$modfname.dll";
+	my $try =  "$dir/$modfname.$dl_dlext";
 	last if $file = (-f $try) && $try;
 	
 	
@@ -306,13 +279,13 @@ sub dl_findfile {
         my(@names, $name);    # what filenames to look for
         if (m:-l: ) {          # convert -lname to appropriate library name
             s/-l//;
-            push(@names,"lib$_.dll");
+            push(@names,"lib$_.$dl_so");
             push(@names,"lib$_.a");
         } else {                # Umm, a bare name. Try various alternatives:
             # these should be ordered with the most likely first
-            push(@names,"$_.dll")    unless m/\.dll$/o;
-            push(@names,"$_.dll")     unless m/\.dll$/o;
-            push(@names,"lib$_.dll")  unless m:/:;
+            push(@names,"$_.$dl_dlext")    unless m/\.$dl_dlext$/o;
+            push(@names,"$_.$dl_so")     unless m/\.$dl_so$/o;
+            push(@names,"lib$_.$dl_so")  unless m:/:;
 	    
             push(@names,"$_.a")          if !m/\.a$/ and $dlsrc eq "dl_dld.xs";
             push(@names, $_);

@@ -3,7 +3,7 @@
 # See AutoSplit.pm.
 package DynaLoader;
 
-#line 268 "../LIB\DynaLoader.pm (autosplit into ..\lib\auto\DynaLoader\dl_findfile.al)"
+#line 241 "../LIB\DynaLoader.pm (autosplit into ..\lib\auto\DynaLoader\dl_findfile.al)"
 sub dl_findfile {
     # Read ext/DynaLoader/DynaLoader.doc for detailed information.
     # This function does not automatically consider the architecture
@@ -45,13 +45,13 @@ sub dl_findfile {
         my(@names, $name);    # what filenames to look for
         if (m:-l: ) {          # convert -lname to appropriate library name
             s/-l//;
-            push(@names,"lib$_.dll");
+            push(@names,"lib$_.$dl_so");
             push(@names,"lib$_.a");
         } else {                # Umm, a bare name. Try various alternatives:
             # these should be ordered with the most likely first
-            push(@names,"$_.dll")    unless m/\.dll$/o;
-            push(@names,"$_.dll")     unless m/\.dll$/o;
-            push(@names,"lib$_.dll")  unless m:/:;
+            push(@names,"$_.$dl_dlext")    unless m/\.$dl_dlext$/o;
+            push(@names,"$_.$dl_so")     unless m/\.$dl_so$/o;
+            push(@names,"lib$_.$dl_so")  unless m:/:;
 	    
             push(@names,"$_.a")          if !m/\.a$/ and $dlsrc eq "dl_dld.xs";
             push(@names, $_);

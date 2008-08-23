@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.12';
+$VERSION = '2.13';
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -69,13 +69,15 @@ sub import {
     my $fields_base;
 
     my $inheritor = caller(0);
+    my @isa_classes;
 
+    my @bases;
     foreach my $base (@_) {
         if ( $inheritor eq $base ) {
             warn "Class '$inheritor' tried to inherit from itself\n";
         }
 
-        next if $inheritor->isa($base);
+        next if grep $_->isa($base), ($inheritor, @bases);
 
         if (has_version($base)) {
             ${$base.'::VERSION'} = '-1, set by base.pm' 
@@ -91,19 +93,21 @@ sub import {
                 die if $@ && $@ !~ /^Can't locate .*? at \(eval /;
                 unless (%{"$base\::"}) {
                     require Carp;
+                    local $" = " ";
                     Carp::croak(<<ERROR);
 Base class package "$base" is empty.
-    (Perhaps you need to 'use' the module which defines that package first.)
+    (Perhaps you need to 'use' the module which defines that package first,
+    or make that module available in \@INC (\@INC contains: @INC).
 ERROR
                 }
-                $sigdie = $SIG{__DIE__};
+                $sigdie = $SIG{__DIE__} || undef;
             }
             # Make sure a global $SIG{__DIE__} makes it out of the localization.
             $SIG{__DIE__} = $sigdie if defined $sigdie;
             ${$base.'::VERSION'} = "-1, set by base.pm"
               unless defined ${$base.'::VERSION'};
         }
-        push @{"$inheritor\::ISA"}, $base;
+        push @bases, $base;
 
         if ( has_fields($base) || has_attr($base) ) {
             # No multiple fields inheritance *suck*
@@ -115,6 +119,10 @@ ERROR
             }
         }
     }
+    # Save this until the end so it's all or nothing if the above loop croaks.
+    push @{"$inheritor\::ISA"}, @isa_classes;
+
+    push @{"$inheritor\::ISA"}, @bases;
 
     if( defined $fields_base ) {
         inherit_fields($inheritor, $fields_base);

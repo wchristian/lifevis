@@ -37,20 +37,13 @@ my %COMPILER_ENV = map { $_ => 1 } qw(
 );
 my $compiler_env_initialized;
 
-# Make sure none of the modules used here uses
-#
-#        use base 'Exporter';
-#
-# because broken versions of Module::Install (0.60 and earlier)
-# hide base.pm on case-insensitive filesystems behind Base.pm.
-
-use ActiveState::Path qw(find_prog realpath);
-
 use Config ();
 my $CONFIG_OBJ = tied %Config::Config;
 
 sub override {
     return 0 if $ENV{ACTIVEPERL_CONFIG_DISABLE};
+
+    require ActiveState::Path;
 
     my $key = shift;
 
@@ -66,7 +59,7 @@ sub override {
 
     if ($key eq "make" && $^O eq "MSWin32") {
 	for (qw(nmake dmake)) {
-	    if (find_prog($_)) {
+	    if (ActiveState::Path::find_prog($_)) {
 		$_[0] = $OVERRIDE{$key} = $_;
 		return 1;
 	    }
@@ -74,15 +67,22 @@ sub override {
 	return 0;
     }
     if ($key eq "make" && ($^O eq "solaris" || $^O eq "hpux")) {
-	if (!find_prog(_orig_conf("make")) && -x "/usr/ccs/bin/make") {
+	if (!ActiveState::Path::find_prog(_orig_conf("make")) && -x "/usr/ccs/bin/make") {
 	    $_[0] = $OVERRIDE{$key} = "/usr/ccs/bin/make";
 	    return 1;
 	}
     }
 
     if ($COMPILER_ENV{$key} && !$compiler_env_initialized++) {
-	if ($^O eq "MSWin32" && (_gcc_requested() || !find_prog(_orig_conf("cc")))) {
-	    if (my $gcc = find_prog("gcc")) {
+	if ($^O eq "MSWin32" && !_gcc_requested() &&
+	    _orig_conf("cc") eq "cl" && (my $cl = ActiveState::Path::find_prog("cl")))
+	{
+	    require Win32;
+	    my @version = Win32::GetFileVersion($cl);
+	    _override("ccversion", join('.', @version[0..2])) if @version;
+	}
+	elsif ($^O eq "MSWin32" && (_gcc_requested() || !ActiveState::Path::find_prog(_orig_conf("cc")))) {
+	    if (my $gcc = ActiveState::Path::find_prog("gcc")) {
 		# assume MinGW or similar is available
 		$gcc =~ s,\\,/,g;
 		my($mingw) = $gcc =~ m,^(.*)/bin/gcc\.exe$,;
@@ -112,7 +112,7 @@ sub override {
 		# Copy all symbol definitions from the CCFLAGS
 		my @ccflags = grep /^-D/, split / +/, _orig_conf("ccflags");
 		# Add GCC specific flags
-		push(@ccflags, qw(-DHASATTRIBUTE -fno-strict-aliasing));
+		push(@ccflags, qw(-DHASATTRIBUTE -fno-strict-aliasing -mms-bitfields));
 		_override("ccflags", join(" ", @ccflags));
 
 		# more overrides assuming MinGW
@@ -179,11 +179,11 @@ sub override {
 	    _override($_, $flags{$_}) for keys %flags;
 	}
 	elsif (($^O eq "solaris" || $^O eq "hpux") && (_gcc_requested() || !_orig_conf("gccversion"))) {
-	    my $cc = _gcc_requested() ? undef : find_prog(_orig_conf("cc"));
+	    my $cc = _gcc_requested() ? undef : ActiveState::Path::find_prog(_orig_conf("cc"));
 	    if ($cc && $^O eq "hpux" && _is_bundled_hpux_compiler($cc)) {
 		undef($cc);
 	    }
-	    if (!$cc && ($cc = find_prog("gcc"))) {
+	    if (!$cc && ($cc = ActiveState::Path::find_prog("gcc"))) {
 		_override("cc", "gcc");
 		my($gccversion) = qx(gcc --version);
 		$gccversion =~ s/^gcc(\.exe)? \(GCC\) //;
@@ -261,8 +261,9 @@ sub _override {
 
 
 sub _is_bundled_hpux_compiler {
+    require ActiveState::Path;
     my $cc = shift;
-    $cc = realpath($cc);
+    $cc = ActiveState::Path::realpath($cc);
     return $cc =~ /\bcc_bundled$/;
 }
 
