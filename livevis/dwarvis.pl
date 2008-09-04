@@ -1044,7 +1044,16 @@ sub ourInit {
     $displaylist{MY_MAP_LIST} = 2;
     glNewList($displaylist{MY_MAP_LIST}, GL_COMPILE);
     glBegin(GL_QUADS);
-    ourDrawCube(0,0,0,1);
+    for my $x (0..32){
+        for my $y (0..32){
+            for my $z (14..18){
+                ourDrawCube($x,($z-14),$y,1) if(
+                    defined $pre_compiled_map_data[$x][$y][$z] &&
+                    $pre_compiled_map_data[$x][$y][$z] == 0
+                );
+            }
+        }
+    }
     glEnd();
     glEndList();
 }
