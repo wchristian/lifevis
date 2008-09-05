@@ -72,10 +72,10 @@ my ( $Map_W, $Map_H, $Map_D );
 
 
 # Settings for our light.  Try playing with these (or add more lights).
-my @Light_Ambient  = ( 0.1, 0.1, 0.1, 1.0 );
-my @Light_Diffuse  = ( 1.2, 1.2, 1.2, 1.0 );
-my @Light_Position = ( 2.0, 2.0, 40.0, 1.0 );
-
+my @Light_Ambient  = ( 0.5, 0.5, 0.5, 1.0 );
+my @Light_Diffuse  = ( 0.8, 0.8, 0.8, 1.0 );
+my @Light_Specular  = ( 1.2, 1.2, 1.2, 1.0 );
+my @Light_Position = ( -200.0, 150.0, 150.0, 1.0 );
 my $range = 15; # view range
 
 
@@ -111,6 +111,8 @@ my $pe_timestamp;
 my @full_map_data;
 
 my ($menu,$submenid,$menid);
+
+my ($xmouse, $ymouse, $zmouse);                 # cursor coordinates
 
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
@@ -178,7 +180,6 @@ sub testDF {
     my $range = 1;
     my $map_base;                                   # offset of the address where the map blocks start
     my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
-    my ($xmouse, $ymouse, $zmouse);                 # cursor coordinates
     my ($xcell, $ycell, $zcell);                    # cursor cell coordinates
     my ($xtile, $ytile, $ztile);                    # cursor tile coordinates inside the cell adressed above
     my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
@@ -649,6 +650,14 @@ sub cbRenderScene {
         $X_Pos,$Y_Pos,$Z_Pos,
         0,1,0);
 
+    glLightfv_p(GL_LIGHT1, GL_POSITION,
+                (
+                    $xmouse+$Light_Position[0],
+                    $ymouse+$Light_Position[1],
+                    $zmouse+$Light_Position[2],
+                    1.0
+                ));    # Set up a light, turn it on.
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    # Clear the color and depth buffers.
 
   
@@ -1020,9 +1029,17 @@ sub ourInit {
 
     cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
 
-    glLightfv_p(GL_LIGHT1, GL_POSITION, @Light_Position);    # Set up a light, turn it on.
+
+    glLightfv_p(GL_LIGHT1, GL_POSITION,
+                (
+                    $xmouse+$Light_Position[0],
+                    $ymouse+$Light_Position[1],
+                    $zmouse+$Light_Position[2],
+                    1.0
+                ));    # Set up a light, turn it on.
     glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
     glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
+    glLightfv_p(GL_LIGHT1, GL_SPECULAR, @Light_Specular);
     glEnable (GL_LIGHT1);
     
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
