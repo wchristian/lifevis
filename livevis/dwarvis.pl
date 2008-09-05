@@ -5,6 +5,7 @@ use warnings;
 
 use Carp;
 use OpenGL qw/ :all /;
+use OpenGL::Image;
 use Image::BMP;
 use Math::Trig;
 use Win32::Process::List;
@@ -54,14 +55,15 @@ my $Window_Height = 300;
 my $Curr_TexMode = 0;
 my @TexModesStr = qw/ GL_DECAL GL_MODULATE GL_BLEND GL_REPLACE /;
 my @TexModes = ( GL_DECAL, GL_MODULATE, GL_BLEND, GL_REPLACE );
+my @Texture_ID;
 
 # Object and scene global variables.
 
 # Camera position and rotation variables.
 my ($X_Pos,$Y_Pos,$Z_Pos,$X_Off,$Y_Off,$Z_Off,$X_Rot,$Y_Rot);
-$X_Pos   =   0.5;
-$Y_Pos   =   0.0;
-$Z_Pos   =   0.5;
+$X_Pos   =   0;
+$Y_Pos   =   0;
+$Z_Pos   =   0;
 $X_Rot   = -45.0;
 $Y_Rot   = 157.5;
 ourOrientMe(); # sets up initial camera position offsets
@@ -193,6 +195,9 @@ sub testDF {
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $offsets[$ver]{mouse_z} );
     
+    ($X_Pos,$Y_Pos,$Z_Pos) = ($xmouse,$ymouse,$zmouse);
+    ourOrientMe(); # sets up initial camera position offsets
+
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
     
     ($xtile, $ytile, $ztile) = ( $xmouse%16, $ymouse%16, $zmouse );
@@ -208,7 +213,7 @@ sub testDF {
             for my $bz ( 0..$#zoffsets ) {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
 
-                say (($bx-$xcell+1)." ".($by-$ycell+1)." ".($bz));
+                #say (($bx-$xcell+1)." ".($by-$ycell+1)." ".($bz));
                 
                 process_block(                                  # process the data in one block
                     $zoffsets[$bz],                             # offset of the current block
@@ -637,12 +642,7 @@ sub cbRenderScene {
 
     glEnable(GL_DEPTH_TEST);
 
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-
     glMatrixMode(GL_MODELVIEW);    # Need to manipulate the ModelView matrix to move our model around.
-
-    glLoadIdentity();    # Reset to 0,0,0; no rotation, no scaling.
 
     gluLookAt(
         $X_Pos + $X_Off, $Y_Pos + $Y_Off, $Z_Pos + $Z_Off,
@@ -737,12 +737,12 @@ sub cbRenderScene {
 sub ourDrawCube {
     my ($x, $y, $z, $s) = @_;
     glColor3f(0.75, 0.75, 0.75); # Basic polygon color
-    my $tex_num_x = 2;
-    my $tex_num_y = 11;
-    my $tex_x1 = $tex_num_x*$tex_const;
-    my $tex_x2 = $tex_num_x*$tex_const + $tex_const;
-    my $tex_y1 = $tex_num_y*$tex_const;
-    my $tex_y2 = $tex_num_y*$tex_const + $tex_const;
+    my $tex_num_x = 0;
+    my $tex_num_y = 0;
+    my $tex_x1 =0;# $tex_num_x*$tex_const;
+    my $tex_x2 =1;# $tex_num_x*$tex_const + $tex_const;
+    my $tex_y1 =1;# $tex_num_y*$tex_const;
+    my $tex_y2 =0;# $tex_num_y*$tex_const + $tex_const;
     my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
 
     my $xs = $x + $s;
@@ -1028,6 +1028,7 @@ sub ourInit {
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
     glEnable(GL_COLOR_MATERIAL);
     
+    say "Building circle stuff display list...";
     $displaylist{MY_CIRCLE_LIST} = 1;
     glNewList($displaylist{MY_CIRCLE_LIST}, GL_COMPILE);
     glBegin(GL_POLYGON);
@@ -1041,13 +1042,14 @@ sub ourInit {
     glEnd();
     glEndList();
     
+    print "Building map stuff display list...   ";
     $displaylist{MY_MAP_LIST} = 2;
     glNewList($displaylist{MY_MAP_LIST}, GL_COMPILE);
     glBegin(GL_QUADS);
     for my $x (0..32){
         for my $y (0..32){
-            for my $z (14..18){
-                ourDrawCube($x,($z-14),$y,1) if(
+            for my $z (0..18){
+                ourDrawCube($x,$z,$y,1) if(
                     defined $pre_compiled_map_data[$x][$y][$z] &&
                     $pre_compiled_map_data[$x][$y][$z] == 0
                 );
@@ -1056,6 +1058,7 @@ sub ourInit {
     }
     glEnd();
     glEndList();
+    say "done";
 }
 
 
@@ -1070,49 +1073,41 @@ sub ourInit {
 # input.
 
 sub ourBuildTextures {
+    
+    print "loading texture..";
+  
     my $gluerr;
-    my $hole_size = 3300; # ~ == 57.45 ^ 2.
+    my $tex = new OpenGL::Image(engine=>'Magick',source=>'curses3_960x300.png');
+    # Get GL info
+    my($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
+    my($w,$h) = $tex->Get('width','height');
+    
+    @Texture_ID = glGenTextures_p(3);    # Generate a texture index, then bind it for future operations.
+    
+    
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[0]);                                  # unfiltered texture
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
 
-    my @Texture_ID = glGenTextures_p(1);    # Generate a texture index, then bind it for future operations.
-    glBindTexture(GL_TEXTURE_2D, $Texture_ID[0]);
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[1]);                                  # other mimap method, fails hilariously (?)
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    gluBuild2DMipmaps_s(GL_TEXTURE_2D, 3, $w, $h, GL_RGB, GL_UNSIGNED_BYTE, $tex->Ptr());
+    
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);                                   # mip-mapped texture
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
+    print ".";
 
-    print "loading texture...   ";
-    my $img = new Image::BMP(
-    file            => 'curses3_960x300.bmp',
-    debug           => 0,
-    );
-    my $w = $img->{Width};
-    my $h = $img->{Height};
-
-    my $tw = 256 if ( $w > 128 and $w < 256);
-    my $th = 256 if ( $h > 128 and $h < 256);
-
-    # Iterate across the texture array.
-    my $fulltex;
-    for my $y (0..$th-1) {
-        for my $x (0..$tw-1) {
-            my ($r,$g,$b) = (0,0,0);
-            my $a = 255;
-            if ($x < $w and $y < $h) {
-                ($r,$g,$b) = $img->xy_rgb($x,$y);
-                $a = 0 if ( $r == 255 and $g == 0 and $b == 255 );
-            }
-            else { $a = 0; }
-            $fulltex .= pack "C4", $r, $g, $b, $a;
-        }
-    }
-
-    # The GLU library helps us build MipMaps for our texture.
-    if ( ( $gluerr = gluBuild2DMipmaps_s(GL_TEXTURE_2D, 4, $tw, $th, GL_RGBA, GL_UNSIGNED_BYTE, $fulltex) ) ) {
-        printf STDERR "GLULib%s\n", gluErrorString($gluerr);
-        exit(-1);
-    }
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
 
     glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
     glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);    # We start with GL_DECAL mode.
-    print "texture loaded.\n";
+    #glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_BLEND);    # We start with GL_DECAL mode.
+    say "   texture loaded.\n";
 }
 
 
