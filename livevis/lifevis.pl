@@ -561,7 +561,7 @@ sub process_xml {
     say "--- -- -\n$message\n--- -- -" if defined $message;
     push @offsets, \%config_hash;
 
-    open my $HANDLE, "<", "dwarvis.pl";
+    open my $HANDLE, "<", "lifevis.pl";
     @data_store = <$HANDLE>;
     close $HANDLE;
     
@@ -586,7 +586,7 @@ sub process_xml {
         push @new_data_store, $line;
     }
 
-    open $HANDLE, ">", "dwarvis.pl";
+    open $HANDLE, ">", "lifevis.pl";
     for my $line ( @new_data_store ) {
         print $HANDLE $line;
     }
