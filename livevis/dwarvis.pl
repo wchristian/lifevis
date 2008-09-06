@@ -14,6 +14,8 @@ use Win32::Process::Memory;
 use LWP::Simple;
 $|++;
 
+# %DB::packages = ( 'main' => 1 );
+
 # Dwarf Fortress 3D Map Viewer
 #
 # The base intention of this program is to provide an OpenGL engine capable of
@@ -39,6 +41,9 @@ $|++;
 ### Translated from C to Perl by J-L Morel <jl_morel@bribes.org>
 ### ( http://www.bribes.org/perl/wopengl.html )
 
+use constant TYPE => 0;
+use constant DESIGNATION => 1;
+use constant OCCUPATION => 2;
 
 use constant PROGRAM_TITLE => "O'Reilly Net: OpenGL Demo -- C.Halsall";
 use constant PI        => 4 * atan2(1, 1);
@@ -113,6 +118,11 @@ my @full_map_data;
 my ($menu,$submenid,$menid);
 
 my ($xmouse, $ymouse, $zmouse);                 # cursor coordinates
+my ($xcell, $ycell, $zcell);                    # cursor cell coordinates
+my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
+
+my $slice=0;
+my $slice_follows=0;
 
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
@@ -123,8 +133,6 @@ connectToDF();
 testDF();
 #exit;
 glutInit();
-
-ourLoadMapData();
 
 print "setting up OpenGL environment...   ";
 glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -179,8 +187,6 @@ glutMainLoop();
 sub testDF {
     my $range = 1;
     my $map_base;                                   # offset of the address where the map blocks start
-    my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
-    my ($xcell, $ycell, $zcell);                    # cursor cell coordinates
     my ($xtile, $ytile, $ztile);                    # cursor tile coordinates inside the cell adressed above
     my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
     @full_map_data=[];                              # array to hold the full extracted map data
@@ -196,30 +202,34 @@ sub testDF {
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $offsets[$ver]{mouse_z} );
     
-    ($X_Pos,$Y_Pos,$Z_Pos) = ($xmouse,$ymouse,$zmouse);
+    ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse,$ymouse,$zmouse);
     ourOrientMe(); # sets up initial camera position offsets
+    
+    say "$xmouse,$ymouse,$zmouse";
 
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
+    $xcell += 1 if $xcell == 0;
+    $ycell += 1 if $ycell == 0;
+    $xcell -= 1 if $xcell == $xcount-1;
+    $ycell -= 1 if $ycell == $ycount-1;
     
     ($xtile, $ytile, $ztile) = ( $xmouse%16, $ymouse%16, $zmouse );
     
     # get the offsets of the address storages for each x-slice and cycle through
     @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
-    for my $bx ( ($xcell-1)..($xcell+1) ) {
+    for my $bx ( $xcell-1 .. $xcell+1 ) {
         # get the offsets of the address storages for each y-column in this x-slice and cycle through
         @yoffsets = $proc->get_packs("L", 4, $xoffsets[$bx], $ycount);
-        for my $by ( ($ycell-1)..($ycell+1) ) {
+        for my $by ( $ycell-1 .. $ycell+1 ) {
             # get the offsets of each z-block in this y-column and cycle through
             @zoffsets = $proc->get_packs("L", 4, $yoffsets[$by], $zcount);
             for my $bz ( 0..$#zoffsets ) {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
-
-                #say (($bx-$xcell+1)." ".($by-$ycell+1)." ".($bz));
                 
                 process_block(                                  # process the data in one block
                     $zoffsets[$bz],                             # offset of the current block
-                    ($bx-$xcell+1),                                        # x location of the current block
-                    ($by-$ycell+1),                                        # y location of the current block
+                    $bx,                                        # x location of the current block
+                    $by,                                        # y location of the current block
                     $bz );                                      # z location of the current block
                 
             }
@@ -239,16 +249,15 @@ sub process_block {
 
     for my $y ( 0..15 ) {                           # cycle through 16 x and 16 y values, which generate a total of 256 tile indexes
         for my $x ( 0..15 ) {
-
+            
             my $tile_index = $y+($x*16);                # this calculates the tile index we are currently at, from the x and y coords in this block
-
+            
             my $real_x = ($bx*16)+$x;                   # this calculates the real x and y values of this tile on the overall map_base
             my $real_y = ($by*16)+$y;
-
-            $pre_compiled_map_data[$real_x][$real_y][$bz] = 2;
-            $pre_compiled_map_data[$real_x][$real_y][$bz] = 0 unless( $type_data[$tile_index] == 32 );
             
-           # say "[$real_x] [$real_y] [$bz] = $type_data[$tile_index]";
+            $pre_compiled_map_data[$real_x][$real_y][$bz][TYPE] = $type_data[$tile_index];
+            $pre_compiled_map_data[$real_x][$real_y][$bz][DESIGNATION] = $designation_data[$tile_index];
+            $pre_compiled_map_data[$real_x][$real_y][$bz][OCCUPATION] = $ocupation_data[$tile_index];
         }
     }
 }
@@ -593,62 +602,26 @@ sub process_xml {
 ## Rendering Functions #########################################################
 ################################################################################
 
-sub createMenu {
-
-  $submenid = glutCreateMenu(\&menu);
-  glutAddMenuEntry("Teapot", 2);
-  glutAddMenuEntry("Cube", 3);
-  glutAddMenuEntry("Torus", 4);
-
-  $menid = glutCreateMenu(\&menu);
-  glutAddMenuEntry("Clear", 1);
-  glutAddSubMenu("Draw", $submenid);
-  glutAddMenuEntry("Quit", 0);
-
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
-}
-
-sub menu {
-    my ($in) = @_;
-    
-  if($in == 0 && defined $in){
-    glutDestroyWindow($Window_ID);
-    exit(0);
-  }
-  
-  glutPostRedisplay();
-}
-
 # ------
-# Routine which handles background stuff when the app is idle
+# Does everything needed before losing control to the main
+# OpenGL event loop.
 
-sub cbBackgroundProc {
-    
-    #glutPostRedisplay();
-}
+sub ourInit {
+    my ($Width, $Height) = @_;
 
-# ------
-# Routine which actually does the drawing
+    ourBuildTextures();
 
-sub cbRenderScene {
-    my $buf; # For our strings.
+    glClearColor(0.7, 0.7, 0.7, 0.0);    # Color to clear color buffer to.
 
-    # Enables, disables or otherwise adjusts as appropriate for our current settings.
+    glClearDepth(1.0);    # Depth to clear depth buffer to; type of test.
+    glDepthFunc(GL_LESS);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
 
-    glEnable(GL_TEXTURE_2D);
+    glShadeModel(GL_SMOOTH);    # Enables Smooth Color Shading; try GL_FLAT for (lack of) fun.
 
-    glEnable(GL_LIGHTING);
-
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_DEPTH_TEST);
-
-    glMatrixMode(GL_MODELVIEW);    # Need to manipulate the ModelView matrix to move our model around.
-
-    gluLookAt(
-        $X_Pos + $X_Off, $Y_Pos + $Y_Off, $Z_Pos + $Z_Off,
-        $X_Pos,$Y_Pos,$Z_Pos,
-        0,1,0);
+    cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
 
     glLightfv_p(GL_LIGHT1, GL_POSITION,
                 (
@@ -657,87 +630,29 @@ sub cbRenderScene {
                     $zmouse+$Light_Position[2],
                     1.0
                 ));    # Set up a light, turn it on.
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    # Clear the color and depth buffers.
-
-  
-    glColor3f(0, 0, 0); # Basic polygon color
-    glCallList($displaylist{MY_CIRCLE_LIST});
-    glCallList($displaylist{MY_MAP_LIST});
+    glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
+    glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
+    glLightfv_p(GL_LIGHT1, GL_SPECULAR, @Light_Specular);
+    glEnable (GL_LIGHT1);
     
-    glBegin(GL_QUADS);    # OK, let's start drawing our planer quads.
-
-    ourDrawMapCubes();
-    ourDrawMapGround();
-
-    glEnd();    # All polygons have been drawn.
-
-    glLoadIdentity();    # Move back to the origin (for the text, below).
-
-    glMatrixMode(GL_PROJECTION);    # We need to change the projection matrix for the text rendering.
-
-    glPushMatrix();    # But we like our current view too; so we save it here.
-
-    glLoadIdentity();    # Now we set up a new projection for the text.
-    glOrtho(0,$Window_Width,0,$Window_Height,-1.0,1.0);
-
-    glDisable(GL_TEXTURE_2D);    # Lit or textured text looks awful.
-    glDisable(GL_LIGHTING);
-
-    glDisable(GL_DEPTH_TEST);    # We don'$t want depth-testing either.
-
-    glColor4f(0.6,1.0,0.6,.75);    # But, for fun, let's make the text partially transparent too.
-
-    $buf = sprintf "Mode: %s", $TexModesStr[$Curr_TexMode];    # Render our various display mode settings.
-    glRasterPos2i(2,2); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "X_Rot: %d", $X_Rot;
-    glRasterPos2i(2,74); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Y_Rot: %d", $Y_Rot;
-    glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Z_Pos: %f", $Z_Pos;
-    glRasterPos2i(2,98); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Y_Pos: %f", $Y_Pos;
-    glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "X_Pos: %f", $X_Pos;
-    glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Z_Off: %f", $Z_Off;
-    glRasterPos2i(2,134); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Y_Off: %f", $Y_Off;
-    glRasterPos2i(2,146); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "X_Off: %f", $X_Off;
-    glRasterPos2i(2,158); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    # Now we want to render the calulated FPS at the top. To ease, simply translate up.  Note we're working in screen pixels in this projection.
-
-    #    glTranslatef(6.0,$Window_Height - 14,0.0);
-    #
-    #    glColor4f(0.2,0.2,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
-    #
-    #    glBegin(GL_QUADS);
-    #    glVertex3f(  0.0, -2.0, 0.0);
-    #    glVertex3f(  0.0, 12.0, 0.0);
-    #    glVertex3f(140.0, 12.0, 0.0);
-    #    glVertex3f(140.0, -2.0, 0.0);
-    #    glEnd();
-    #
-    #    glColor4f(0.9,0.2,0.2,.75);
-    #    $buf = sprintf "FPS: %f F: %2d", $FrameRate, $FrameCount;
-    #    glRasterPos2i(6,0);
-    #    ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    glPopMatrix();    # Done with this special projection matrix.  Throw it away.
-
-    glutSwapBuffers();    # All done drawing.  Let's show it.
-
-    #ourDoFPS();    # And collect our statistics.
+    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
+    glEnable(GL_COLOR_MATERIAL);
+    
+    print "Building map stuff display list...   ";
+    for my $z (0..$zcount){
+        glNewList($z, GL_COMPILE);
+        glBegin(GL_QUADS);
+        for my $x (($xcell*16)-16..($xcell*16)+16+16) {
+            for my $y (($ycell*16)-16..($ycell*16)+16+16) {
+                ourDrawCube($x,$z,$y,1)
+                    if( defined $pre_compiled_map_data[$x][$y][$z][TYPE] &&
+                        $pre_compiled_map_data[$x][$y][$z][TYPE] != 32 );
+            }
+        }
+        glEnd();
+        glEndList();
+    }
+    say "done";
 }
 
 # ------
@@ -795,193 +710,152 @@ sub ourDrawCube {
     glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
 }
 
-sub ourDrawMapCubes {
-    glColor3f(0.75, 0.75, 0.75); # Basic polygon color
-    my $tex_num_x = 2;
-    my $tex_num_y = 11;
-    my $tex_x1 = $tex_num_x*$tex_const;
-    my $tex_x2 = $tex_num_x*$tex_const + $tex_const;
-    my $tex_y1 = $tex_num_y*$tex_const;
-    my $tex_y2 = $tex_num_y*$tex_const + $tex_const;
-    my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
+# ------
+# Barebone menu creation functions
 
-    for my $num ( 0..$#{ $sliced_map_data[1] } ) {
-        my $x = $sliced_map_data[1][$num][0];
-        my $y = $sliced_map_data[1][$num][1];
-        my $z = $sliced_map_data[1][$num][2];
-        my $s = $sliced_map_data[1][$num][3];
-        my $top = $sliced_map_data[1][$num][4];
-        my $bottom = $sliced_map_data[1][$num][5];
-        my $front = $sliced_map_data[1][$num][6];
-        my $back = $sliced_map_data[1][$num][7];
-        my $right = $sliced_map_data[1][$num][8];
-        my $left = $sliced_map_data[1][$num][9];
-        my $xs = $x + $s;
-        my $ys = $y + $s;
-        my $zs = $z + $s;
-        my $yh = $y + 0.25;
+sub createMenu {
 
-        if ( $X_Rot > -30  and $bottom == 2 ) {
-            glNormal3f( 0,-1, 0); # Bottom Face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
-        }
+  $submenid = glutCreateMenu(\&menu);
+  glutAddMenuEntry("Teapot", 2);
+  glutAddMenuEntry("Cube", 3);
+  glutAddMenuEntry("Torus", 4);
 
-        if ( $X_Rot < 30 and ( $top==-1 or $top==0 or $top==3 ) ) {
-            glNormal3f( 0, 1, 0); # Top face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
-        }
+  $menid = glutCreateMenu(\&menu);
+  glutAddMenuEntry("Clear", 1);
+  glutAddSubMenu("Draw", $submenid);
+  glutAddMenuEntry("Quit", 0);
 
-        if ( $back == 0 or $back == 3 ) {
-            glNormal3f( 0, 0,-1); # Far face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
-        }
-        if ( $back == 2 ) {
-            glNormal3f( 0, 0,-1); # Far face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
-            glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $xs,  $yh, $z);
-            glTexCoord2f($tex_x2,$tex_y3); glVertex3f(  $x,  $yh, $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
-        }
-
-        if ( $right == 0 or $right == 3 ) {
-            glNormal3f( 1, 0, 0); # Right face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
-        }
-        if ( $right == 2 ) {
-            glNormal3f( 1, 0, 0); # Right face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $xs,  $yh, $zs);
-            glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $xs,  $yh,  $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
-        }
-
-        if ( $front == 0 or $front == 3 ) {
-            glNormal3f( 0, 0, 1); # Front face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
-        }
-        if ( $front == 2 ) {
-            glNormal3f( 0, 0, 1); # Front face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y3); glVertex3f(  $x,  $yh, $zs);
-            glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $xs,  $yh, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
-        }
-
-        if ( $left == 0 or $left == 3 ) {
-            glNormal3f(-1, 0, 0); # Left Face.
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
-        }
-        if ( $left == 2 ) {
-            glNormal3f(-1, 0, 0); # Left Face.
-            glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $x,  $yh,  $z);
-            glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $x,  $yh, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
-        }
-    }
+  glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
-sub ourDrawMapGround {
-    glColor3f(0.1, 0.1, 0.1); # Basic polygon color
-    my $tex_num_x = 14;
-    my $tex_num_y = 2;
-    my $tex_x1 = $tex_num_x*$tex_const;
-    my $tex_x2 = $tex_num_x*$tex_const + $tex_const;
-    my $tex_y1 = $tex_num_y*$tex_const;
-    my $tex_y2 = $tex_num_y*$tex_const + $tex_const;
-    my $tex_y3 = $tex_num_y*$tex_const + $tex_const/2;
-
-    for my $num ( 0..$#{ $sliced_map_data[2] } ) {
-        my $x = $sliced_map_data[2][$num][0];
-        my $y = $sliced_map_data[2][$num][1];
-        my $z = $sliced_map_data[2][$num][2];
-        my $s = $sliced_map_data[2][$num][3];
-        my $top = $sliced_map_data[2][$num][4];
-        my $bottom = $sliced_map_data[2][$num][5];
-        my $front = $sliced_map_data[2][$num][6];
-        my $back = $sliced_map_data[2][$num][7];
-        my $right = $sliced_map_data[2][$num][8];
-        my $left = $sliced_map_data[2][$num][9];
-        my $xs = $x + $s;
-        my $ys = $y + $s/4;
-        my $zs = $z + $s;
-
-        if ( $X_Rot > -30 and ( $bottom == 2 or $bottom == 3 ) ) {
-            glNormal3f( 0,-1, 0); # Bottom Face.
-            glTexCoord2f(0,    0); glVertex3f(  $x, $y,  $z);
-            glTexCoord2f(0,    0); glVertex3f( $xs, $y,  $z);
-            glTexCoord2f(0,    0); glVertex3f( $xs, $y, $zs);
-            glTexCoord2f(0,    0); glVertex3f(  $x, $y, $zs);
-        }
-
-        if ( $X_Rot > -30 and ( $bottom == 2 or $bottom == 3 ) ) {
-            glNormal3f( 0,-1, 0); # Bottom Face.
-            glTexCoord2f(0,    0); glVertex3f(  $x, $y,  $z);
-            glTexCoord2f(0,    0); glVertex3f( $xs, $y,  $z);
-            glTexCoord2f(0,    0); glVertex3f( $xs, $y, $zs);
-            glTexCoord2f(0,    0); glVertex3f(  $x, $y, $zs);
-        }
-
-        if ( $X_Rot < 30 and $top ) {
-            glNormal3f( 0, 1, 0); # Top face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
-        }
-
-        if ( $back == 0 or $back == 3 ) {
-            glNormal3f( 0, 0,-1); # Far face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
-        }
-
-        if ( $right == 0 or $right == 3) {
-            glNormal3f( 1, 0, 0); # Right face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
-        }
-
-        if ( $front == 0 or $front == 3 ) {
-            glNormal3f( 0, 0, 1); # Front face.
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
-        }
-
-        if ( $left == 0 or $left == 3) {
-            glNormal3f(-1, 0, 0); # Left Face.
-            glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
-            glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
-            glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
-            glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
-        }
-    }
+sub menu {
+    my ($in) = @_;
+    
+  if($in == 0 && defined $in){
+    glutDestroyWindow($Window_ID);
+    exit(0);
+  }
+  
+  glutPostRedisplay();
 }
 
+# ------
+# Routine which handles background stuff when the app is idle
+
+sub cbBackgroundProc {
+    
+    glutPostRedisplay();
+}
+
+# ------
+# Routine which actually does the drawing
+
+sub cbRenderScene {
+    my $buf; # For our strings.
+
+    # Enables, disables or otherwise adjusts as appropriate for our current settings.
+
+    glEnable(GL_TEXTURE_2D);
+
+    glEnable(GL_LIGHTING);
+
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_DEPTH_TEST);
+
+    glMatrixMode(GL_MODELVIEW);    # Need to manipulate the ModelView matrix to move our model around.
+
+    gluLookAt(
+        $X_Pos + $X_Off, $Y_Pos + $Y_Off, $Z_Pos + $Z_Off,
+        $X_Pos,$Y_Pos,$Z_Pos,
+        0,1,0);
+
+    glLightfv_p(GL_LIGHT1, GL_POSITION,
+                (
+                    $xmouse+$Light_Position[0],
+                    $ymouse+$Light_Position[1],
+                    $zmouse+$Light_Position[2],
+                    1.0
+                ));    # Set up a light, turn it on.
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    # Clear the color and depth buffers.
+  
+    glColor3f(0, 0, 0); # Basic polygon color
+    
+    for my $z (0..$zcount-$slice) {
+        glCallList($z);
+    }
+
+    glLoadIdentity();    # Move back to the origin (for the text, below).
+
+    glMatrixMode(GL_PROJECTION);    # We need to change the projection matrix for the text rendering.
+
+    glPushMatrix();    # But we like our current view too; so we save it here.
+
+    glLoadIdentity();    # Now we set up a new projection for the text.
+    glOrtho(0,$Window_Width,0,$Window_Height,-1.0,1.0);
+
+    glDisable(GL_TEXTURE_2D);    # Lit or textured text looks awful.
+    glDisable(GL_LIGHTING);
+
+    glDisable(GL_DEPTH_TEST);    # We don'$t want depth-testing either.
+
+    glColor4f(0.6,1.0,0.6,.75);    # But, for fun, let's make the text partially transparent too.
+
+    $buf = sprintf "Mode: %s", $TexModesStr[$Curr_TexMode];    # Render our various display mode settings.
+    glRasterPos2i(2,2); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "X_Rot: %d", $X_Rot;
+    glRasterPos2i(2,74); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Y_Rot: %d", $Y_Rot;
+    glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Z_Pos: %f", $Z_Pos;
+    glRasterPos2i(2,98); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Y_Pos: %f", $Y_Pos;
+    glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "X_Pos: %f", $X_Pos;
+    glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Z_Off: %f", $Z_Off;
+    glRasterPos2i(2,134); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Y_Off: %f", $Y_Off;
+    glRasterPos2i(2,146); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "X_Off: %f", $X_Off;
+    glRasterPos2i(2,158); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = "X";
+    glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    # Now we want to render the calulated FPS at the top. To ease, simply translate up.  Note we're working in screen pixels in this projection.
+
+    #    glTranslatef(6.0,$Window_Height - 14,0.0);
+    #
+    #    glColor4f(0.2,0.2,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
+    #
+    #    glBegin(GL_QUADS);
+    #    glVertex3f(  0.0, -2.0, 0.0);
+    #    glVertex3f(  0.0, 12.0, 0.0);
+    #    glVertex3f(140.0, 12.0, 0.0);
+    #    glVertex3f(140.0, -2.0, 0.0);
+    #    glEnd();
+    #
+    #    glColor4f(0.9,0.2,0.2,.75);
+    #    $buf = sprintf "FPS: %f F: %2d", $FrameRate, $FrameCount;
+    #    glRasterPos2i(6,0);
+    #    ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    glPopMatrix();    # Done with this special projection matrix.  Throw it away.
+
+    glutSwapBuffers();    # All done drawing.  Let's show it.
+
+    #ourDoFPS();    # And collect our statistics.
+}
 
 ################################################################################
 ## 3D Maintenance ##############################################################
@@ -1001,81 +875,12 @@ sub cbResizeScene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0,$Width/$Height,0.0001,100.0);
+    gluPerspective(45.0,$Width/$Height,0.1,100.0);
 
     glMatrixMode(GL_MODELVIEW);
 
     $Window_Width  = $Width;
     $Window_Height = $Height;
-}
-
-# ------
-# Does everything needed before losing control to the main
-# OpenGL event loop.
-
-sub ourInit {
-    my ($Width, $Height) = @_;
-
-    ourBuildTextures();
-
-    glClearColor(0.7, 0.7, 0.7, 0.0);    # Color to clear color buffer to.
-
-    glClearDepth(1.0);    # Depth to clear depth buffer to; type of test.
-    glDepthFunc(GL_LESS);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glEnable(GL_CULL_FACE);
-
-    glShadeModel(GL_SMOOTH);    # Enables Smooth Color Shading; try GL_FLAT for (lack of) fun.
-
-    cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
-
-
-    glLightfv_p(GL_LIGHT1, GL_POSITION,
-                (
-                    $xmouse+$Light_Position[0],
-                    $ymouse+$Light_Position[1],
-                    $zmouse+$Light_Position[2],
-                    1.0
-                ));    # Set up a light, turn it on.
-    glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
-    glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
-    glLightfv_p(GL_LIGHT1, GL_SPECULAR, @Light_Specular);
-    glEnable (GL_LIGHT1);
-    
-    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
-    glEnable(GL_COLOR_MATERIAL);
-    
-    say "Building circle stuff display list...";
-    $displaylist{MY_CIRCLE_LIST} = 1;
-    glNewList($displaylist{MY_CIRCLE_LIST}, GL_COMPILE);
-    glBegin(GL_POLYGON);
-    for my $j (0..99){
-    for my $i (0..99){
-        my $cos=cos($i*2*PI/100.0);
-        my $sin=sin($i*2*PI/100.0);
-        glVertex2f($cos+$j,$sin+$j);
-    }
-    }
-    glEnd();
-    glEndList();
-    
-    print "Building map stuff display list...   ";
-    $displaylist{MY_MAP_LIST} = 2;
-    glNewList($displaylist{MY_MAP_LIST}, GL_COMPILE);
-    glBegin(GL_QUADS);
-    for my $x (0..32){
-        for my $y (0..32){
-            for my $z (0..18){
-                ourDrawCube($x,$z,$y,1) if(
-                    defined $pre_compiled_map_data[$x][$y][$z] &&
-                    $pre_compiled_map_data[$x][$y][$z] == 0
-                );
-            }
-        }
-    }
-    glEnd();
-    glEndList();
-    say "done";
 }
 
 
@@ -1150,28 +955,24 @@ sub cbKeyPressed {
             my $sin_y = $sin_cache{$Y_Rot} ||= sin($Y_Rot * PIOVER180);
             $X_Pos += $cos_y * 0.25;
             $Z_Pos += $sin_y * 0.25;
-            ourResliceMapData();
         }; # A
         $normal_inputs{100} = sub {
             my $cos_y = $cos_cache{$Y_Rot} ||= cos($Y_Rot * PIOVER180);
             my $sin_y = $sin_cache{$Y_Rot} ||= sin($Y_Rot * PIOVER180);
             $X_Pos -= $cos_y * 0.25;
             $Z_Pos -= $sin_y * 0.25;
-            ourResliceMapData();
         }; # D
         $normal_inputs{119} = sub {
             my $cos_y = $cos_cache{$Y_Rot} ||= cos($Y_Rot * PIOVER180);
             my $sin_y = $sin_cache{$Y_Rot} ||= sin($Y_Rot * PIOVER180);
             $X_Pos -= $sin_y * 0.25;
             $Z_Pos += $cos_y * 0.25;
-            ourResliceMapData();
         }; # W
         $normal_inputs{115} = sub {
             my $cos_y = $cos_cache{$Y_Rot} ||= cos($Y_Rot * PIOVER180);
             my $sin_y = $sin_cache{$Y_Rot} ||= sin($Y_Rot * PIOVER180);
             $X_Pos += $sin_y * 0.25;
             $Z_Pos -= $cos_y * 0.25;
-            ourResliceMapData();
         }; # S
 
         $normal_inputs{113} = sub {
@@ -1188,8 +989,24 @@ sub cbKeyPressed {
             ourOrientMe();
         }; # E
 
-        $normal_inputs{114} = sub { $Y_Pos += 1; ourResliceMapData();               }; # R
-        $normal_inputs{102} = sub { $Y_Pos -= 1; ourResliceMapData();                }; # F
+        $normal_inputs{116} = sub {
+            $slice--;
+            ourOrientMe();
+        }; # T
+
+        $normal_inputs{103} = sub {
+            $slice++;
+            ourOrientMe();
+        }; # G
+
+        $normal_inputs{122} = sub {
+            $slice = $slice ? 0 : $zmouse;
+            $slice_follows = $slice_follows ? 0 : 1;
+            ourOrientMe();
+        }; # Z
+
+        $normal_inputs{114} = sub { $Y_Pos += 1; $slice-- if $slice_follows;  }; # R
+        $normal_inputs{102} = sub { $Y_Pos -= 1; $slice++ if $slice_follows;  }; # F
 
         $normal_inputs{27} = sub { glutDestroyWindow($Window_ID); exit(1);           }; # ESC
 
@@ -1276,161 +1093,6 @@ sub ourOrientMe {
 ## Map Stuff ###################################################################
 ################################################################################
 
-
-sub ourLoadMapData {
-    
-    $displaylist{MY_CIRCLE_LIST} = 1;
-    glNewList($displaylist{MY_CIRCLE_LIST}, GL_COMPILE);
-    glBegin(GL_POLYGON);
-    for my $j (0..99){
-    for my $i (0..99){
-        my $cos=cos($i*2*PI/100.0);
-        my $sin=sin($i*2*PI/100.0);
-        glVertex2f($cos+$j,$sin+$j);
-    }
-    }
-    glEnd();
-    glEndList();
-    
-    #my $map_directory = '.';
-    #
-    #print "reading map files...   ";
-    #
-    #opendir my $DIR, $map_directory or die "can't opendir $map_directory: $!";
-    #my @map_files = grep { /map.*txt/ && -f "$map_directory/$_" } readdir $DIR;
-    #closedir $DIR;
-    #
-    #for my $map_file (@map_files) {
-    #    open my $DAT, '<', $map_file or die "horribly: $!";
-    #    push @map_data, [ <$DAT> ];
-    #    close $DAT;
-    #}
-    #
-    #print "map files read.\n";
-    #
-    #print "inserting map data into internal 3d grid...   ";
-    #
-    #$Map_H = $#map_data;
-    #for my $y ( 0..$Map_H ) {
-    #
-    #    $Map_D = $#{ $map_data[0] } unless ( $Map_D );
-    #    for my $z ( 0..$Map_D ) {
-    #        chomp($map_data[$y][$z]);
-    #        my @line_data = split //, $map_data[$y][$z];
-    #
-    #        $Map_W = $#line_data unless ( $Map_W );
-    #        for my $x (0..$Map_W) {
-    #            $pre_compiled_map_data[$x][$y][$z] = 0 if ( $line_data[$x] eq ' ' );
-    #            $pre_compiled_map_data[$x][$y][$z] = 1 if ( $line_data[$x] eq '#' );
-    #            $pre_compiled_map_data[$x][$y][$z] = 2 if ( $line_data[$x] eq '.' );
-    #            $pre_compiled_map_data[$x][$y][$z] = 3 if ( $line_data[$x] eq '_' );
-    #        }
-    #    }
-    #}
-
-    #print "3d grid created.\n";
-    #
-    #print "parsing 3d grid into map component list...   ";
-    #
-    #for my $y ( 0..15 ) {
-    #    for my $z ( 15..15 ) {
-    #        for my $x (0..15) {
-    #            if ( $pre_compiled_map_data[$x][$y][$z] > 0 ) {
-    #                my @cube;
-    #                my $type = $pre_compiled_map_data[$x][$y][$z];
-    #                $cube[0] = $x;
-    #                $cube[1] = $y;
-    #                $cube[2] = $z;
-    #                $cube[3] = 1;
-    #                for my $i (4..9) { $cube[$i] = -1; }
-    #                $cube[4] = $pre_compiled_map_data[$x][$y+1][$z] if ($pre_compiled_map_data[$x][$y+1][$z] and $y < $Map_H ); # top
-    #                $cube[5] = $pre_compiled_map_data[$x][$y-1][$z] if ($pre_compiled_map_data[$x][$y-1][$z] and $y > 0 ); # bottom
-    #                $cube[6] = $pre_compiled_map_data[$x][$y][$z+1] if ($pre_compiled_map_data[$x][$y][$z+1] and $z < $Map_D ); # front
-    #                $cube[7] = $pre_compiled_map_data[$x][$y][$z-1] if ($pre_compiled_map_data[$x][$y][$z-1] and $z > 0 ); # back
-    #                $cube[8] = $pre_compiled_map_data[$x+1][$y][$z] if ($pre_compiled_map_data[$x+1][$y][$z] and $x < $Map_W ); # right
-    #                $cube[9] = $pre_compiled_map_data[$x-1][$y][$z] if ($pre_compiled_map_data[$x-1][$y][$z] and $x > 0 ); # left
-    #                #                    if ( $type == 1 ) {
-    #                #                        $cube[4] = 1 unless ( $y < $Map_H and $pre_compiled_map_data[$x][$y+1][$z] > 0 ); # top
-    #                #                        $cube[5] = 1 unless ( $pre_compiled_map_data[$x][$y-1][$z] == 1 ); # bottom
-    #                #                        $cube[6] = 1 unless ( $z < $Map_D and $pre_compiled_map_data[$x][$y][$z+1] == 1 ); # front
-    #                #                        $cube[7] = 1 unless ( $pre_compiled_map_data[$x][$y][$z-1] == 1 ); # back
-    #                #                        $cube[8] = 1 unless ( $x < $Map_W and $pre_compiled_map_data[$x+1][$y][$z] == 1 ); # right
-    #                #                        $cube[9] = 1 unless ( $pre_compiled_map_data[$x-1][$y][$z] == 1 ); # left
-    #                #                    }
-    #                #                    if ( $type == 2 ) {
-    #                #                        $cube[4] = 1; # unless ( $y < $Map_H and $pre_compiled_map_data[$x][$y+1][$z] > 0 ); # top
-    #                #                        $cube[5] = 1 unless ( $pre_compiled_map_data[$x][$y-1][$z] < 2 ); # bottom
-    #                #                        $cube[6] = 1 unless ( $z < $Map_D and $pre_compiled_map_data[$x][$y][$z+1] > 0 ); # front
-    #                #                        $cube[7] = 1 unless ( $pre_compiled_map_data[$x][$y][$z-1] > 0 ); # back
-    #                #                        $cube[8] = 1 unless ( $x < $Map_W and $pre_compiled_map_data[$x+1][$y][$z] > 0 ); # right
-    #                #                        $cube[9] = 1 unless ( $pre_compiled_map_data[$x-1][$y][$z] > 0 ); # left
-    #                #                    }
-    #                next unless ( $cube[4] or $cube[5] or $cube[6] or $cube[7] or $cube[8] or $cube[9] );
-    #                push @{ $compiled_map_data[$type] }, [ @cube ];
-    #            }
-    #        }
-    #    }
-    #}
-    ##    print "$#compiled_map_data\n";
-    ##    print "$#{ $compiled_map_data[1] }\n";
-    ##    print "$#{ $compiled_map_data[2] }\n";
-    #
-    #print "component list created.\n";
-    #
-    #print "creating initial view slice...   ";
-    #
-    #ourResliceMapData();
-    #
-    #print "intial view slice created.\n";
-}
-
-sub ourResliceMapData {
-    my $slice_id = int($X_Pos) . ':' . int($Y_Pos) .  ':' . int($Z_Pos);
-    #    print "$slice_id\n";
-
-    if ( $slice_cache{$slice_id} ) {
-        @sliced_map_data = @{ $slice_cache{$slice_id} };
-    }
-    else {
-        @sliced_map_data = ();
-        for my $type ( 0..$#compiled_map_data ) {
-            my $counter = 0;
-            for my $num ( 0..$#{ $compiled_map_data[$type] } ) {
-                my $x = $compiled_map_data[$type][$num][0];
-                next if ( $x > $X_Pos+$range or $X_Pos-$range > $x );
-                my $y = $compiled_map_data[$type][$num][1];
-                next if ( $y-$range > $Y_Pos or $y+$range < $Y_Pos );
-                my $z = $compiled_map_data[$type][$num][2];
-                next if ( $z > $Z_Pos+$range or $Z_Pos-$range > $z );
-                my $s = $compiled_map_data[$type][$num][3];
-                my $top = $compiled_map_data[$type][$num][4];
-                my $bottom = $compiled_map_data[$type][$num][5];
-                my $front = $compiled_map_data[$type][$num][6];
-                my $back = $compiled_map_data[$type][$num][7];
-                my $right = $compiled_map_data[$type][$num][8];
-                my $left = $compiled_map_data[$type][$num][9];
-
-                $sliced_map_data[$type][$counter][0] = $x;
-                $sliced_map_data[$type][$counter][1] = $y;
-                $sliced_map_data[$type][$counter][2] = $z;
-                $sliced_map_data[$type][$counter][3] = $s;
-                $sliced_map_data[$type][$counter][4] = $top;
-                $sliced_map_data[$type][$counter][5] = $bottom;
-                $sliced_map_data[$type][$counter][6] = $front;
-                $sliced_map_data[$type][$counter][7] = $back;
-                $sliced_map_data[$type][$counter][8] = $right;
-                $sliced_map_data[$type][$counter][9] = $left;
-
-                $counter++;
-            }
-        }
-
-        $slice_cache{$slice_id} = [ @sliced_map_data ];
-    }
-    #    print "$#sliced_map_data\n";
-    #    print "$#{ $sliced_map_data[1] }\n";
-    #    print "$#{ $sliced_map_data[2] }\n";
-}
 
 ################################################################################
 ## Helper Stuff ################################################################
