@@ -1007,6 +1007,8 @@ sub cbKeyPressed {
 
         $normal_inputs{114} = sub { $Y_Pos += 1; $slice-- if $slice_follows;  }; # R
         $normal_inputs{102} = sub { $Y_Pos -= 1; $slice++ if $slice_follows;  }; # F
+        
+        $normal_inputs{107} = sub { testDF();  }; # K
 
         $normal_inputs{27} = sub { glutDestroyWindow($Window_ID); exit(1);           }; # ESC
 
