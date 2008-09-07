@@ -81,8 +81,6 @@ my @Light_Ambient  = ( 0.5, 0.5, 0.5, 1.0 );
 my @Light_Diffuse  = ( 0.8, 0.8, 0.8, 1.0 );
 my @Light_Specular  = ( 1.2, 1.2, 1.2, 1.0 );
 my @Light_Position = ( -200.0, 150.0, 150.0, 1.0 );
-my $range = 15; # view range
-
 
 # ------
 # Frames per second (FPS) statistic variables.
@@ -124,13 +122,17 @@ my ($xcount, $ycount, $zcount);                 # dimensions of the map data we'
 my $slice=0;
 my $slice_follows=0;
 
+my $range = 1;
+my $map_base;                                   # offset of the address where the map blocks start
+my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
+
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
 # then passes control onto OpenGL.
 
 connectToDF();
-
-testDF();
+extractBaseMemoryData();
+updateFromDF();
 #exit;
 glutInit();
 
@@ -156,6 +158,8 @@ glutSpecialFunc(\&cbSpecialKeyPressed);
 
 glutMotionFunc(\&cbMouseActiveMotion);
 
+
+
 print "OpenGL environment ready.\n";
 
 print "initializing OpenGL...\n";
@@ -174,6 +178,8 @@ Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 ;
 
+glutTimerFunc (5000, \&refreshMapData, 0);
+
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
 print "switching to main loop...\n";
@@ -184,28 +190,49 @@ glutMainLoop();
 ## Rendering Functions #########################################################
 ################################################################################
 
-sub testDF {
-    my $range = 1;
-    my $map_base;                                   # offset of the address where the map blocks start
-    my ($xtile, $ytile, $ztile);                    # cursor tile coordinates inside the cell adressed above
-    my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
-    @full_map_data=[];                              # array to hold the full extracted map data
+my @cell_offsets;
+
+sub refreshMapData {
+        
+    updateFromDF();
+    rebuildDisplayLists();
+    glutTimerFunc (2000, \&refreshMapData, 0);
     
-    $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );        # checking whether the game has a map already
-    croak "Map data is not yet available, make sure you have a game loaded." unless ( $map_base );
+}
+
+sub extractBaseMemoryData {
 
     $xcount = $proc->get_u32( $offsets[$ver]{x_count} );         # find out how much data we're dealing with
     $ycount = $proc->get_u32( $offsets[$ver]{y_count} );
-    $zcount = $proc->get_u32( $offsets[$ver]{z_count} );   
+    $zcount = $proc->get_u32( $offsets[$ver]{z_count} );
+    
+    $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );        # checking whether the game has a map already
+    croak "Map data is not yet available, make sure you have a game loaded." unless ( $map_base );
+    
+    # get the offsets of the address storages for each x-slice and cycle through
+    @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
+    for my $bx ( 0 .. $xcount-1 ) {
+        # get the offsets of the address storages for each y-column in this x-slice and cycle through
+        @yoffsets = $proc->get_packs("L", 4, $xoffsets[$bx], $ycount);
+        for my $by ( 0 .. $ycount-1 ) {
+            $cell_offsets[$bx][$by] = $yoffsets[$by];
+        }
+    }
+}
+
+sub updateFromDF {
+    @full_map_data=[];                              # array to hold the full extracted map data
 
     $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );         # get mouse data
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $offsets[$ver]{mouse_z} );
     
+    $xmouse = 0 if  $xmouse > $xcount*16;
+    $ymouse = 0 if  $ymouse > $ycount*16;
+    $zmouse = 15 if $zmouse > $zcount;
+    
     ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse,$ymouse,$zmouse);
     ourOrientMe(); # sets up initial camera position offsets
-    
-    say "$xmouse,$ymouse,$zmouse";
 
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
     $xcell += 1 if $xcell == 0;
@@ -213,16 +240,10 @@ sub testDF {
     $xcell -= 1 if $xcell == $xcount-1;
     $ycell -= 1 if $ycell == $ycount-1;
     
-    ($xtile, $ytile, $ztile) = ( $xmouse%16, $ymouse%16, $zmouse );
-    
-    # get the offsets of the address storages for each x-slice and cycle through
-    @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
     for my $bx ( $xcell-1 .. $xcell+1 ) {
-        # get the offsets of the address storages for each y-column in this x-slice and cycle through
-        @yoffsets = $proc->get_packs("L", 4, $xoffsets[$bx], $ycount);
         for my $by ( $ycell-1 .. $ycell+1 ) {
             # get the offsets of each z-block in this y-column and cycle through
-            @zoffsets = $proc->get_packs("L", 4, $yoffsets[$by], $zcount);
+            @zoffsets = $proc->get_packs("L", 4, $cell_offsets[$bx][$by], $zcount);
             for my $bz ( 0..$#zoffsets ) {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
                 
@@ -638,7 +659,13 @@ sub ourInit {
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
     glEnable(GL_COLOR_MATERIAL);
     
-    print "Building map stuff display list...   ";
+    rebuildDisplayLists();
+    
+}
+
+sub rebuildDisplayLists {
+    
+    print "Building map stuff display lists...   ";
     for my $z (0..$zcount){
         glNewList($z, GL_COMPILE);
         glBegin(GL_QUADS);
@@ -653,6 +680,7 @@ sub ourInit {
         glEndList();
     }
     say "done";
+    
 }
 
 # ------
@@ -1008,7 +1036,7 @@ sub cbKeyPressed {
         $normal_inputs{114} = sub { $Y_Pos += 1; $slice-- if $slice_follows;  }; # R
         $normal_inputs{102} = sub { $Y_Pos -= 1; $slice++ if $slice_follows;  }; # F
         
-        $normal_inputs{107} = sub { testDF();  }; # K
+        $normal_inputs{107} = sub { updateFromDF(); rebuildDisplayLists(); }; # K
 
         $normal_inputs{27} = sub { glutDestroyWindow($Window_ID); exit(1);           }; # ESC
 
