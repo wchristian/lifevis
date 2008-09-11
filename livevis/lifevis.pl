@@ -126,13 +126,20 @@ my $range = 1;
 my $map_base;                                   # offset of the address where the map blocks start
 my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
 
+my $myself = Win32::Process::Memory->new({ pid  => $$, access => 'query' });
+
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
 # then passes control onto OpenGL.
 
 connectToDF();
+
+say $$;
+    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
 extractBaseMemoryData();
+    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
 updateFromDF();
+    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
 #exit;
 glutInit();
 
@@ -149,7 +156,7 @@ createMenu();
 
 glutDisplayFunc(\&cbRenderScene);               # Register the callback function to do the drawing.
 
-glutIdleFunc(\&cbBackgroundProc);                  # If there's nothing to do, draw.
+#glutIdleFunc(\&cbBackgroundProc);                  # If there's nothing to do, draw.
 
 glutReshapeFunc(\&cbResizeScene);               # It's a good idea to know when our window's resized.
 
@@ -178,7 +185,7 @@ Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 ;
 
-glutTimerFunc (5000, \&refreshMapData, 0);
+#glutTimerFunc (5000, \&refreshMapData, 0);
 
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
@@ -193,15 +200,14 @@ glutMainLoop();
 my @cell_offsets;
 
 sub refreshMapData {
-        
+    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     updateFromDF();
     rebuildDisplayLists();
-    glutTimerFunc (2000, \&refreshMapData, 0);
+    #glutTimerFunc (2000, \&refreshMapData, 0);
     
 }
 
 sub extractBaseMemoryData {
-
     $xcount = $proc->get_u32( $offsets[$ver]{x_count} );         # find out how much data we're dealing with
     $ycount = $proc->get_u32( $offsets[$ver]{y_count} );
     $zcount = $proc->get_u32( $offsets[$ver]{z_count} );
@@ -235,13 +241,13 @@ sub updateFromDF {
     ourOrientMe(); # sets up initial camera position offsets
 
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
-    $xcell += 1 if $xcell == 0;
-    $ycell += 1 if $ycell == 0;
-    $xcell -= 1 if $xcell == $xcount-1;
-    $ycell -= 1 if $ycell == $ycount-1;
+    $xcell += $range if $xcell == 0;
+    $ycell += $range if $ycell == 0;
+    $xcell -= $range if $xcell == $xcount-1;
+    $ycell -= $range if $ycell == $ycount-1;
     
-    for my $bx ( $xcell-1 .. $xcell+1 ) {
-        for my $by ( $ycell-1 .. $ycell+1 ) {
+    for my $bx ( $xcell-$range .. $xcell+$range ) {
+        for my $by ( $ycell-$range .. $ycell+$range ) {
             # get the offsets of each z-block in this y-column and cycle through
             @zoffsets = $proc->get_packs("L", 4, $cell_offsets[$bx][$by], $zcount);
             for my $bz ( 0..$#zoffsets ) {
@@ -432,6 +438,21 @@ sub populate_memory_data_store {
             mouse_x   => 0x009fb294,
             mouse_y   => 0x009fb298,
             mouse_z   => 0x009fb29c,
+        },
+        {
+            version => "v0.28.181.40d",
+            PE => 0x48c330df,
+            map_loc => 0x015c4d58,
+            x_count => 0x015c4d70,
+            y_count => 0x015c4d74,
+            z_count => 0x015c4d78,
+            pe_timestamp_offset => 0x004000f8,
+            type_off        => 0x00000062,
+            designation_off => 0x00000264,
+            occupancy_off   => 0x00000664,
+            mouse_x   => 0x009fc294,
+            mouse_y   => 0x009fc298,
+            mouse_z   => 0x009fc29c,
         },
     ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT
     
@@ -665,12 +686,14 @@ sub ourInit {
 
 sub rebuildDisplayLists {
     
+    my $range_sum = (16*$range);
+    
     print "Building map stuff display lists...   ";
     for my $z (0..$zcount){
         glNewList($z, GL_COMPILE);
         glBegin(GL_QUADS);
-        for my $x (($xcell*16)-16..($xcell*16)+16+16) {
-            for my $y (($ycell*16)-16..($ycell*16)+16+16) {
+        for my $x (($xcell*16)-$range_sum..($xcell*16)+16+$range_sum) {
+            for my $y (($ycell*16)-$range_sum..($ycell*16)+16+$range_sum) {
                 ourDrawCube($x,$z,$y,1)
                     if( defined $pre_compiled_map_data[$x][$y][$z][TYPE] &&
                         $pre_compiled_map_data[$x][$y][$z][TYPE] != 32 );
@@ -1036,7 +1059,7 @@ sub cbKeyPressed {
         $normal_inputs{114} = sub { $Y_Pos += 1; $slice-- if $slice_follows;  }; # R
         $normal_inputs{102} = sub { $Y_Pos -= 1; $slice++ if $slice_follows;  }; # F
         
-        $normal_inputs{107} = sub { updateFromDF(); rebuildDisplayLists(); }; # K
+        $normal_inputs{107} = sub { refreshMapData(); }; # K
 
         $normal_inputs{27} = sub { glutDestroyWindow($Window_ID); exit(1);           }; # ESC
 
