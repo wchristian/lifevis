@@ -124,7 +124,20 @@ my $slice_follows=0;
 
 my $range = 1;
 my $map_base;                                   # offset of the address where the map blocks start
-my (@xoffsets,@yoffsets,@zoffsets);             # arrays to store the offsets of the place where other addresses are stored
+
+my @cells;
+use constant changed => 0;
+use constant z => 1;
+use constant offset => 2;
+use constant cache_ptr => 3;
+# slice constants
+#use constant changed => 0;
+
+my @tiles;
+use constant type => 0;
+
+my @cache;
+use constant cell_ptr => 0;
 
 my $myself = Win32::Process::Memory->new({ pid  => $$, access => 'query' });
 
@@ -134,12 +147,7 @@ my $myself = Win32::Process::Memory->new({ pid  => $$, access => 'query' });
 
 connectToDF();
 
-say $$;
-    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
 extractBaseMemoryData();
-    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
-updateFromDF();
-    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
 #exit;
 glutInit();
 
@@ -173,6 +181,8 @@ print "initializing OpenGL...\n";
 
 ourInit($Window_Width, $Window_Height);         # OK, OpenGL's ready to go.  Let's call our own init function.
 
+syncToDF();
+
 print "OpenGL initialized.\n";
 
 # Print out a bit of help dialog.
@@ -200,72 +210,143 @@ glutMainLoop();
 my @cell_offsets;
 
 sub refreshMapData {
-    printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
-    updateFromDF();
-    rebuildDisplayLists();
+    syncToDF();
     #glutTimerFunc (2000, \&refreshMapData, 0);
     
 }
 
 sub extractBaseMemoryData {
-    $xcount = $proc->get_u32( $offsets[$ver]{x_count} );         # find out how much data we're dealing with
+    # get map size
+    $xcount = $proc->get_u32( $offsets[$ver]{x_count} );
     $ycount = $proc->get_u32( $offsets[$ver]{y_count} );
     $zcount = $proc->get_u32( $offsets[$ver]{z_count} );
     
-    $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );        # checking whether the game has a map already
+    # checking whether the game has a map already    
+    $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );
     croak "Map data is not yet available, make sure you have a game loaded." unless ( $map_base );
     
     # get the offsets of the address storages for each x-slice and cycle through
-    @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
+    my @xoffsets = $proc->get_packs("L", 4, $map_base, $xcount);
     for my $bx ( 0 .. $xcount-1 ) {
         # get the offsets of the address storages for each y-column in this x-slice and cycle through
-        @yoffsets = $proc->get_packs("L", 4, $xoffsets[$bx], $ycount);
+        my @yoffsets = $proc->get_packs("L", 4, $xoffsets[$bx], $ycount);
         for my $by ( 0 .. $ycount-1 ) {
             $cell_offsets[$bx][$by] = $yoffsets[$by];
+            $cells[$bx][$by][offset] = $yoffsets[$by];
         }
     }
 }
 
-sub updateFromDF {
-    @full_map_data=[];                              # array to hold the full extracted map data
-
-    $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );         # get mouse data
+sub syncToDF {
+    # get mouse data
+    $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $offsets[$ver]{mouse_z} );
     
+    # normalize mouse data if out of bounds, i.e. cursor not in use; TODO: make cache for old mouse data
     $xmouse = 0 if  $xmouse > $xcount*16;
     $ymouse = 0 if  $ymouse > $ycount*16;
     $zmouse = 15 if $zmouse > $zcount;
     
+    # update camera system with mouse data
     ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse,$ymouse,$zmouse);
     ourOrientMe(); # sets up initial camera position offsets
-
+    
+    # calculate cell coords from mouse coords
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
     $xcell += $range if $xcell == 0;
     $ycell += $range if $ycell == 0;
     $xcell -= $range if $xcell == $xcount-1;
     $ycell -= $range if $ycell == $ycount-1;
     
+    # cycle through cells in range around cursor to grab data
     for my $bx ( $xcell-$range .. $xcell+$range ) {
         for my $by ( $ycell-$range .. $ycell+$range ) {
-            # get the offsets of each z-block in this y-column and cycle through
-            @zoffsets = $proc->get_packs("L", 4, $cell_offsets[$bx][$by], $zcount);
+            
+            # cycle through slices in cell
+            my @zoffsets = $proc->get_packs("L", 4, $cells[$bx][$by][offset], $zcount);
+            $cells[$bx][$by][changed] = 0;
             for my $bz ( 0..$#zoffsets ) {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
                 
-                process_block(                                  # process the data in one block
-                    $zoffsets[$bz],                             # offset of the current block
-                    $bx,                                        # x location of the current block
-                    $by,                                        # y location of the current block
-                    $bz );                                      # z location of the current block
+                # process slice in cell and set slice to changed
+                $cells[$bx][$by][z][$bz] = 1 if new_process_block(
+                    $zoffsets[$bz],                             # offset of the current slice
+                    $bx,                                        # x location of the current slice
+                    $by,                                        # y location of the current slice
+                    $bz );
+                # update changed status of cell if necessary
+                $cells[$bx][$by][changed] = 1 if $cells[$bx][$by][z][$bz];  # z location of the current block
+            }
+        }
+    }
+    
+    # cycle through cells in range around cursor to generate display lists
+    for my $bx ( $xcell-$range .. $xcell+$range ) {
+        for my $by ( $ycell-$range .. $ycell+$range ) {
+            
+            if ( $cells[$bx][$by][cache_ptr] ){
+                # cell is in cache
+                
+            }
+            else {
+                # cell is not in cache
+                
+                # set up new cache entry and link it back to the cell
+                $cache[$#cache+1][cell_ptr] = \$cells[$bx][$by][cache_ptr];
+                $cells[$bx][$by][cache_ptr] = \$cache[$#cache];
+                
+                # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
+                my $slices = $cells[$bx][$by][z];
+                for my $slice ( 0 .. (@$slices - 1) ) {
+                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if @$slices[$slice];
+                }
+                
+                # check that we're not using too much memory and destroy cache entries if necessary
+                # TODO: add checks that not more is deleted than we need to display, as well as restrict deletions to 2 max
+                while ( $myself->get_memtotal > 200787840) {
+                    
+                    my $slices = $cache[0];
+                    for my $slice ( 1 .. (@$slices - 1) ) {
+                        glDeleteLists($cache[0][$slice],1) if $cache[0][$slice];
+                    }
+                    
+                    ${$cache[0][0]} = '';
+                    shift @cache;
+                    
+                    #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
+                }
                 
             }
         }
     }
+    
 }
 
-sub process_block {
+sub generateDisplayList {
+    my ( $active_cache, $z, $y, $x ) = @_;
+    
+    my $dl = glGenLists(1);
+    $$active_cache->[$z+1] = $dl;
+    
+    glNewList($dl, GL_COMPILE);
+    #glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
+    glBegin(GL_QUADS);
+    for my $rx (($x*16)..($x*16)+16) {
+        for my $ry (($y*16)..($y*16)+16) {
+            ourDrawCube($rx,$z,$ry,1)
+                if( defined $tiles[$rx][$ry][$z][TYPE] &&
+                    $tiles[$rx][$ry][$z][TYPE] != 32 );
+        }
+    }
+    glEnd();
+    glEndList();
+    
+}
+
+sub new_process_block {
     my ($block_offset, $bx, $by, $bz) = @_;
+    my $changed = 0;
 
     my @type_data        = $proc->get_packs(        # extract type/designation/occupation arrays for this block
         "S", 2,                                     # format and size in bytes of each data unit
@@ -279,14 +360,19 @@ sub process_block {
             
             my $tile_index = $y+($x*16);                # this calculates the tile index we are currently at, from the x and y coords in this block
             
-            my $real_x = ($bx*16)+$x;                   # this calculates the real x and y values of this tile on the overall map_base
-            my $real_y = ($by*16)+$y;
+            my $rx = ($bx*16)+$x;                   # this calculates the real x and y values of this tile on the overall map_base
+            my $ry = ($by*16)+$y;
             
-            $pre_compiled_map_data[$real_x][$real_y][$bz][TYPE] = $type_data[$tile_index];
-            $pre_compiled_map_data[$real_x][$real_y][$bz][DESIGNATION] = $designation_data[$tile_index];
-            $pre_compiled_map_data[$real_x][$real_y][$bz][OCCUPATION] = $ocupation_data[$tile_index];
+            if ( !defined $tiles[$rx][$ry][$bz][type] || $tiles[$rx][$ry][$bz][type] != $type_data[$tile_index] ) {
+                $changed = 1;
+                $tiles[$rx][$ry][$bz][type] = $type_data[$tile_index];
+            }
+            #$cells[$real_x][$real_y][z][$bz][DESIGNATION] = $designation_data[$tile_index];
+            #$cells[$real_x][$real_y][z][$bz][OCCUPATION] = $ocupation_data[$tile_index];
         }
     }
+    
+    return $changed;
 }
 
 sub ask { print "$_[0]"; }
@@ -665,13 +751,6 @@ sub ourInit {
 
     cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
 
-    glLightfv_p(GL_LIGHT1, GL_POSITION,
-                (
-                    $xmouse+$Light_Position[0],
-                    $ymouse+$Light_Position[1],
-                    $zmouse+$Light_Position[2],
-                    1.0
-                ));    # Set up a light, turn it on.
     glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
     glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
     glLightfv_p(GL_LIGHT1, GL_SPECULAR, @Light_Specular);
@@ -679,30 +758,6 @@ sub ourInit {
     
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
     glEnable(GL_COLOR_MATERIAL);
-    
-    rebuildDisplayLists();
-    
-}
-
-sub rebuildDisplayLists {
-    
-    my $range_sum = (16*$range);
-    
-    print "Building map stuff display lists...   ";
-    for my $z (0..$zcount){
-        glNewList($z, GL_COMPILE);
-        glBegin(GL_QUADS);
-        for my $x (($xcell*16)-$range_sum..($xcell*16)+16+$range_sum) {
-            for my $y (($ycell*16)-$range_sum..($ycell*16)+16+$range_sum) {
-                ourDrawCube($x,$z,$y,1)
-                    if( defined $pre_compiled_map_data[$x][$y][$z][TYPE] &&
-                        $pre_compiled_map_data[$x][$y][$z][TYPE] != 32 );
-            }
-        }
-        glEnd();
-        glEndList();
-    }
-    say "done";
     
 }
 
@@ -833,8 +888,15 @@ sub cbRenderScene {
   
     glColor3f(0, 0, 0); # Basic polygon color
     
-    for my $z (0..$zcount-$slice) {
-        glCallList($z);
+    # cycle through cells in range around cursor to render
+    for my $bx ( $xcell-$range .. $xcell+$range ) {
+        for my $by ( $ycell-$range .. $ycell+$range ) {
+            
+            my $slices = ${$cells[$bx][$by][cache_ptr]};
+            for my $slice ( 1 .. (@$slices - 1) ) {
+                glCallList(@{$slices}[$slice]) if @{$slices}[$slice];
+            }
+        }
     }
 
     glLoadIdentity();    # Move back to the origin (for the text, below).
@@ -950,7 +1012,7 @@ sub ourBuildTextures {
     print "loading texture..";
   
     my $gluerr;
-    my $tex = new OpenGL::Image(engine=>'Magick',source=>'curses3_960x300.png');
+    my $tex = new OpenGL::Image(engine=>'Magick',source=>'grass.png');
     # Get GL info
     my($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
     my($w,$h) = $tex->Get('width','height');
