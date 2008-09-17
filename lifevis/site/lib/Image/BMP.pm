@@ -14,6 +14,27 @@ package Image::BMP;
 #
 # If you find a simple BMP image that this can't handle, I'd be interested
 # in seeing it, though I can't guarantee I'll update the code to make it work..
+#
+# CHANGELOG
+#
+# Version 1.15 2007/11/29
+# -----------------------
+# + Fix to avoid seeing 24b images as B&W (Thanks Christian Walde, mithaldu yahoo de)
+#
+# Version 1.14 2006/09/07
+# -----------------------
+# + Fix for border case on last byte in image (Thanks Peter Dons Tychsen, pdt gnmobile com)
+# + Fix for ColorsUsed==0 (Thanks Marton Nemeth, Marton.Nemeth knorr-bremse com)
+#   See MSDN / Administration and Management Graphics and Multimedia / Bitmaps /
+#       About Bitmaps / Bitmap storage
+#       http://windowssdk.msdn.microsoft.com/en-us/library/ms532311.aspx
+#   and MSDN / Administration and Management Graphics and Multimedia / Bitmaps /
+#       About Bitmaps / Bitmap reference / Bitmap structures / BITMAPINFOHEADER
+#       http://windowssdk.msdn.microsoft.com/en-us/library/ms532290.aspx
+#
+# Version 1.13 2006/06/11
+# -----------------------
+# + Initial public release
 
 use strict;
 use IO::File;
@@ -24,7 +45,7 @@ use Exporter ();
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(open_file open_pipe close load colormap xy xy_rgb xy_index set save view_ascii debug remember_image ignore_imagemagick_bug add_pixel file);
 
-$VERSION = '1.13';
+$VERSION = '1.15';
 $LIBRARY = __PACKAGE__;
 
 ##################################################
@@ -299,6 +320,8 @@ sub read_infoheader() {
   $bmp->{YpixelsPerM} = read_bmp($bmp,4);
   $bmp->{ColorsUsed} = read_bmp($bmp,4);
   $bmp->{ColorsImportant} = read_bmp($bmp,4);
+	$bmp->{ColorsUsed} = 1<<$bmp->{BitCount} if $bmp->{ColorsUsed} == 0;
+
   $bmp->_debug(1,"Image: $bmp->{BitCount}/$bmp->{ColorsUsed} colors. Geometry: $bmp->{Width}x$bmp->{Height} $bmp->{ImageSize} [comp: $bmp->{Compression}]\n");
 
   fatal("Unknown bitmap format (hdr size!=40?): [$bmp->{file}]")
@@ -390,7 +413,7 @@ sub colormap {
 
   # B&W
   return $index ? 0xffffff : 0x000000
-    if ( $bmp->{BitCount}==1 || !$bmp->{ColorsUsed} ) && $bmp->{BitCount}!=24;
+    if $bmp->{BitCount}==1 || (!$bmp->{ColorsUsed} && $bmp->{BitCount}!=24);
 
   # True color
   return $index unless $bmp->{IndexedColor};
@@ -420,7 +443,7 @@ sub next_xy {
 
   # Padding at end of each line
   pad_bmp($bmp) if $pad && $x==$bmp->{Width}-1;
-  return (undef,undef) if $bmp->{_byte}>=$bmp->{_size};
+  return (undef,undef) if $bmp->{_byte}>$bmp->{_size};
 
   ($x,$y) = (0, $y-1) if (++$x >= $bmp->{Width});
   return (undef,undef) unless defined $y && $y>=0;
@@ -492,12 +515,12 @@ sub load() {
         "  (imagesize < width+padding * height)")
     unless $bmp->{_size} == $bmp->{ImageSize};
 
-  $bmp->_debug(1,"Reading image data...\n");
+  $bmp->_debug(1,"Reading image data - [$bmp->{Width} x $bmp->{Height} x $bmp->{BitCount}]...\n");
 
   # Image starts from bottom left and reads right then up
   my ($x,$y) = (0, $bmp->{Height}-1);
   $bmp->{_byte}=0;
-  while ($bmp->{_byte}<$bmp->{_size}) {
+  while ($bmp->{_byte}<=$bmp->{_size}) {
     if ($rle) {
       my $n = read_bmp($bmp,1);
       my $c = read_bmp($bmp,1);
