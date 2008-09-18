@@ -16,6 +16,11 @@ package Image::BMP;
 # in seeing it, though I can't guarantee I'll update the code to make it work..
 #
 # CHANGELOG
+# ---------
+#
+# Version 1.16 2008/06/19
+# -----------------------
+# * Handle bitfield compression (Thanks Anatoly Savchenkov, asavchenkov alarity com)
 #
 # Version 1.15 2007/11/29
 # -----------------------
@@ -45,7 +50,7 @@ use Exporter ();
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(open_file open_pipe close load colormap xy xy_rgb xy_index set save view_ascii debug remember_image ignore_imagemagick_bug add_pixel file);
 
-$VERSION = '1.15';
+$VERSION = '1.16';
 $LIBRARY = __PACKAGE__;
 
 ##################################################
@@ -329,6 +334,17 @@ sub read_infoheader() {
 
   $bmp->{_colors} = $bmp->{ColorsUsed} || 1<<$bmp->{BitCount};
   $bmp->{_colors} = 0 if $bmp->{_colors}==(1<<24);	# No truecolor map
+
+	# Treat mask colors as color indexes (just to skip them) and reset
+	# compression to none [Thanks Anatoly Savchenkov, asavchenkov alarity com]
+	# MSDN Article:  "BI_BITFIELDS"
+	# Specifies that the bitmap is not compressed and that the color table
+	# consists of three DWORD color masks that specify the red, green, and
+	# blue components, respectively, of each pixel. This is valid when used
+	# with 16- and 32-bpp bitmaps.
+	($bmp->{_colors}, $bmp->{Compression}) = (3,0)
+		if $bmp->{Compression} == 3;
+
   my $DataOffset = 14+40+4*$bmp->{_colors};
   error("Corrupt bitmap header?  [$bmp->{file}]\n  (DataOffset!=14+40+4*Colors?)")
     unless $bmp->{DataOffset} == $DataOffset;
@@ -901,7 +917,7 @@ then prints a message asking you to send me the image/results.
 
 =head1 COPYRIGHT
 
-  Copyright 2004 <a href='http://GetDave.com/'>David Ljung Madison</a>.  All rights reserved.
-  See: <a href='http://MarginalHacks.com/'>MarginalHacks.com</a>
+  Copyright 2004 <a href="http://GetDave.com/">David Ljung Madison</a>.  All rights reserved.
+  See: <a href="http://MarginalHacks.com/">MarginalHacks.com</a>
 
 =cut

@@ -10,7 +10,7 @@ require DynaLoader;
 
 use Carp;
 
-$VERSION = '0.56';
+$VERSION = '0.56_01';
 $BUILD_VERSION = $XS_VERSION = $VERSION;
 $VERSION = eval($VERSION);
 
@@ -22,14 +22,17 @@ our $glext_installed = {};
 # Implemented extensions and their dependencies
 our $glext_dependencies =
 {
+  GL_ARB_color_buffer_float=>'2.0', #39
   GL_ARB_depth_texture=>'1.1', #22
   GL_ARB_draw_buffers=>'1.3', #37
   GL_ARB_fragment_program=>'1.4;ARB_vertex_program', #27
   GL_ARB_fragment_program_shadow=>'1.4;ARB_fragment_program,ARB_shadow', #36
   GL_ARB_fragment_shader=>'1.4;ARB_shader_objects', #32
   GL_ARB_half_float_pixel=>'1.5', #40
+  GL_ARB_multisample=>'1.0', #5
   GL_ARB_multitexture=>'1.1',
   GL_ARB_pixel_buffer_object=>'1.5', #42
+  GL_ARB_point_parameters=>'1.0', #14
   GL_ARB_point_sprite=>'1.4', #35
   GL_ARB_shading_language_100=>'1.5;ARB_shader_objects,ARB_fragment_shader,ARB_vertex_shader', #33
   GL_ARB_shader_objects=>'1.4', #30
@@ -1103,7 +1106,14 @@ glGetActiveAttribARB_s
 glGetActiveAttribARB_p
 glGetAttribLocationARB_c
 glGetAttribLocationARB_p
+glPointParameterfARB
+glPointParameterfvARB_c
+glPointParameterfvARB_s
+glPointParameterfvARB_p
+glSampleCoverageARB
+glClampColorARB
 );
+# gl_func
 
 @glu_func = qw(
 gluBeginCurve
@@ -4183,7 +4193,26 @@ GL_STATIC_COPY_ARB
 GL_DYNAMIC_DRAW_ARB
 GL_DYNAMIC_READ_ARB
 GL_DYNAMIC_COPY_ARB
+GL_POINT_SIZE_MIN_ARB
+GL_POINT_SIZE_MAX_ARB
+GL_POINT_FADE_THRESHOLD_SIZE_ARB
+GL_POINT_DISTANCE_ATTENUATION_ARB
+GL_MULTISAMPLE_ARB
+GL_SAMPLE_ALPHA_TO_COVERAGE_ARB
+GL_SAMPLE_ALPHA_TO_ONE_ARB
+GL_SAMPLE_COVERAGE_ARB
+GL_SAMPLE_BUFFERS_ARB
+GL_SAMPLES_ARB
+GL_SAMPLE_COVERAGE_VALUE_ARB
+GL_SAMPLE_COVERAGE_INVERT_ARB
+GL_MULTISAMPLE_BIT_ARB
+GL_RGBA_FLOAT_MODE_ARB
+GL_CLAMP_VERTEX_COLOR_ARB
+GL_CLAMP_FRAGMENT_COLOR_ARB
+GL_CLAMP_READ_COLOR_ARB
+GL_FIXED_ONLY_ARB
 );
+# gl_const
 
 @glu_const = qw(
 GLU_SMOOTH

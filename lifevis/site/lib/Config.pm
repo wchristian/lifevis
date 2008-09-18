@@ -79,7 +79,7 @@ sub __unused {
 
 # tie returns the object, so the value returned to require will be true.
 tie %Config, 'Config', {
-    archlibexp => 'C:\Perl\\lib',
+    archlibexp => '.\lib',
     archname => 'MSWin32-x86-multi-thread',
     d_readlink => undef,
     d_symlink => undef,
@@ -93,10 +93,10 @@ tie %Config, 'Config', {
     osname => 'MSWin32',
     osvers => '5.00',
     path_sep => ';',
-    privlibexp => 'C:\Perl\\lib',
-    scriptdir => 'C:\Perl\\bin',
-    sitearchexp => 'C:\Perl\\site\\lib',
-    sitelibexp => 'C:\Perl\\site\\lib',
+    privlibexp => '.\lib',
+    scriptdir => '.\bin',
+    sitearchexp => '.\site\\lib',
+    sitelibexp => '.\site\\lib',
     so => 'dll',
     useithreads => 'define',
     usevendorprefix => undef,
