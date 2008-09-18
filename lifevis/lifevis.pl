@@ -82,7 +82,7 @@ my ( $Map_W, $Map_H, $Map_D );
 my @Light_Ambient  = ( 0.5, 0.5, 0.5, 1.0 );
 my @Light_Diffuse  = ( 0.8, 0.8, 0.8, 1.0 );
 my @Light_Specular  = ( 1.2, 1.2, 1.2, 1.0 );
-my @Light_Position = ( -200.0, 150.0, 150.0, 1.0 );
+my @Light_Position = ( -200.0, 150.0, 150.0, 0.0 );
 
 # ------
 # Frames per second (FPS) statistic variables.
@@ -240,7 +240,7 @@ sub extractBaseMemoryData {
 }
 
 sub syncToDF {
-    #my $t0 = new Benchmark;
+    my $t0 = new Benchmark;
     
     # get mouse data
     $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );
@@ -274,7 +274,7 @@ sub syncToDF {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
                 
                 # process slice in cell and set slice to changed
-                $cells[$bx][$by][z][$bz] = 1 if new_process_block(
+                $cells[$bx][$by][z][$bz] = new_process_block(
                     $zoffsets[$bz],                             # offset of the current slice
                     $bx,                                        # x location of the current slice
                     $by,                                        # y location of the current slice
@@ -291,6 +291,18 @@ sub syncToDF {
             
             if ( $cells[$bx][$by][cache_ptr] ){
                 # cell is in cache
+                if( $cells[$bx][$by][changed] ) {
+                
+                    # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
+                    my $slices = $cells[$bx][$by][z];
+                    for my $slice ( 0 .. (@$slices - 1) ) {
+                        generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if ( @$slices[$slice] );
+                    }
+                    
+                    for my $id (0 .. $#cache-1) {
+                        ($cache[$id],$cache[$id+1]) = ($cache[$id+1],$cache[$id]) if ( \$cache[$id] == $cells[$bx][$by][cache_ptr] );
+                    }
+                }
                 
             }
             else {
@@ -303,12 +315,12 @@ sub syncToDF {
                 # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                 my $slices = $cells[$bx][$by][z];
                 for my $slice ( 0 .. (@$slices - 1) ) {
-                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if @$slices[$slice];
+                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if ( @$slices[$slice] );
                 }
                 
                 # check that we're not using too much memory and destroy cache entries if necessary
                 # TODO: add checks that not more is deleted than we need to display, as well as restrict deletions to 2 max
-                while ( $myself->get_memtotal > 200787840) {
+                while ( $myself->get_memtotal > 200787840 ) {
                     
                     my $slices = $cache[0];
                     for my $slice ( 1 .. (@$slices - 1) ) {
@@ -325,26 +337,37 @@ sub syncToDF {
         }
     }
     
-    #my $t1 = new Benchmark;
-    #my $td = timediff($t1, $t0);
-    #print "the code took:",timestr($td),"\n";
-    #say "---";
+    my $t1 = new Benchmark;
+    my $td = timediff($t1, $t0);
+    print "the code took:",timestr($td),"\n";
+    
+    my $dl = glGenLists(1);
+    say "$dl lists";
+    glDeleteLists($dl,1);
+    say "---";
 }
 
 sub generateDisplayList {
     my ( $active_cache, $z, $y, $x ) = @_;
+    my $dl;
     
-    my $dl = glGenLists(1);
-    $$active_cache->[$z+1] = $dl;
+    if($$active_cache->[$z+1]) {
+        $dl = $$active_cache->[$z+1];
+    }
+    else {
+        $dl = glGenLists(1);
+        $$active_cache->[$z+1] = $dl;
+    }
     
     glNewList($dl, GL_COMPILE);
     #glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
     glBegin(GL_QUADS);
+    my $tile = \$tiles[$z][type];
     for my $rx (($x*16)..($x*16)+16) {
         for my $ry (($y*16)..($y*16)+16) {
             ourDrawCube($rx,$z,$ry,1)
-                if( defined $tiles[$rx][$ry][$z][TYPE] &&
-                    $tiles[$rx][$ry][$z][TYPE] != 32 );
+                if( defined $$tile->[$rx][$ry] &&
+                    $$tile->[$rx][$ry] != 32 );
         }
     }
     glEnd();
@@ -363,23 +386,22 @@ sub new_process_block {
     #my @designation_data = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{designation_off}, 256);
     #my @ocupation_data   = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{occupancy_off},   256);
     
-    my ($rx,$ry,$y,$x,$xScaled);
+    my ($rx,$ry,$y,$x,$tile);
     
     my $bxScaled = $bx * 16;
     my $byScaled = $by * 16;
 	my $tile_index=0;
-    
-    my (@realx,@realy);
    
     for $x ( 0..15 ) {
         $rx = $bxScaled+$x;                   # this calculates the real x and y values of this tile on the overall map_base
+        $tile = \$tiles[$bz][type][$rx];
+        
         for $y ( 0..15 ) {                           # cycle through 16 x and 16 y values, which generate a total of 256 tile indexes
-            
             $ry = $byScaled+$y;
             
-            if ( !defined $tiles[$rx][$ry][$bz][type] || $tiles[$rx][$ry][$bz][type] != $type_data[$tile_index] ) {
+            if ( !defined $$tile->[$ry] || $$tile->[$ry] != $type_data[$tile_index] ) {
                 $changed = 1;
-                $tiles[$rx][$ry][$bz][type] = $type_data[$tile_index];
+                $$tile->[$ry] = $type_data[$tile_index];
             }
             #$cells[$real_x][$real_y][z][$bz][DESIGNATION] = $designation_data[$tile_index];
             #$cells[$real_x][$real_y][z][$bz][OCCUPATION] = $ocupation_data[$tile_index];
@@ -896,7 +918,7 @@ sub cbRenderScene {
                     $xmouse+$Light_Position[0],
                     $ymouse+$Light_Position[1],
                     $zmouse+$Light_Position[2],
-                    1.0
+                    0.0
                 ));    # Set up a light, turn it on.
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    # Clear the color and depth buffers.
