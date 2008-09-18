@@ -1,1 +1,1 @@
-bin\perl lifevis.pl
+bin\perl.exe lifevis.pl

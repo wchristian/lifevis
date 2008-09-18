@@ -3,6 +3,8 @@ use 5.010;
 use strict;
 use warnings;
 
+use Benchmark ':hireswallclock';
+
 use Carp;
 use OpenGL qw/ :all /;
 use OpenGL::Image;
@@ -238,6 +240,8 @@ sub extractBaseMemoryData {
 }
 
 sub syncToDF {
+    #my $t0 = new Benchmark;
+    
     # get mouse data
     $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
@@ -321,6 +325,10 @@ sub syncToDF {
         }
     }
     
+    #my $t1 = new Benchmark;
+    #my $td = timediff($t1, $t0);
+    #print "the code took:",timestr($td),"\n";
+    #say "---";
 }
 
 sub generateDisplayList {
@@ -352,16 +360,22 @@ sub new_process_block {
         "S", 2,                                     # format and size in bytes of each data unit
         $block_offset+$offsets[$ver]{type_off},            # starting offset
         256);                                       # number of units
-    my @designation_data = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{designation_off}, 256);
-    my @ocupation_data   = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{occupancy_off},   256);
-
-    for my $y ( 0..15 ) {                           # cycle through 16 x and 16 y values, which generate a total of 256 tile indexes
-        for my $x ( 0..15 ) {
+    #my @designation_data = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{designation_off}, 256);
+    #my @ocupation_data   = $proc->get_packs("L", 4, $block_offset+$offsets[$ver]{occupancy_off},   256);
+    
+    my ($rx,$ry,$y,$x,$xScaled);
+    
+    my $bxScaled = $bx * 16;
+    my $byScaled = $by * 16;
+	my $tile_index=0;
+    
+    my (@realx,@realy);
+   
+    for $x ( 0..15 ) {
+        $rx = $bxScaled+$x;                   # this calculates the real x and y values of this tile on the overall map_base
+        for $y ( 0..15 ) {                           # cycle through 16 x and 16 y values, which generate a total of 256 tile indexes
             
-            my $tile_index = $y+($x*16);                # this calculates the tile index we are currently at, from the x and y coords in this block
-            
-            my $rx = ($bx*16)+$x;                   # this calculates the real x and y values of this tile on the overall map_base
-            my $ry = ($by*16)+$y;
+            $ry = $byScaled+$y;
             
             if ( !defined $tiles[$rx][$ry][$bz][type] || $tiles[$rx][$ry][$bz][type] != $type_data[$tile_index] ) {
                 $changed = 1;
@@ -369,6 +383,7 @@ sub new_process_block {
             }
             #$cells[$real_x][$real_y][z][$bz][DESIGNATION] = $designation_data[$tile_index];
             #$cells[$real_x][$real_y][z][$bz][OCCUPATION] = $ocupation_data[$tile_index];
+            ++$tile_index;
         }
     }
     
