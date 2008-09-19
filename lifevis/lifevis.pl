@@ -145,6 +145,9 @@ use constant type => 0;
 my @cache;
 use constant cell_ptr => 0;
 
+my @cache_bucket;
+my @protected_caches;
+
 my $myself = Win32::Process::Memory->new({ pid  => $$, access => 'query' });
 
 # ------
@@ -310,54 +313,84 @@ sub syncToDF {
     for my $bx ( $xcell-$range .. $xcell+$range ) {
         for my $by ( $ycell-$range .. $ycell+$range ) {
             
+            my $cache_id;
+            
             if ( $cells[$bx][$by][cache_ptr] ){
+                $cache_id = $cells[$bx][$by][cache_ptr];
+                
                 # cell is in cache
                 if( $cells[$bx][$by][changed] ) {
                 
                     # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                     my $slices = $cells[$bx][$by][z];
                     for my $slice ( 0 .. (@$slices - 1) ) {
-                        generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if ( @$slices[$slice] );
+                        generateDisplayList( $cache_id, $slice, $by, $bx ) if ( @$slices[$slice] );
                     }
-                    
-                    #for my $id (0 .. $#cache-1) {
-                    #    ($cache[$id],$cache[$id+1]) = ($cache[$id+1],$cache[$id]) if ( \$cache[$id] == $cells[$bx][$by][cache_ptr] );
-                    #}
                 }
+                    
+                $cache[$cache_id][1]++;
+                
+                $protected_caches[$cache_id] = 1;
                 
             }
             else {
                 # cell is not in cache
                 
-                # set up new cache entry and link it back to the cell
-                $cache[$#cache+1][cell_ptr] = \$cells[$bx][$by][cache_ptr];
-                $cells[$bx][$by][cache_ptr] = \$cache[$#cache];
+                # get fresh cache id either from end of cache or out of bucket
+                $cache_id = $#cache+1;
+                $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
+                
+                die "waagh" if !defined $cache_id;
+                
+                # set up link to cell and back-link to cache id
+                $cache[$cache_id][cell_ptr] = \$cells[$bx][$by][cache_ptr];
+                $cells[$bx][$by][cache_ptr] = $cache_id;
+                $cache[$cache_id][1] = 0;
                 
                 # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                 my $slices = $cells[$bx][$by][z];
                 for my $slice ( 0 .. (@$slices - 1) ) {
-                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice, $by, $bx ) if ( defined @$slices[$slice] );
+                    generateDisplayList( $cache_id, $slice, $by, $bx ) if ( defined @$slices[$slice] );
                 }
                 
+                $protected_caches[$cache_id] = 1;
             }
         }
     }
     
     # check that we're not using too much memory and destroy cache entries if necessary
-    while ( $myself->get_memtotal > 300787840 && $cache_limit <= $#cache && $deletions < 2 ) {
+    while ( $myself->get_memtotal > 300787840 && $deletions < 2 ) { # $cache_limit <= $#cache && 
+        my $delete;
+        my $use;
         
-        my $slices = $cache[0];
-        for my $slice ( 1 .. (@$slices - 1) ) {
-            glDeleteLists($cache[0][$slice],1) if $cache[0][$slice];
+        for my $id (0..$#cache) {
+            next if !defined $cache[$id][1]; # skip empty caches
+            next if $protected_caches[$id];  # skip caches we're currently looking at
+
+            if ( !defined $use || $cache[$id][1] < $use ) {
+                $delete = $id;
+                $use = $cache[$id][1];
+            }
         }
         
-        ${$cache[0][0]} = '';
-        shift @cache;
+        last if !defined $delete;
+        
+        my $slices = $cache[$delete];
+        for my $slice ( 2 .. (@$slices - 1) ) {
+            glDeleteLists($cache[$delete][$slice],1) if $cache[$delete][$slice];
+        }
+        
+        ${$cache[$delete][0]} = '';
+        
+        $cache[$delete] = [];
+        push @cache_bucket, $delete;
         
         $deletions++;
         
         #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     }
+    
+    @protected_caches = [];
     
     my $t1 = new Benchmark;
     my $td = timediff($t1, $t0);
@@ -369,15 +402,15 @@ sub syncToDF {
 }
 
 sub generateDisplayList {
-    my ( $active_cache, $z, $y, $x ) = @_;
+    my ( $id, $z, $y, $x ) = @_;
     my $dl;
     
-    if($$active_cache->[$z+1]) {
-        $dl = $$active_cache->[$z+1];
+    if($cache[$id][$z+2]) {
+        $dl = $cache[$id][$z+2];
     }
     else {
         $dl = glGenLists(1);
-        $$active_cache->[$z+1] = $dl;
+        $cache[$id][$z+2] = $dl;
     }
     
     glNewList($dl, GL_COMPILE);
@@ -952,9 +985,9 @@ sub cbRenderScene {
         for my $by ( $ycell-$range .. $ycell+$range ) {
             #next unless $cells[$bx][$by][cache_ptr];
             
-            my $slices = ${$cells[$bx][$by][cache_ptr]};
-            for my $slice ( 1 .. (@$slices - 1) ) {
-                glCallList(@{$slices}[$slice]) if @{$slices}[$slice];
+            my $slices = $cache[$cells[$bx][$by][cache_ptr]];
+            for my $slice ( 2 .. (@$slices - 1) ) {
+                glCallList($slices->[$slice]) if $slices->[$slice];
             }
         }
     }
@@ -1009,6 +1042,11 @@ sub cbRenderScene {
 
     $buf = sprintf "X_Off: %f", $X_Off;
     glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Mem: %f", (($myself->get_memtotal / 300787840) * 100);
+    glRasterPos2i(2,98); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+
 
     #$buf = "X";
     #glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
