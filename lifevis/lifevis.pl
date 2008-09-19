@@ -119,7 +119,7 @@ my ($menu,$submenid,$menid);
 
 my $delay_full_update=40;
 
-my $range = 2;
+my $range = 1;
 my $cache_limit = (1+(2*$range))*(1+(2*$range));
 my ($xmouse, $ymouse, $zmouse) = (0,0,15);                 # cursor coordinates
 my ($xmouse_old, $ymouse_old, $zmouse_old) = (0,0,15);                 # cursor coordinates
@@ -958,7 +958,18 @@ sub cbRenderScene {
             }
         }
     }
-
+    
+    # draw visible cursor
+    glDisable(GL_LIGHTING);
+    glLineWidth(2);
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[3]);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBegin(GL_QUADS);
+    ourDrawCube($X_Pos-.5,$Y_Pos-.5,$Z_Pos-.5,1);
+    glEnd();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);
+    
     glLoadIdentity();    # Move back to the origin (for the text, below).
 
     glMatrixMode(GL_PROJECTION);    # We need to change the projection matrix for the text rendering.
@@ -1002,8 +1013,8 @@ sub cbRenderScene {
     $buf = sprintf "X_Off: %f", $X_Off;
     glRasterPos2i(2,158); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
-    $buf = "X";
-    glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    #$buf = "X";
+    #glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     # Now we want to render the calulated FPS at the top. To ease, simply translate up.  Note we're working in screen pixels in this projection.
 
@@ -1077,7 +1088,7 @@ sub ourBuildTextures {
     my($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
     my($w,$h) = $tex->Get('width','height');
     
-    @Texture_ID = glGenTextures_p(3);    # Generate a texture index, then bind it for future operations.
+    @Texture_ID = glGenTextures_p(4);    # Generate a texture index, then bind it for future operations.
     
     
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[0]);                                  # unfiltered texture
@@ -1097,6 +1108,16 @@ sub ourBuildTextures {
     glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
     print ".";
 
+    glBindTexture(GL_TEXTURE_2D, $Texture_ID[3]);       # select mipmapped texture
+    $tex = new OpenGL::Image(engine=>'Magick',source=>'cursor.png');
+    ($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
+    ($w,$h) = $tex->Get('width','height');
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
+    
+    
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
 
     glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
