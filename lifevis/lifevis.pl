@@ -148,7 +148,10 @@ use constant cell_ptr => 0;
 my @cache_bucket;
 my @protected_caches;
 
-my $myself = Win32::Process::Memory->new({ pid  => $$, access => 'query' });
+use Win32::OLE('in');
+my $objWMIService = Win32::OLE->GetObject ('winmgmts:\\\\.\\root\\CIMV2') or die "WMI connection failed.\n";
+my @state_array;
+my $memory_use;
 
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
@@ -315,7 +318,7 @@ sub syncToDF {
             
             my $cache_id;
             
-            if ( $cells[$bx][$by][cache_ptr] ){
+            if ( defined $cells[$bx][$by][cache_ptr] ){
                 $cache_id = $cells[$bx][$by][cache_ptr];
                 
                 # cell is in cache
@@ -340,8 +343,6 @@ sub syncToDF {
                 $cache_id = $#cache+1;
                 $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
                 
-                die "waagh" if !defined $cache_id;
-                
                 # set up link to cell and back-link to cache id
                 $cache[$cache_id][cell_ptr] = \$cells[$bx][$by][cache_ptr];
                 $cells[$bx][$by][cache_ptr] = $cache_id;
@@ -358,8 +359,11 @@ sub syncToDF {
         }
     }
     
+    @state_array = in $objWMIService->ExecQuery ('SELECT PrivatePageCount FROM Win32_Process WHERE ProcessId = '.$$,'WQL',0x10 | 0x20);
+    $memory_use = $state_array[0]->{PrivatePageCount};
+    
     # check that we're not using too much memory and destroy cache entries if necessary
-    while ( $myself->get_memtotal > 300787840 && $deletions < 2 ) { # $cache_limit <= $#cache && 
+    while ( $memory_use > 300787840 && $deletions < 2 ) { # $cache_limit <= $#cache && 
         my $delete;
         my $use;
         
@@ -380,9 +384,9 @@ sub syncToDF {
             glDeleteLists($cache[$delete][$slice],1) if $cache[$delete][$slice];
         }
         
-        ${$cache[$delete][0]} = '';
+        undef ${$cache[$delete][0]};
         
-        $cache[$delete] = [];
+        undef $cache[$delete];
         push @cache_bucket, $delete;
         
         $deletions++;
@@ -1043,8 +1047,11 @@ sub cbRenderScene {
     $buf = sprintf "X_Off: %f", $X_Off;
     glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
-    $buf = sprintf "Mem: %f", (($myself->get_memtotal / 300787840) * 100);
+    $buf = sprintf "Mem: %f", (($memory_use / 300787840) * 100);
     glRasterPos2i(2,98); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+
+    $buf = sprintf "Caches: %d", (($#cache+1) - ($#cache_bucket+1));
+    glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
 
 
