@@ -244,7 +244,7 @@ sub extractBaseMemoryData {
 sub syncToDF {
     my $redraw = 0;
     my $deletions = 0;
-    #my $t0 = new Benchmark;
+    my $t0 = new Benchmark;
     
     $xmouse_old = $xmouse;
     $ymouse_old = $ymouse;
@@ -359,9 +359,9 @@ sub syncToDF {
         #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     }
     
-    #my $t1 = new Benchmark;
-    #my $td = timediff($t1, $t0);
-    #print "the code took:",timestr($td),"\n";
+    my $t1 = new Benchmark;
+    my $td = timediff($t1, $t0);
+    print "the code took:",timestr($td),"\n";
     
     #say "$#cache caches";
     #say "---";
@@ -415,14 +415,14 @@ sub new_process_block {
    
     for $x ( 0..15 ) {
         $rx = $bxScaled+$x;                   # this calculates the real x and y values of this tile on the overall map_base
-        $tile = \$tiles[$bz][type][$rx];
+        $tile = $tiles[$bz][type][$rx] ||= [];
         
         for $y ( 0..15 ) {                           # cycle through 16 x and 16 y values, which generate a total of 256 tile indexes
             $ry = $byScaled+$y;
             
-            if ( !defined $$tile->[$ry] || $$tile->[$ry] != $type_data[$tile_index] ) {
+            if ( !defined $tile->[$ry] || $tile->[$ry] != $type_data[$tile_index] ) {
                 $changed = 1;
-                $$tile->[$ry] = $type_data[$tile_index];
+                $tile->[$ry] = $type_data[$tile_index];
             }
             #$cells[$real_x][$real_y][z][$bz][DESIGNATION] = $designation_data[$tile_index];
             #$cells[$real_x][$real_y][z][$bz][OCCUPATION] = $ocupation_data[$tile_index];
