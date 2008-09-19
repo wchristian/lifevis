@@ -56,7 +56,7 @@ my $tex_const = 0.046875; # width or height of one texture field
 
 # Window and texture IDs, window width and height.
 my $Window_ID;
-my $Window_Width = 300;
+my $Window_Width = 533;
 my $Window_Height = 300;
 
 my $Curr_TexMode = 0;
@@ -986,32 +986,29 @@ sub cbRenderScene {
 
     glColor4f(0.6,1.0,0.6,.75);    # But, for fun, let's make the text partially transparent too.
 
-    $buf = sprintf "Mode: %s", $TexModesStr[$Curr_TexMode];    # Render our various display mode settings.
+    $buf = sprintf "X_Rot: %d", $X_Rot;
     glRasterPos2i(2,2); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
-    $buf = sprintf "X_Rot: %d", $X_Rot;
-    glRasterPos2i(2,74); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
     $buf = sprintf "Y_Rot: %d", $Y_Rot;
-    glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,14); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "Z_Pos: %f", $Z_Pos;
-    glRasterPos2i(2,98); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,26); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "Y_Pos: %f", $Y_Pos;
-    glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,38); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "X_Pos: %f", $X_Pos;
-    glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,50); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "Z_Off: %f", $Z_Off;
-    glRasterPos2i(2,134); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,62); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "Y_Off: %f", $Y_Off;
-    glRasterPos2i(2,146); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,74); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     $buf = sprintf "X_Off: %f", $X_Off;
-    glRasterPos2i(2,158); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    glRasterPos2i(2,86); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     #$buf = "X";
     #glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
@@ -1264,8 +1261,8 @@ sub cbMouseActiveMotion {
     }
 
     if ( $new_y < 30  and $new_y > -30 ) { # $x > 0 and $x < 300 and
-        my $diff = (180 * $new_y / 300) * -1;
-        $X_Rot += $diff if( ($X_Rot + $diff) > -90 and ($X_Rot + $diff) < 90 );
+        my $diff = (180 * $new_y / 300) * -0.75;
+        $X_Rot += $diff if( ($X_Rot + $diff) > -89 and ($X_Rot + $diff) < 89 );
     }
     $last_mouse_x = $x;
     $last_mouse_y = $y;
