@@ -119,7 +119,7 @@ my ($menu,$submenid,$menid);
 
 my $delay_full_update=40;
 
-my $range = 1;
+my $range = 2;
 my $cache_limit = (1+(2*$range))*(1+(2*$range));
 my ($xmouse, $ymouse, $zmouse) = (0,0,15);                 # cursor coordinates
 my ($xmouse_old, $ymouse_old, $zmouse_old) = (0,0,15);                 # cursor coordinates
@@ -278,10 +278,10 @@ sub syncToDF {
     
     # calculate cell coords from mouse coords
     ($xcell, $ycell) = ( int($xmouse/16), int($ymouse/16) );
-    $xcell += $range if $xcell == 0;
-    $ycell += $range if $ycell == 0;
-    $xcell -= $range if $xcell == $xcount-1;
-    $ycell -= $range if $ycell == $ycount-1;
+    $xcell = $range if $xcell <= $range-1;
+    $ycell = $range if $ycell <= $range-1;
+    $xcell = $xcount-$range-1 if $xcell >= $xcount-$range;
+    $ycell = $ycount-$range-1 if $ycell >= $ycount-$range;
     
     # cycle through cells in range around cursor to grab data
     for my $bx ( $xcell-$range .. $xcell+$range ) {
