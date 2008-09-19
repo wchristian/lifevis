@@ -117,14 +117,16 @@ my @full_map_data;
 
 my ($menu,$submenid,$menid);
 
-my ($xmouse, $ymouse, $zmouse);                 # cursor coordinates
-my ($xcell, $ycell, $zcell);                    # cursor cell coordinates
+my $range = 1;
+my $cache_limit = (1+(2*$range))*(1+(2*$range));
+my ($xmouse, $ymouse, $zmouse) = (0,0,15);                 # cursor coordinates
+my ($xmouse_old, $ymouse_old, $zmouse_old) = (0,0,15);                 # cursor coordinates
+my ($xcell, $ycell)=($range,$range);                    # cursor cell coordinates
 my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
 
 my $slice=0;
 my $slice_follows=0;
 
-my $range = 1;
 my $map_base;                                   # offset of the address where the map blocks start
 
 my @cells;
@@ -183,8 +185,6 @@ print "initializing OpenGL...\n";
 
 ourInit($Window_Width, $Window_Height);         # OK, OpenGL's ready to go.  Let's call our own init function.
 
-syncToDF();
-
 print "OpenGL initialized.\n";
 
 # Print out a bit of help dialog.
@@ -197,7 +197,7 @@ Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 ;
 
-#glutTimerFunc (5000, \&refreshMapData, 0);
+refreshMapData();
 
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
@@ -212,8 +212,8 @@ glutMainLoop();
 my @cell_offsets;
 
 sub refreshMapData {
-    syncToDF();
-    #glutTimerFunc (2000, \&refreshMapData, 0);
+    glutPostRedisplay() if syncToDF();
+    glutTimerFunc (2000, \&refreshMapData, 0);
     
 }
 
@@ -240,20 +240,34 @@ sub extractBaseMemoryData {
 }
 
 sub syncToDF {
+    my $redraw = 0;
+    my $deletions = 0;
     my $t0 = new Benchmark;
+    
+    $xmouse_old = $xmouse;
+    $ymouse_old = $ymouse;
+    $zmouse_old = $zmouse;
     
     # get mouse data
     $xmouse = $proc->get_u32( $offsets[$ver]{mouse_x} );
     $ymouse = $proc->get_u32( $offsets[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $offsets[$ver]{mouse_z} );
     
-    # normalize mouse data if out of bounds, i.e. cursor not in use; TODO: make cache for old mouse data
-    $xmouse = 0 if  $xmouse > $xcount*16;
-    $ymouse = 0 if  $ymouse > $ycount*16;
-    $zmouse = 15 if $zmouse > $zcount;
+    # normalize mouse data if out of bounds, i.e. cursor not in use
+    if ( $xmouse > $xcount*16 || $ymouse > $ycount*16 || $zmouse > $zcount ) {
+        $xmouse = $xmouse_old;
+        $ymouse = $ymouse_old;
+        $zmouse = $zmouse_old;
+    }
+    
+    $redraw = 1 if (  
+        $xmouse != $xmouse_old ||
+        $ymouse != $ymouse_old ||
+        $zmouse != $zmouse_old
+    );
     
     # update camera system with mouse data
-    ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse,$ymouse,$zmouse);
+    ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse+.5,$ymouse+.5,$zmouse+.5);
     ourOrientMe(); # sets up initial camera position offsets
     
     # calculate cell coords from mouse coords
@@ -282,6 +296,7 @@ sub syncToDF {
                 # update changed status of cell if necessary
                 $cells[$bx][$by][changed] = 1 if $cells[$bx][$by][z][$bz];  # z location of the current block
             }
+            $redraw = 1 if $cells[$bx][$by][changed];
         }
     }
     
@@ -315,26 +330,27 @@ sub syncToDF {
                 # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                 my $slices = $cells[$bx][$by][z];
                 for my $slice ( 0 .. (@$slices - 1) ) {
-                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if ( @$slices[$slice] );
-                }
-                
-                # check that we're not using too much memory and destroy cache entries if necessary
-                # TODO: add checks that not more is deleted than we need to display, as well as restrict deletions to 2 max
-                while ( $myself->get_memtotal > 200787840 ) {
-                    
-                    my $slices = $cache[0];
-                    for my $slice ( 1 .. (@$slices - 1) ) {
-                        glDeleteLists($cache[0][$slice],1) if $cache[0][$slice];
-                    }
-                    
-                    ${$cache[0][0]} = '';
-                    shift @cache;
-                    
-                    #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
+                    generateDisplayList( $cells[$bx][$by][cache_ptr], $slice, $by, $bx ) if ( defined @$slices[$slice] );
                 }
                 
             }
         }
+    }
+    
+    # check that we're not using too much memory and destroy cache entries if necessary
+    while ( $myself->get_memtotal > 300787840 && $cache_limit <= $#cache && $deletions < 2 ) {
+        
+        my $slices = $cache[0];
+        for my $slice ( 1 .. (@$slices - 1) ) {
+            glDeleteLists($cache[0][$slice],1) if $cache[0][$slice];
+        }
+        
+        ${$cache[0][0]} = '';
+        shift @cache;
+        
+        $deletions++;
+        
+        printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     }
     
     my $t1 = new Benchmark;
@@ -345,6 +361,7 @@ sub syncToDF {
     say "$dl lists";
     glDeleteLists($dl,1);
     say "---";
+    return $redraw;
 }
 
 sub generateDisplayList {
@@ -928,6 +945,7 @@ sub cbRenderScene {
     # cycle through cells in range around cursor to render
     for my $bx ( $xcell-$range .. $xcell+$range ) {
         for my $by ( $ycell-$range .. $ycell+$range ) {
+            #next unless $cells[$bx][$by][cache_ptr];
             
             my $slices = ${$cells[$bx][$by][cache_ptr]};
             for my $slice ( 1 .. (@$slices - 1) ) {
