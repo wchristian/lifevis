@@ -117,6 +117,8 @@ my @full_map_data;
 
 my ($menu,$submenid,$menid);
 
+my $delay_full_update=40;
+
 my $range = 1;
 my $cache_limit = (1+(2*$range))*(1+(2*$range));
 my ($xmouse, $ymouse, $zmouse) = (0,0,15);                 # cursor coordinates
@@ -213,7 +215,7 @@ my @cell_offsets;
 
 sub refreshMapData {
     glutPostRedisplay() if syncToDF();
-    glutTimerFunc (2000, \&refreshMapData, 0);
+    glutTimerFunc (100, \&refreshMapData, 0);
     
 }
 
@@ -242,7 +244,7 @@ sub extractBaseMemoryData {
 sub syncToDF {
     my $redraw = 0;
     my $deletions = 0;
-    my $t0 = new Benchmark;
+    #my $t0 = new Benchmark;
     
     $xmouse_old = $xmouse;
     $ymouse_old = $ymouse;
@@ -265,6 +267,10 @@ sub syncToDF {
         $ymouse != $ymouse_old ||
         $zmouse != $zmouse_old
     );
+    
+    $delay_full_update++;
+    return 0 if ( $delay_full_update < 20 && $redraw == 0 );
+    $delay_full_update=0;
     
     # update camera system with mouse data
     ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse+.5,$ymouse+.5,$zmouse+.5);
@@ -314,9 +320,9 @@ sub syncToDF {
                         generateDisplayList( $cells[$bx][$by][cache_ptr], $slice+1, $by, $bx ) if ( @$slices[$slice] );
                     }
                     
-                    for my $id (0 .. $#cache-1) {
-                        ($cache[$id],$cache[$id+1]) = ($cache[$id+1],$cache[$id]) if ( \$cache[$id] == $cells[$bx][$by][cache_ptr] );
-                    }
+                    #for my $id (0 .. $#cache-1) {
+                    #    ($cache[$id],$cache[$id+1]) = ($cache[$id+1],$cache[$id]) if ( \$cache[$id] == $cells[$bx][$by][cache_ptr] );
+                    #}
                 }
                 
             }
@@ -350,17 +356,15 @@ sub syncToDF {
         
         $deletions++;
         
-        printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
+        #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     }
     
-    my $t1 = new Benchmark;
-    my $td = timediff($t1, $t0);
-    print "the code took:",timestr($td),"\n";
+    #my $t1 = new Benchmark;
+    #my $td = timediff($t1, $t0);
+    #print "the code took:",timestr($td),"\n";
     
-    my $dl = glGenLists(1);
-    say "$dl lists";
-    glDeleteLists($dl,1);
-    say "---";
+    #say "$#cache caches";
+    #say "---";
     return $redraw;
 }
 
@@ -820,7 +824,8 @@ sub ourInit {
 
 sub ourDrawCube {
     my ($x, $y, $z, $s) = @_;
-    glColor3f(0.75, 0.75, 0.75); # Basic polygon color
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
     my $tex_num_x = 0;
     my $tex_num_y = 0;
     my $tex_x1 =0;# $tex_num_x*$tex_const;
@@ -926,8 +931,8 @@ sub cbRenderScene {
     glMatrixMode(GL_MODELVIEW);    # Need to manipulate the ModelView matrix to move our model around.
 
     gluLookAt(
-        $X_Pos + $X_Off, $Y_Pos + $Y_Off, $Z_Pos + $Z_Off,
-        $X_Pos,$Y_Pos,$Z_Pos,
+        $X_Pos + $X_Off, $Y_Pos+10 + $Y_Off, $Z_Pos + $Z_Off,
+        $X_Pos,$Y_Pos+10,$Z_Pos,
         0,1,0);
 
     glLightfv_p(GL_LIGHT1, GL_POSITION,
