@@ -73,6 +73,8 @@ $Y_Pos   =   0;
 $Z_Pos   =   0;
 $X_Rot   = -45.0;
 $Y_Rot   = 157.5;
+my $mouse_dist = 40;
+my $middle_mouse = 0;
 ourOrientMe(); # sets up initial camera position offsets
 
 my ( $Map_W, $Map_H, $Map_D );
@@ -196,6 +198,7 @@ glutKeyboardFunc(\&cbKeyPressed);               # And let's get some keyboard in
 glutSpecialFunc(\&cbSpecialKeyPressed);
 
 glutMotionFunc(\&cbMouseActiveMotion);
+glutMouseFunc(\&cbMouseClickAction);
 
 
 
@@ -436,25 +439,35 @@ sub generateDisplayList {
     glBegin(GL_QUADS);
     my $tile = $tiles[$z][type];
     my $tile_below = $tiles[$z-1][type];
-    for my $rx (($x*16)..($x*16)+16) {
-        for my $ry (($y*16)..($y*16)+16) {
+    for my $rx (($x*16)..($x*16)+15) {
+        for my $ry (($y*16)..($y*16)+15) {
             
             next if !defined $tile->[$rx][$ry];
             $type = $tile->[$rx][$ry];
             $type_below = $tile_below->[$rx][$ry];
             next if $type == 32;
             
-            if ( $types[$tile->[$rx][$ry]][base_visual] == WALL ) {
-                ourDrawCube($rx,$z,$ry,1);
+            my ($below, $north, $south, $west, $east) = (EMPTY,EMPTY,EMPTY,EMPTY,EMPTY);
+            my $x_mod = $rx%16;
+            my $y_mod = $ry%16;
+            
+            $below = $types[$type_below][base_visual] if $type_below;
+            $north = $types[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
+            $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
+            $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
+            $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
+            
+            if ( $types[$type][base_visual] == WALL ) {
+                drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
-            if ( $types[$tile->[$rx][$ry]][base_visual] == FLOOR ) {
-                ourDrawFloor($rx,$z,$ry,1);
+            elsif ( $types[$tile->[$rx][$ry]][base_visual] == FLOOR ) {
+                drawFloor($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
-            if ( $types[$tile->[$rx][$ry]][base_visual] == RAMP ) {
+            elsif ( $types[$tile->[$rx][$ry]][base_visual] == RAMP ) {
                 next if ( $types[$type_below][base_visual] == RAMP );
                 ourDrawRamp($rx,$z,$ry,1);
                 next;
@@ -893,16 +906,140 @@ sub ourInit {
 # ------
 # Routine which draws all cubes in the map
 
+sub drawWall {
+    my ($x, $y, $z, $s, $below, $north, $south, $west, $east) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_num_x = 0;
+    my $tex_num_y = 0;
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+    my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
+
+    my $xs = $x + $s;
+    my $ys = $y + $s;
+    my $zs = $z + $s;
+
+    if ($below != WALL) {
+        glNormal3f( 0,-1, 0); # Bottom Face.
+        glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+        glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+        glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+        glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+    }
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+
+    if ($north != WALL && $north != RAMP) {    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    }
+
+    if ($east != WALL && $east != RAMP) {    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    }
+
+    if ($south != WALL && $south != RAMP) {    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    }
+
+    if ($west != WALL && $west != RAMP) {    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+    }
+}
+
+sub drawFloor {
+    my ($x, $y, $z, $s, $below, $north, $south, $west, $east) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+    my $tex_y3 =0.1;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $zs = $z + $s;
+
+    if ($below != WALL) {
+        glNormal3f( 0,-1, 0); # Bottom Face.
+        glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+        glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+        glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+        glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+    }
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+
+    if ($north == EMPTY) {    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y3); glVertex3f(  $x, $ys, $z);
+    }
+
+    if ($east == EMPTY) {    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $xs, $ys,  $z);
+    }
+
+    if ($south == EMPTY) {    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y3); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $xs, $ys, $zs);
+    }
+
+    if ($west == EMPTY) {    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y3); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y3); glVertex3f( $x, $ys,  $z);
+    }
+}
+
 sub ourDrawCube {
     my ($x, $y, $z, $s) = @_;
     my $brightness = $y/($zcount-15);
     glColor3f($brightness, $brightness, $brightness); # Basic polygon color
     my $tex_num_x = 0;
     my $tex_num_y = 0;
-    my $tex_x1 =0;# $tex_num_x*$tex_const;
-    my $tex_x2 =1;# $tex_num_x*$tex_const + $tex_const;
-    my $tex_y1 =1;# $tex_num_y*$tex_const;
-    my $tex_y2 =0;# $tex_num_y*$tex_const + $tex_const;
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
     my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
 
     my $xs = $x + $s;
@@ -1003,13 +1140,10 @@ sub ourDrawRamp {
     my ($x, $y, $z, $s) = @_;
     my $brightness = $y/($zcount-15);
     glColor3f($brightness, $brightness, $brightness); # Basic polygon color
-    my $tex_num_x = 0;
-    my $tex_num_y = 0;
-    my $tex_x1 =0;# $tex_num_x*$tex_const;
-    my $tex_x2 =1;# $tex_num_x*$tex_const + $tex_const;
-    my $tex_y1 =1;# $tex_num_y*$tex_const;
-    my $tex_y2 =0;# $tex_num_y*$tex_const + $tex_const;
-    my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
 
     my $xs = $x + $s;
     my $ys = $y + 0.1*$s;
@@ -1193,9 +1327,14 @@ sub cbRenderScene {
 
     $buf = sprintf "Caches: %d", (($#cache+1) - ($#cache_bucket+1));
     glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
-
-    $buf = sprintf "Type: %d", $tiles[$zmouse][type][$xmouse][$ymouse];
-    glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    
+    if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
+        $buf = sprintf "Type: %d", $tiles[$zmouse][type][$xmouse][$ymouse];
+        glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
+    }
+    
+    $buf = sprintf "Mouse: %d %d", $xmouse,$ymouse;
+    glRasterPos2i(2,134); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     #$buf = "X";
     #glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
@@ -1435,22 +1574,43 @@ sub cbSpecialKeyPressed {
     printf "SKP: No action for %d.\n", $key;
 }
 
+sub cbMouseClickAction {
+    my ($button, $state, $x, $y) = @_;
+    
+    $middle_mouse = 1 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_DOWN;
+    
+    $middle_mouse = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
+}
+
 sub cbMouseActiveMotion {
     my ($x, $y) = @_;
+    
     my ($new_x, $new_y) = (0, 0);
     $new_x = $x - $last_mouse_x if ($last_mouse_x);
     $new_y = $y - $last_mouse_y if ($last_mouse_y);
-
-    if ( $new_x < 30  and $new_x > -30 ) { # $x > 0 and $x < 300 and
-        $Y_Rot -= (180 * $new_x / 300) * -1;
-        $Y_Rot -= 360 if ($Y_Rot > 360);
-        $Y_Rot += 360 if ($Y_Rot < 0);
+        
+    if ( $middle_mouse == 0 ) {
+    
+        if ( $new_x < 30  and $new_x > -30 ) {
+            $Y_Rot -= (180 * $new_x / 300) * -1;
+            $Y_Rot -= 360 if ($Y_Rot > 360);
+            $Y_Rot += 360 if ($Y_Rot < 0);
+        }
+    
+        if ( $new_y < 30  and $new_y > -30 ) {
+            my $diff = (180 * $new_y / 300) * -0.75;
+            $X_Rot += $diff if( ($X_Rot + $diff) > -89 and ($X_Rot + $diff) < 89 );
+        }
     }
-
-    if ( $new_y < 30  and $new_y > -30 ) { # $x > 0 and $x < 300 and
-        my $diff = (180 * $new_y / 300) * -0.75;
-        $X_Rot += $diff if( ($X_Rot + $diff) > -89 and ($X_Rot + $diff) < 89 );
+    else {
+    
+        if ( $new_y < 30  and $new_y > -30 ) {
+            $mouse_dist += $new_y;
+            $mouse_dist = 1 if $mouse_dist < 1;
+        }
+        
     }
+    
     $last_mouse_x = $x;
     $last_mouse_y = $y;
     ourOrientMe();
@@ -1464,9 +1624,9 @@ sub ourOrientMe {
     my $sin_x = $sin_cache{$X_Rot} ||= sin($X_Rot * PIOVER180);
     my $cos_x = $cos_cache{$X_Rot} ||= cos($X_Rot * PIOVER180);
 
-    $X_Off = ($sin_y * $cos_x) * 20;
-    $Y_Off = (-$sin_x) * 20;
-    $Z_Off = (-$cos_y * $cos_x) * 20;
+    $X_Off = ($sin_y * $cos_x) * $mouse_dist;
+    $Y_Off = (-$sin_x) * $mouse_dist;
+    $Z_Off = (-$cos_y * $cos_x) * $mouse_dist;
 }
 
 ################################################################################
