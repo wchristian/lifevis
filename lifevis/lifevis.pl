@@ -127,6 +127,7 @@ my ($xmouse, $ymouse, $zmouse) = (0,0,15);                 # cursor coordinates
 my ($xmouse_old, $ymouse_old, $zmouse_old) = (0,0,15);                 # cursor coordinates
 my ($xcell, $ycell)=($range,$range);                    # cursor cell coordinates
 my ($xcount, $ycount, $zcount);                 # dimensions of the map data we're dealing with
+my ($x_max, $y_max);                 # dimensions of the map data we're dealing with
 
 my $slice=0;
 my $slice_follows=0;
@@ -245,6 +246,9 @@ sub extractBaseMemoryData {
     $xcount = $proc->get_u32( $offsets[$ver]{x_count} );
     $ycount = $proc->get_u32( $offsets[$ver]{y_count} );
     $zcount = $proc->get_u32( $offsets[$ver]{z_count} );
+    
+    $x_max = ($xcount*16)-1;
+    $y_max = ($ycount*16)-1;
     
     # checking whether the game has a map already    
     $map_base = $proc->get_u32( $offsets[$ver]{map_loc} );
@@ -448,28 +452,83 @@ sub generateDisplayList {
             next if $type == 32;
             
             my ($below, $north, $south, $west, $east) = (EMPTY,EMPTY,EMPTY,EMPTY,EMPTY);
+            my ($northeast, $southeast, $southwest, $northwest) = (EMPTY,EMPTY,EMPTY,EMPTY);
             my $x_mod = $rx%16;
             my $y_mod = $ry%16;
             
             $below = $types[$type_below][base_visual] if $type_below;
-            $north = $types[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
-            $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
-            $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
-            $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
             
             if ( $types[$type][base_visual] == WALL ) {
+                $north = $types[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
+                $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
+                $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
+                $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
                 drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
             elsif ( $types[$tile->[$rx][$ry]][base_visual] == FLOOR ) {
+                $north = $types[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
+                $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
+                $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
+                $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
                 drawFloor($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
             elsif ( $types[$tile->[$rx][$ry]][base_visual] == RAMP ) {
                 next if ( $types[$type_below][base_visual] == RAMP );
-                ourDrawRamp($rx,$z,$ry,1);
+                $north = $types[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $ry != 0;
+                $northeast = $types[$tile->[$rx+1][$ry-1]][base_visual] if $tile->[$rx+1][$ry-1] && ($ry != 0 || $rx != $x_max);
+                $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $rx != $x_max;
+                $southeast = $types[$tile->[$rx+1][$ry+1]][base_visual] if $tile->[$rx+1][$ry+1] && ($ry != $y_max || $rx != $x_max);
+                $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $ry != $y_max;
+                $southwest = $types[$tile->[$rx-1][$ry+1]][base_visual] if $tile->[$rx-1][$ry+1] && ($ry != $y_max || $ry != 0);
+                $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $rx != 0;
+                $northwest = $types[$tile->[$rx-1][$ry-1]][base_visual] if $tile->[$rx-1][$ry-1] && ($ry != 0|| $ry != 0);
+                
+                if( $north == WALL ) {
+                    if ( $east == WALL) {
+                        drawDoubleNorthEastRamp($rx,$z,$ry,1);
+                    }
+                    elsif ( $west == WALL) {
+                        drawDoubleNorthWestRamp($rx,$z,$ry,1);
+                    }
+                    else {
+                        drawSingleNorthRamp($rx,$z,$ry,1);                        
+                    }
+                }
+                elsif( $east == WALL ) {
+                    if ( $south == WALL) {
+                        drawDoubleSouthEastRamp($rx,$z,$ry,1);
+                    }
+                    else {
+                        drawSingleEastRamp($rx,$z,$ry,1);
+                    }
+                }
+                elsif( $south == WALL ) {
+                    if ( $west == WALL) {
+                        drawDoubleSouthWestRamp($rx,$z,$ry,1);
+                    }
+                    else {
+                        drawSingleSouthRamp($rx,$z,$ry,1);
+                    }
+                }
+                elsif( $west == WALL ) {
+                    drawSingleWestRamp($rx,$z,$ry,1);
+                }
+                elsif( $northeast == WALL ) {
+                    drawSingleNorthEastRamp($rx,$z,$ry,1);
+                }
+                elsif( $southeast == WALL ) {
+                    drawSingleSouthEastRamp($rx,$z,$ry,1);
+                }
+                elsif( $southwest == WALL ) {
+                    drawSingleSouthWestRamp($rx,$z,$ry,1);
+                }
+                elsif( $northwest == WALL ) {
+                    drawSingleNorthWestRamp($rx,$z,$ry,1);
+                }
                 next;
             }
             
@@ -1134,6 +1193,618 @@ sub ourDrawFloor {
     glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
     glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
     glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleNorthRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
+}
+
+sub drawSingleNorthEastRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleSouthEastRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleSouthWestRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleNorthWestRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
+}
+
+sub drawDoubleNorthEastRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
+}
+
+sub drawDoubleNorthWestRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
+}
+
+sub drawDoubleSouthWestRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
+}
+
+sub drawDoubleSouthEastRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleSouthRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleEastRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub drawSingleWestRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_x1 =0;
+    my $tex_x2 =1;
+    my $tex_y1 =1;
+    my $tex_y2 =0;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys2, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys2,  $z);
 }
 
 sub ourDrawRamp {
