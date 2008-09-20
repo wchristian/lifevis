@@ -148,6 +148,18 @@ use constant cell_ptr => 0;
 my @cache_bucket;
 my @protected_caches;
 
+our @types;
+use constant base_visual => 0;
+use constant EMPTY => 0;
+use constant FLOOR => 1;
+use constant WALL => 2;
+use constant RAMP => 3;
+use constant STAIR => 4;
+use constant FORTIF => 5;
+use constant PILLAR => 6;
+
+do 'df_internals.pl';
+
 use Win32::OLE('in');
 my $objWMIService = Win32::OLE->GetObject ('winmgmts:\\\\.\\root\\CIMV2') or die "WMI connection failed.\n";
 my @state_array;
@@ -408,6 +420,8 @@ sub syncToDF {
 sub generateDisplayList {
     my ( $id, $z, $y, $x ) = @_;
     my $dl;
+    my $type;
+    my $type_below;
     
     if($cache[$id][$z+2]) {
         $dl = $cache[$id][$z+2];
@@ -420,12 +434,32 @@ sub generateDisplayList {
     glNewList($dl, GL_COMPILE);
     #glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
     glBegin(GL_QUADS);
-    my $tile = \$tiles[$z][type];
+    my $tile = $tiles[$z][type];
+    my $tile_below = $tiles[$z-1][type];
     for my $rx (($x*16)..($x*16)+16) {
         for my $ry (($y*16)..($y*16)+16) {
-            ourDrawCube($rx,$z,$ry,1)
-                if( defined $$tile->[$rx][$ry] &&
-                    $$tile->[$rx][$ry] != 32 );
+            
+            next if !defined $tile->[$rx][$ry];
+            $type = $tile->[$rx][$ry];
+            $type_below = $tile_below->[$rx][$ry];
+            next if $type == 32;
+            
+            if ( $types[$tile->[$rx][$ry]][base_visual] == WALL ) {
+                ourDrawCube($rx,$z,$ry,1);
+                next;
+            }
+            
+            if ( $types[$tile->[$rx][$ry]][base_visual] == FLOOR ) {
+                ourDrawFloor($rx,$z,$ry,1);
+                next;
+            }
+            
+            if ( $types[$tile->[$rx][$ry]][base_visual] == RAMP ) {
+                next if ( $types[$type_below][base_visual] == RAMP );
+                ourDrawRamp($rx,$z,$ry,1);
+                next;
+            }
+            
         }
     }
     glEnd();
@@ -912,6 +946,113 @@ sub ourDrawCube {
     glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
 }
 
+sub ourDrawFloor {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_num_x = 0;
+    my $tex_num_y = 0;
+    my $tex_x1 =0;# $tex_num_x*$tex_const;
+    my $tex_x2 =1;# $tex_num_x*$tex_const + $tex_const;
+    my $tex_y1 =1;# $tex_num_y*$tex_const;
+    my $tex_y2 =0;# $tex_num_y*$tex_const + $tex_const;
+    my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
+sub ourDrawRamp {
+    my ($x, $y, $z, $s) = @_;
+    my $brightness = $y/($zcount-15);
+    glColor3f($brightness, $brightness, $brightness); # Basic polygon color
+    my $tex_num_x = 0;
+    my $tex_num_y = 0;
+    my $tex_x1 =0;# $tex_num_x*$tex_const;
+    my $tex_x2 =1;# $tex_num_x*$tex_const + $tex_const;
+    my $tex_y1 =1;# $tex_num_y*$tex_const;
+    my $tex_y2 =0;# $tex_num_y*$tex_const + $tex_const;
+    my $tex_y3 = $tex_num_y*$tex_const + ($tex_const/4)*3;
+
+    my $xs = $x + $s;
+    my $ys = $y + 0.1*$s;
+    my $ys2 = $y + $s+0.1;
+    my $zs = $z + $s;
+
+    glNormal3f( 0,-1, 0); # Bottom Face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $y,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs, $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $y, $zs);
+
+    glNormal3f( 0, 1, 0); # Top face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys,  $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0,-1); # Far face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $z);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f(  $x,  $y, $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f(  $x, $ys, $z);
+    
+    glNormal3f( 1, 0, 0); # Right face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2,  $z);
+    
+    glNormal3f( 0, 0, 1); # Front face.
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f(  $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f(  $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $xs,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $xs, $ys2, $zs);
+    
+    glNormal3f(-1, 0, 0); # Left Face.
+    glTexCoord2f($tex_x1,$tex_y2); glVertex3f( $x,  $y,  $z);
+    glTexCoord2f($tex_x2,$tex_y2); glVertex3f( $x,  $y, $zs);
+    glTexCoord2f($tex_x2,$tex_y1); glVertex3f( $x, $ys, $zs);
+    glTexCoord2f($tex_x1,$tex_y1); glVertex3f( $x, $ys,  $z);
+}
+
 # ------
 # Barebone menu creation functions
 
@@ -1053,7 +1194,8 @@ sub cbRenderScene {
     $buf = sprintf "Caches: %d", (($#cache+1) - ($#cache_bucket+1));
     glRasterPos2i(2,110); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
-
+    $buf = sprintf "Type: %d", $tiles[$zmouse][type][$xmouse][$ymouse];
+    glRasterPos2i(2,122); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
 
     #$buf = "X";
     #glRasterPos2i(146,144); ourPrintString(GLUT_BITMAP_HELVETICA_12,$buf);
