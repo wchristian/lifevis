@@ -81,9 +81,9 @@ my ( $Map_W, $Map_H, $Map_D );
 
 
 # Settings for our light.  Try playing with these (or add more lights).
-my @Light_Ambient  = ( 0.5, 0.5, 0.5, 1.0 );
-my @Light_Diffuse  = ( 0.8, 0.8, 0.8, 1.0 );
-my @Light_Specular  = ( 1.2, 1.2, 1.2, 1.0 );
+my @Light_Ambient  = ( 0.7, 0.7, 0.7, 1.0 );
+my @Light_Diffuse  = ( 0.9, 0.9, 0.9, 1.0 );
+my @Light_Specular  = ( 2.2, 2.2, 2.2, 1.0 ); # irrelevant
 my @Light_Position = ( -200.0, 150.0, 150.0, 0.0 );
 
 # ------
@@ -793,6 +793,7 @@ sub ourInit {
     glEnable(GL_CULL_FACE);
 
     glShadeModel(GL_SMOOTH);    # Enables Smooth Color Shading; try GL_FLAT for (lack of) fun.
+    glEnable(GL_NORMALIZE);
 
     cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
 
