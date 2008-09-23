@@ -799,10 +799,6 @@ sub ourInit {
     glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
     glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
     
-    #glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0);
-    #glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 2);
-    #glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.8);
-    
     glEnable (GL_LIGHT1);
     
     glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
