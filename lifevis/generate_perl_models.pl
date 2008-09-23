@@ -44,18 +44,15 @@ sub generateModel {
                                                $vertices[$id->[2]{vert}] );
     }
     
-    my $model = "
-    
-sub drawSingleNorthRamp {
+    my $model = "sub draw$input {
     my (\$x, \$y, \$z, \$s) = \@_;
     my \$brightness = \$y/(\$zcount-15);
     glColor3f(\$brightness, \$brightness, \$brightness);
-    
 ";
 
 
     for my $id ( 0..$#faces) {
-        $model .= "\n\n    glNormal3f( $normals[$id][0],$normals[$id][1],$normals[$id][2]);\n";
+        $model .= "\n    glNormal3f( $normals[$id][0],$normals[$id][1],$normals[$id][2]);\n";
         for my $vid ( 0..2) {
             my $uv = $faces[$id][$vid]{uv};
             my $vert = $faces[$id][$vid]{vert};
@@ -63,7 +60,7 @@ sub drawSingleNorthRamp {
         }
     }
     
-    $model .= "}\n\n";
+    $model .= "}";
     
     return $model;
 }
@@ -84,7 +81,7 @@ foreach my $file (@filelist) {
     $code .= "\n\n$model";
 }
 
-open my $OUT, ">", "models2.pl" or die( "horribly: ".$! );
+open my $OUT, ">", "models.pl" or die( "horribly: ".$! );
 print $OUT "#!/usr/bin/perl -w
 use 5.010;
 use strict;

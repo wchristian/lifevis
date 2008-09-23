@@ -162,7 +162,7 @@ use constant FORTIF => 5;
 use constant PILLAR => 6;
 
 do 'df_internals.pl';
-do 'models.pl';
+do 'models2.pl';
 
 use Win32::OLE('in');
 my $objWMIService = Win32::OLE->GetObject ('winmgmts:\\\\.\\root\\CIMV2') or die "WMI connection failed.\n";
@@ -441,7 +441,7 @@ sub generateDisplayList {
     
     glNewList($dl, GL_COMPILE);
     #glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);       # select mipmapped texture
-    glBegin(GL_QUADS);
+    glBegin(GL_TRIANGLES);
     my $tile = $tiles[$z][type];
     my $tile_below = $tiles[$z-1][type];
     for my $rx (($x*16)..($x*16)+15) {
@@ -464,7 +464,7 @@ sub generateDisplayList {
                 $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
                 $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
                 $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
+                #drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
@@ -494,11 +494,11 @@ sub generateDisplayList {
                         #    drawTripleNorthSouthEastRamp($rx,$z,$ry,1);
                         #}
                         #else {
-                            drawDoubleNorthEastRamp($rx,$z,$ry,1);
+                            #drawDoubleNorthEastRamp($rx,$z,$ry,1);
                         #}
                     }
                     elsif ( $west == WALL) {
-                        drawDoubleNorthWestRamp($rx,$z,$ry,1);
+                        #drawDoubleNorthWestRamp($rx,$z,$ry,1);
                     }
                     else {
                         drawSingleNorthRamp($rx,$z,$ry,1);                        
@@ -506,34 +506,34 @@ sub generateDisplayList {
                 }
                 elsif( $east == WALL ) {
                     if ( $south == WALL) {
-                        drawDoubleSouthEastRamp($rx,$z,$ry,1);
+                        #drawDoubleSouthEastRamp($rx,$z,$ry,1);
                     }
                     else {
-                        drawSingleEastRamp($rx,$z,$ry,1);
+                        #drawSingleEastRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $south == WALL ) {
                     if ( $west == WALL) {
-                        drawDoubleSouthWestRamp($rx,$z,$ry,1);
+                        #drawDoubleSouthWestRamp($rx,$z,$ry,1);
                     }
                     else {
-                        drawSingleSouthRamp($rx,$z,$ry,1);
+                        #drawSingleSouthRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $west == WALL ) {
                     drawSingleWestRamp($rx,$z,$ry,1);
                 }
                 elsif( $northeast == WALL ) {
-                    drawSingleNorthEastRamp($rx,$z,$ry,1);
+                    #drawSingleNorthEastRamp($rx,$z,$ry,1);
                 }
                 elsif( $southeast == WALL ) {
-                    drawSingleSouthEastRamp($rx,$z,$ry,1);
+                    #drawSingleSouthEastRamp($rx,$z,$ry,1);
                 }
                 elsif( $southwest == WALL ) {
-                    drawSingleSouthWestRamp($rx,$z,$ry,1);
+                    #drawSingleSouthWestRamp($rx,$z,$ry,1);
                 }
                 elsif( $northwest == WALL ) {
-                    drawSingleNorthWestRamp($rx,$z,$ry,1);
+                    #drawSingleNorthWestRamp($rx,$z,$ry,1);
                 }
                 next;
             }
@@ -899,8 +899,8 @@ sub cbRenderScene {
     glLineWidth(2);
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[3]);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBegin(GL_QUADS);
-    ourDrawCube($X_Pos-.5,$Y_Pos-.5,$Z_Pos-.5,1);
+    glBegin(GL_TRIANGLES);
+    #drawCursor($X_Pos-.5,$Y_Pos-.5,$Z_Pos-.5,1);
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);
