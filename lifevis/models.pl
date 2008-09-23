@@ -23,64 +23,64 @@ sub drawFloor {
     glColor3f($brightness, $brightness, $brightness);
 
     glNormal3f( 0,0,0.1);
-    glTexCoord2f(3.3306691e-016,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1.5,8.3266727e-016); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.15); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
 
     glNormal3f( 0,-1,0);
-    glTexCoord2f(1.5,1.6653345e-016); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1.5,1.5); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
+    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
     glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
 
     glNormal3f( 0,0,0.1);
-    glTexCoord2f(0,0.15); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1.5,8.3266727e-016); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1.5,0.15); glVertex3f(1+$x,0.1+$y,1+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
+    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
 
     glNormal3f( -0.1,0,0);
-    glTexCoord2f(1.5,0.15); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,1.9984014e-015); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1.5,0); glVertex3f(0+$x,0+$y,1+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
+
+    glNormal3f( -0.1,0,0);
+    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
 
     glNormal3f( 0,1,0);
-    glTexCoord2f(1.6653345e-016,0); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1.5,1.5); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,1.5); glVertex3f(0+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(1,1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,1); glVertex3f(0+$x,0.1+$y,0+$z);
 
     glNormal3f( 0,1,0);
-    glTexCoord2f(1.5,3.3306691e-016); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1.5,1.5); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1.6653345e-016,0); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,1+$z);
+    glTexCoord2f(1,1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
+
+    glNormal3f( 0.1,0,0);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
+    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
+
+    glNormal3f( 0.1,0,0);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
+    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
 
     glNormal3f( 0,-1,0);
+    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(0,1); glVertex3f(1+$x,0+$y,0+$z);
     glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1.5,1.5); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1.5); glVertex3f(1+$x,0+$y,0+$z);
-
-    glNormal3f( 0.1,0,0);
-    glTexCoord2f(0,2.220446e-015); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1.5,0.15); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0.15); glVertex3f(1+$x,0.1+$y,1+$z);
 
     glNormal3f( 0,0,-0.1);
-    glTexCoord2f(1.5,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1.110223e-016,0.15); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,8.8817842e-016); glVertex3f(1+$x,0+$y,0+$z);
-
-    glNormal3f( -0.1,0,0);
-    glTexCoord2f(0,0.15); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,1.9984014e-015); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1.5,0.15); glVertex3f(0+$x,0.1+$y,1+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
 
     glNormal3f( 0,0,-0.1);
-    glTexCoord2f(1.5,0.15); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1.110223e-016,0.15); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1.5,0); glVertex3f(0+$x,0+$y,0+$z);
-
-    glNormal3f( 0.1,0,0);
-    glTexCoord2f(1.5,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1.5,0.15); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,2.220446e-015); glVertex3f(1+$x,0+$y,1+$z);
+    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
 }
 
 sub drawSingleNorthRamp {
@@ -156,18 +156,18 @@ sub drawSingleWestRamp {
 
     glNormal3f( 0.1,0,0);
     glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1.110223e-016+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
     glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
 
     glNormal3f( 0,-1,0);
     glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
     glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1.110223e-016+$z);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
 
     glNormal3f( 0.1,0,0);
     glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1.110223e-016+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1.110223e-016+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
+    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
 
     glNormal3f( 0,0,0.1);
     glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
@@ -179,38 +179,38 @@ sub drawSingleWestRamp {
     glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
     glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
 
-    glNormal3f( 1,1,6.123234e-017);
+    glNormal3f( 1,1,0);
     glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(6.123234e-017+$x,1.1+$y,0+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,0+$z);
     glTexCoord2f(0,1.41421356); glVertex3f(0+$x,1.1+$y,1+$z);
 
     glNormal3f( 1,1,0);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,1.110223e-016+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(6.123234e-017+$x,1.1+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,0+$z);
     glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,1+$z);
 
-    glNormal3f( 1.2212453e-016,0,-1.1);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1.110223e-016+$z);
-    glTexCoord2f(1,0); glVertex3f(6.123234e-017+$x,0+$y,0+$z);
-    glTexCoord2f(1,1.1); glVertex3f(6.123234e-017+$x,1.1+$y,0+$z);
+    glNormal3f( 0,0,-1.1);
+    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
 
-    glNormal3f( 1.110223e-017,0,-0.1);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1.110223e-016+$z);
-    glTexCoord2f(1,0); glVertex3f(6.123234e-017+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1.110223e-016+$z);
+    glNormal3f( 0,0,-0.1);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
+    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
 
     glNormal3f( 0,-1,0);
     glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(6.123234e-017+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1.110223e-016+$z);
+    glTexCoord2f(0,1); glVertex3f(0+$x,0+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
 
-    glNormal3f( -1.1,0,-6.7355574e-017);
+    glNormal3f( -1.1,0,0);
     glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(6.123234e-017+$x,1.1+$y,0+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
     glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
 
-    glNormal3f( -1.1,0,-6.7355574e-017);
-    glTexCoord2f(0,1.1); glVertex3f(6.123234e-017+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(6.123234e-017+$x,0+$y,0+$z);
+    glNormal3f( -1.1,0,0);
+    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
+    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
     glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
 }
