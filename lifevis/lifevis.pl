@@ -83,8 +83,7 @@ my ( $Map_W, $Map_H, $Map_D );
 # Settings for our light.  Try playing with these (or add more lights).
 my @Light_Ambient  = ( 0.7, 0.7, 0.7, 1.0 );
 my @Light_Diffuse  = ( 0.9, 0.9, 0.9, 1.0 );
-my @Light_Specular  = ( 2.2, 2.2, 2.2, 1.0 ); # irrelevant
-my @Light_Position = ( -200.0, 150.0, 150.0, 0.0 );
+my @Light_Position = ( -0.8, 1.5, 1.0, 0.0 );
 
 # ------
 # Frames per second (FPS) statistic variables.
@@ -464,7 +463,7 @@ sub generateDisplayList {
                 $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
                 $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
                 $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                #drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
+                drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
@@ -509,7 +508,7 @@ sub generateDisplayList {
                         #drawDoubleSouthEastRamp($rx,$z,$ry,1);
                     }
                     else {
-                        #drawSingleEastRamp($rx,$z,$ry,1);
+                        drawSingleEastRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $south == WALL ) {
@@ -517,7 +516,7 @@ sub generateDisplayList {
                         #drawDoubleSouthWestRamp($rx,$z,$ry,1);
                     }
                     else {
-                        #drawSingleSouthRamp($rx,$z,$ry,1);
+                        drawSingleSouthRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $west == WALL ) {
@@ -799,12 +798,15 @@ sub ourInit {
 
     glLightfv_p(GL_LIGHT1, GL_AMBIENT,  @Light_Ambient);
     glLightfv_p(GL_LIGHT1, GL_DIFFUSE,  @Light_Diffuse);
-    glLightfv_p(GL_LIGHT1, GL_SPECULAR, @Light_Specular);
+    
+    #glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0);
+    #glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 2);
+    #glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.8);
+    
     glEnable (GL_LIGHT1);
     
-    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
+    glColorMaterial(GL_FRONT,GL_AMBIENT_AND_DIFFUSE);    # A handy trick -- have surface material mirror the color.
     glEnable(GL_COLOR_MATERIAL);
-    
 }
 
 # ------
@@ -869,18 +871,18 @@ sub cbRenderScene {
         $X_Pos + $X_Off, $Y_Pos+10 + $Y_Off, $Z_Pos + $Z_Off,
         $X_Pos,$Y_Pos+10,$Z_Pos,
         0,1,0);
-
+    
     glLightfv_p(GL_LIGHT1, GL_POSITION,
                 (
-                    $xmouse+$Light_Position[0],
-                    $ymouse+$Light_Position[1],
-                    $zmouse+$Light_Position[2],
-                    0.0
+                    $Light_Position[0],
+                    $Light_Position[1],
+                    $Light_Position[2],
+                    $Light_Position[3]
                 ));    # Set up a light, turn it on.
-
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    # Clear the color and depth buffers.
   
-    glColor3f(0, 0, 0); # Basic polygon color
+    glColor3f(1, 1, 1); # Basic polygon color
     
     # cycle through cells in range around cursor to render
     for my $bx ( $xcell-$range .. $xcell+$range ) {
@@ -1222,23 +1224,17 @@ sub cbMouseActiveMotion {
         
     if ( $middle_mouse == 0 ) {
     
-        if ( $new_x < 30  and $new_x > -30 ) {
             $Y_Rot -= (180 * $new_x / 300) * -1;
             $Y_Rot -= 360 if ($Y_Rot > 360);
             $Y_Rot += 360 if ($Y_Rot < 0);
-        }
     
-        if ( $new_y < 30  and $new_y > -30 ) {
             my $diff = (180 * $new_y / 300) * -0.75;
             $X_Rot += $diff if( ($X_Rot + $diff) > -89 and ($X_Rot + $diff) < 89 );
-        }
     }
     else {
     
-        if ( $new_y < 30  and $new_y > -30 ) {
             $mouse_dist += $new_y*0.2;
             $mouse_dist = 1 if $mouse_dist < 1;
-        }
         
     }
     
