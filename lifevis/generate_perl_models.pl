@@ -4,7 +4,19 @@ use strict;
 
 use Math::Vec qw(:terse);
 
-print "moo". 0.0000000e+0 . "moo";
+my %side = (
+                "0,0,1" => "south",
+                "0,-1,0" => "bottom",
+                "-1,0,0" => "left",
+                "0,1,0" => "top",
+                "1,0,0" => "right",
+                "0,0,-1" => "north",
+                "0.707106781186547,0.707106781186547,0" => "top right",
+                "0,0.707106781186547,0.707106781186547" => "top south",
+
+            );
+
+
 sub generateModel {
     my ($input) = @_;
     my @raw_data;
@@ -25,12 +37,12 @@ sub generateModel {
             $vertices[$#vertices][2] = ($3+0);
         }
         if ( $line =~ m/^f (\d+?)\/(\d+?)\/.*? (\d+?)\/(\d+?)\/.*? (\d+?)\/(\d+?)\/.*?$/ ){
-            $faces[$#faces+1][0]{vert} = ($1-1);
-            $faces[$#faces][0]{uv} = ($2-1);
-            $faces[$#faces][1]{vert} = ($3-1);
-            $faces[$#faces][1]{uv} = ($4-1);
-            $faces[$#faces][2]{vert} = ($5-1);
-            $faces[$#faces][2]{uv} = ($6-1);
+            $faces[$#faces+1]{verts}[0]{coords} = ($1-1);
+            $faces[$#faces]{verts}[0]{uv} = ($2-1);
+            $faces[$#faces]{verts}[1]{coords} = ($3-1);
+            $faces[$#faces]{verts}[1]{uv} = ($4-1);
+            $faces[$#faces]{verts}[2]{coords} = ($5-1);
+            $faces[$#faces]{verts}[2]{uv} = ($6-1);
         }
         if ( $line =~ m/^vt (.*?) (.*?)$/ ){
             $uvs[$#uvs+1][0] = ($1+0);
@@ -38,10 +50,34 @@ sub generateModel {
         }
     }
     for my $id (@faces) {
-        $normals[$#normals+1] = calcFaceNormal(
-                                               $vertices[$id->[0]{vert}],
-                                               $vertices[$id->[1]{vert}],
-                                               $vertices[$id->[2]{vert}] );
+        my $normal_is_new = 1;
+        my $existing_normal;
+        
+        my $normal = calcFaceNormal(
+                        $vertices[$id->{verts}[0]{coords}],
+                        $vertices[$id->{verts}[1]{coords}],
+                        $vertices[$id->{verts}[2]{coords}] );
+        
+        if ($#normals != -1) {
+            for my $nid ( 0..$#normals) {
+                if ( $normal->[0] == $normals[$nid][0] && $normal->[1] == $normals[$nid][1] && $normal->[2] == $normals[$nid][2] ) {
+                    $existing_normal = $nid;
+                    $normal_is_new = 0;
+                    last;
+                }
+            }
+        }
+        
+        if ($normal_is_new) {
+            $normals[$#normals+1] = calcFaceNormal(
+                                                   $vertices[$id->{verts}[0]{coords}],
+                                                   $vertices[$id->{verts}[1]{coords}],
+                                                   $vertices[$id->{verts}[2]{coords}] );
+            $id->{normal} = $#normals;
+        }
+        else {
+            $id->{normal} = $existing_normal;
+        }
     }
     
     my $model = "sub draw$input {
@@ -50,13 +86,21 @@ sub generateModel {
     glColor3f(\$brightness, \$brightness, \$brightness);
 ";
 
-
-    for my $id ( 0..$#faces) {
-        $model .= "\n    glNormal3f( $normals[$id][0],$normals[$id][1],$normals[$id][2]);\n";
-        for my $vid ( 0..2) {
-            my $uv = $faces[$id][$vid]{uv};
-            my $vert = $faces[$id][$vid]{vert};
-            $model .= "    glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);\n";
+    my @old = (999,999,999);
+    for my $nid ( 0..$#normals) {
+        for my $fid ( 0..$#faces) {
+            next if ( $faces[$fid]{normal} != $nid );
+            
+            if( $old[0] != $normals[$nid][0] || $old[1] != $normals[$nid][1] || $old[2] != $normals[$nid][2] ) {
+                my $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
+                $model .= "\n    glNormal3f( $vec ); # $side{$vec} face\n";
+            }
+            for my $vid ( 0..2) {
+                my $uv = $faces[$fid]{verts}[$vid]{uv};
+                my $vert = $faces[$fid]{verts}[$vid]{coords};
+                $model .= "    glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);\n";
+            }
+            @old = ( $normals[$nid][0],$normals[$nid][1],$normals[$nid][2]);
         }
     }
     
@@ -113,6 +157,10 @@ sub calcFaceNormal {
     
     my $edge1 = $v1-$v2;
     my $edge2 = $v2-$v3;
-    my @normal = $edge1->Cross($edge2);
-    return \@normal;
+    my $cross = V($edge1->Cross($edge2));
+    my $length = $cross->Length();
+    
+    my $normal = $cross/$length;
+    
+    return $normal;
 }

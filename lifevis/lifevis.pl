@@ -162,7 +162,7 @@ use constant FORTIF => 5;
 use constant PILLAR => 6;
 
 do 'df_internals.pl';
-do 'models2.pl';
+do 'models.pl';
 
 use Win32::OLE('in');
 my $objWMIService = Win32::OLE->GetObject ('winmgmts:\\\\.\\root\\CIMV2') or die "WMI connection failed.\n";
@@ -793,7 +793,7 @@ sub ourInit {
     glEnable(GL_CULL_FACE);
 
     glShadeModel(GL_SMOOTH);    # Enables Smooth Color Shading; try GL_FLAT for (lack of) fun.
-    glEnable(GL_NORMALIZE);
+    #glEnable(GL_NORMALIZE);
 
     cbResizeScene($Width, $Height);    # Load up the correct perspective matrix; using a callback directly.
 
