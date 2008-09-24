@@ -161,6 +161,7 @@ use constant FORTIF => 5;
 use constant PILLAR => 6;
 
 do 'df_internals.pl';
+our %draw;
 do 'models.pl';
 
 use Win32::OLE('in');
@@ -298,7 +299,7 @@ sub syncToDF {
     $delay_full_update=0;
     
     # update camera system with mouse data
-    ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse+.5,$ymouse+.5,$zmouse+.5);
+    ($X_Pos,$Z_Pos,$Y_Pos) = ($xmouse,$ymouse,$zmouse);
     ourOrientMe(); # sets up initial camera position offsets
     
     # calculate cell coords from mouse coords
@@ -463,7 +464,7 @@ sub generateDisplayList {
                 $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
                 $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
                 $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                drawWall($rx,$z,$ry,1, $below, $north, $south, $west, $east);
+                $draw{Wall}->($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
@@ -472,7 +473,7 @@ sub generateDisplayList {
                 $south = $types[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
                 $west = $types[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
                 $east = $types[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                drawFloor($rx,$z,$ry,1, $below, $north, $south, $west, $east);
+                $draw{Floor}->($rx,$z,$ry,1, $below, $north, $south, $west, $east);
                 next;
             }
             
@@ -489,50 +490,83 @@ sub generateDisplayList {
                 
                 if( $north == WALL ) {
                     if ( $east == WALL) {
-                        #if ( $south == WALL) {
-                        #    drawTripleNorthSouthEastRamp($rx,$z,$ry,1);
-                        #}
-                        #else {
-                            #drawDoubleNorthEastRamp($rx,$z,$ry,1);
-                        #}
+                        if ( $south == WALL) {
+#                            drawTripleNorthEastSouthRamp($rx,$z,$ry,1);
+                        }
+                        elsif ( $west == WALL) {
+#                            drawTripleNorthEastWestRamp($rx,$z,$ry,1);
+                        }
+                        else {
+#                            drawDoubleNorthEastRamp($rx,$z,$ry,1);
+                        }
                     }
                     elsif ( $west == WALL) {
-                        #drawDoubleNorthWestRamp($rx,$z,$ry,1);
+                        if ( $south == WALL) {
+#                            drawTripleNorthWestSouthRamp($rx,$z,$ry,1);
+                        }
+                        else {
+#                            drawDoubleNorthWestRamp($rx,$z,$ry,1);
+                        }
+                    }
+                    elsif ( $south == WALL) {
                     }
                     else {
-                        drawSingleNorthRamp($rx,$z,$ry,1);                        
+                        $draw{SingleNorthRamp1}->($rx,$z,$ry,1);
                     }
                 }
                 elsif( $east == WALL ) {
                     if ( $south == WALL) {
-                        #drawDoubleSouthEastRamp($rx,$z,$ry,1);
+                        if ( $west == WALL) {
+#                            drawTripleEastSouthWestRamp($rx,$z,$ry,1);
+                        }
+                        else {
+#                            drawDoubleSouthEastRamp($rx,$z,$ry,1);
+                        }
                     }
                     else {
-                        drawSingleEastRamp($rx,$z,$ry,1);
+#                        drawSingleEastRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $south == WALL ) {
                     if ( $west == WALL) {
-                        #drawDoubleSouthWestRamp($rx,$z,$ry,1);
+#                        drawDoubleSouthWestRamp($rx,$z,$ry,1);
                     }
                     else {
-                        drawSingleSouthRamp($rx,$z,$ry,1);
+#                        drawSingleSouthRamp($rx,$z,$ry,1);
                     }
                 }
                 elsif( $west == WALL ) {
-                    drawSingleWestRamp($rx,$z,$ry,1);
+                    $draw{SingleNorthRamp4}->($rx,$z,$ry,1);
                 }
                 elsif( $northeast == WALL ) {
-                    #drawSingleNorthEastRamp($rx,$z,$ry,1);
+                    if ( $southeast == WALL) {
+#                        drawDoubleNE_SERamp($rx,$z,$ry,1);
+                    }
+                    elsif ( $northwest == WALL) {
+#                        drawDoubleNE_NWRamp($rx,$z,$ry,1);
+                    }
+                    else {
+#                        drawSingleNorthEastRamp($rx,$z,$ry,1);
+                    }
                 }
                 elsif( $southeast == WALL ) {
-                    #drawSingleSouthEastRamp($rx,$z,$ry,1);
+                    if ( $southwest == WALL) {
+#                        drawDoubleSE_SWRamp($rx,$z,$ry,1);
+                    }
+                    else {
+#                        drawSingleSouthEastRamp($rx,$z,$ry,1);
+                    }
                 }
                 elsif( $southwest == WALL ) {
-                    #drawSingleSouthWestRamp($rx,$z,$ry,1);
+                    if ( $northwest == WALL) {
+#                        drawDoubleSW_NWRamp($rx,$z,$ry,1);
+                    }
+                    else {
+#                        drawSingleSouthWestRamp($rx,$z,$ry,1);
+                    }
                 }
                 elsif( $northwest == WALL ) {
-                    #drawSingleNorthWestRamp($rx,$z,$ry,1);
+#                    drawSingleNorthWestRamp($rx,$z,$ry,1);
                 }
                 next;
             }
@@ -898,7 +932,7 @@ sub cbRenderScene {
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[3]);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBegin(GL_TRIANGLES);
-    #drawCursor($X_Pos-.5,$Y_Pos-.5,$Z_Pos-.5,1);
+    #drawCursor($X_Pos,$Y_Pos,$Z_Pos,1);
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindTexture(GL_TEXTURE_2D, $Texture_ID[2]);
