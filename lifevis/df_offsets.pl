@@ -2,7 +2,7 @@
 use 5.010;
 use strict;
 
-our @offsets = (
+our @OFFSETS = (
         {
             version => "v0.28.181.39a",
             PE => 0x487b4e8b,

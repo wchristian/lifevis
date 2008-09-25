@@ -13,330 +13,339 @@ BEGIN {
 	eval "use constant PILLAR => 6"         unless(defined &PILLAR);
 }
 
-our $zcount;
+our $ZCOUNT;
+
+our %DRAW_MODEL;
 
 
 
-sub drawFloor {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
+$DRAW_MODEL{Floor} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 0,1,0 ); # top face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-}
+    glNormal3f( 0,1,0 );# top face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-sub drawSingleEastRamp {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+};
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
 
-    glNormal3f( -0.707106781186547,0.707106781186547,0 ); #  face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,1.41421356); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,0+$z);
+$DRAW_MODEL{SingleNorthRamp1} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1.1); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(1,1.1); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-}
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-sub drawSingleNorthRamp {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
+    glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,1.41421356); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1.1); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(1,1.1); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+};
 
-    glNormal3f( 0,0.707106781186547,0.707106781186547 ); # top south face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,1.41421356); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0.1+$y,1+$z);
+$DRAW_MODEL{SingleNorthRamp2} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,1.1); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-}
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-sub drawSingleSouthRamp {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
+    glNormal3f( -0.707106781186547,0.707106781186547,0 );# top left face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,1.41421356); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1.1); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(0,1.1); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(1,1.1); glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+};
 
-    glNormal3f( 0,0.707106781186547,-0.707106781186547 ); #  face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,1.41421356); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,0+$z);
+$DRAW_MODEL{SingleNorthRamp3} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(0+$x,0.1+$y,0+$z);
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(1,1.1); glVertex3f(1+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-}
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-sub drawSingleWestRamp {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,1.41421356); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1.1); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,0.1); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(1,1.1); glVertex3f(0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+};
 
-    glNormal3f( 0.707106781186547,0.707106781186547,0 ); # top right face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,1+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,1.41421356); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,1.41421356); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0.1+$y,1+$z);
+$DRAW_MODEL{SingleNorthRamp4} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0.1); glVertex3f(1+$x,0.1+$y,0+$z);
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(1,1.1); glVertex3f(0+$x,1.1+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,1.1); glVertex3f(0+$x,1.1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-}
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-sub drawWall {
-    my ($x, $y, $z, $s) = @_;
-    my $brightness = $y/($zcount-15);
-    glColor3f($brightness, $brightness, $brightness);
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0.1); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    glNormal3f( 0,0,1 ); # south face
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,1+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,1+$y,1+$z);
+    glNormal3f( 0.707106781186547,0.707106781186547,0 );# top right face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,1.41421356); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,1.41421356); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    glNormal3f( 0,-1,0 ); # bottom face
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,0+$y,0+$z);
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1.1); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0.1); glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    glNormal3f( -1,0,0 ); # left face
-    glTexCoord2f(1,1); glVertex3f(0+$x,1+$y,1+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,1+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,1+$y,1+$z);
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(1,1.1); glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1.1); glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+};
 
-    glNormal3f( 0,1,0 ); # top face
-    glTexCoord2f(0,0); glVertex3f(0+$x,1+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(0+$x,1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,1+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(0+$x,1+$y,1+$z);
 
-    glNormal3f( 1,0,0 ); # right face
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,1+$y,1+$z);
-    glTexCoord2f(1,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,1+$z);
 
-    glNormal3f( 0,0,-1 ); # north face
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(0,0); glVertex3f(1+$x,0+$y,0+$z);
-    glTexCoord2f(1,1); glVertex3f(0+$x,1+$y,0+$z);
-    glTexCoord2f(0,1); glVertex3f(1+$x,1+$y,0+$z);
-    glTexCoord2f(1,0); glVertex3f(0+$x,0+$y,0+$z);
-}
+$DRAW_MODEL{Wall} = sub {
+        my ($x, $y, $z, $s) = @_;
+        my $brightness = $y/($ZCOUNT-15);
+        glColor3f($brightness, $brightness, $brightness);
+
+    glNormal3f( 0,0,1 );# south face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,0.5+$y,0.5+$z);
+
+    glNormal3f( 0,-1,0 );# bottom face
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+
+    glNormal3f( -1,0,0 );# left face
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+
+    glNormal3f( 0,1,0 );# top face
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(-0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(-0.5+$x,0.5+$y,0.5+$z);
+
+    glNormal3f( 1,0,0 );# right face
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,0.5+$y,0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
+
+    glNormal3f( 0,0,-1 );# north face
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,0); glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
+    glTexCoord2f(1,1); glVertex3f(-0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(0,1); glVertex3f(0.5+$x,0.5+$y,-0.5+$z);
+    glTexCoord2f(1,0); glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+};
+

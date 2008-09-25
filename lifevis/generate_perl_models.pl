@@ -92,9 +92,9 @@ sub generateModel {
         }
         
         $rotation = '' if ( $rotations == 1 );
-        $model .= "\n\n\$draw{$input$rotation} = sub {
+        $model .= "\n\n\$DRAW_MODEL{$input$rotation} = sub {
         my (\$x, \$y, \$z, \$s) = \@_;
-        my \$brightness = \$y/(\$zcount-15);
+        my \$brightness = \$y/(\$ZCOUNT-15);
         glColor3f(\$brightness, \$brightness, \$brightness);";
     
         my @old = (999,999,999);
@@ -158,9 +158,9 @@ BEGIN {
 	eval \"use constant PILLAR => 6\"         unless(defined &PILLAR);
 }
 
-our \$zcount;
+our \$ZCOUNT;
 
-our \%draw;
+our \%DRAW_MODEL;
 
 $code
 
