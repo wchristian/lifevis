@@ -92,7 +92,7 @@ sub generateModel {
         }
         
         $rotation = '' if ( $rotations == 1 );
-        $model .= "\n\n\$DRAW_MODEL{$input$rotation} = sub {
+        $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s) = \@_;
         my \$brightness = \$y/(\$ZCOUNT-15);
         glColor3f(\$brightness, \$brightness, \$brightness);";
@@ -195,7 +195,7 @@ sub calcFaceNormal {
 
 sub rotate_vector {
     my ($x,$z) = @_;
-    my $xnew = cos(pip2)*($x) - sin(pip2)*$z;
-    my $znew = sin(pip2)*($x) + cos(pip2)*$z;
+    my $xnew = cos(-1*pip2)*($x) - sin(-1*pip2)*$z;
+    my $znew = sin(-1*pip2)*($x) + cos(-1*pip2)*$z;
     return ($xnew,$znew);
 }
