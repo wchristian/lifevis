@@ -89,6 +89,19 @@ my $window_width = 533;
 my $window_height = 300;
 
 my @texture_ID;
+    
+use constant grass => 0;
+use constant stone => 1;
+use constant cursor => 2;
+use constant obsidian => 3;
+use constant unknown => 4;
+use constant minstone => 5;
+use constant pool => 6;
+use constant water => 7;
+use constant soil => 8;
+use constant tree => 9;
+use constant shrub => 10;
+use constant sapling => 10;
 
 # Object and scene global variables.
 
@@ -160,6 +173,7 @@ my @protected_caches;
 our @TILE_TYPES;
 do 'df_internals.pl';
 use constant base_visual => 0;
+use constant base_texture => 1;
 use constant EMPTY => 0;
 use constant FLOOR => 1;
 use constant WALL => 2;
@@ -167,7 +181,9 @@ use constant RAMP => 3;
 use constant STAIR => 4;
 use constant FORTIF => 5;
 use constant PILLAR => 6;
+use constant RAMP_TOP => 7;
 
+# TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
 my @ramps = (
 { mask => 0b0_1111_0000, func => '4S' },
 { mask => 0b0_1101_0000, func => '3S1' },
@@ -184,14 +200,18 @@ my @ramps = (
 { mask => 0b0_1001_0000, func => '2S4' },
 { mask => 0b0_1010_0000, func => '1S_1S1' },
 { mask => 0b0_0101_0000, func => '1S_1S2' },
-{ mask => 0b0_1000_0010, func => '1S_1DR1' },
-{ mask => 0b0_0100_0001, func => '1S_1DR2' },
-{ mask => 0b0_0010_1000, func => '1S_1DR3' },
-{ mask => 0b0_0001_0100, func => '1S_1DR4' },
 { mask => 0b0_1000_0100, func => '1S_1DL1' },
 { mask => 0b0_0100_0010, func => '1S_1DL2' },
 { mask => 0b0_0010_0001, func => '1S_1DL3' },
 { mask => 0b0_0001_1000, func => '1S_1DL4' },
+{ mask => 0b0_1000_0010, func => '1S_1DR1' },
+{ mask => 0b0_0100_0001, func => '1S_1DR2' },
+{ mask => 0b0_0010_1000, func => '1S_1DR3' },
+{ mask => 0b0_0001_0100, func => '1S_1DR4' },
+{ mask => 0b0_1000_0000, func => '1S1' },
+{ mask => 0b0_0100_0000, func => '1S2' },
+{ mask => 0b0_0010_0000, func => '1S3' },
+{ mask => 0b0_0001_0000, func => '1S4' },
 { mask => 0b0_0000_1111, func => '4D' },
 { mask => 0b0_0000_1101, func => '3D1' },
 { mask => 0b0_0000_1110, func => '3D2' },
@@ -201,10 +221,6 @@ my @ramps = (
 { mask => 0b0_1000_0110, func => '1S_2D1' },
 { mask => 0b0_0100_0011, func => '1S_2D2' },
 { mask => 0b0_0010_1001, func => '1S_2D3' },
-{ mask => 0b0_1000_0000, func => '1S1' },
-{ mask => 0b0_0100_0000, func => '1S2' },
-{ mask => 0b0_0010_0000, func => '1S3' },
-{ mask => 0b0_0001_0000, func => '1S4' },
 { mask => 0b0_0000_1001, func => '2D1' },
 { mask => 0b0_0000_1100, func => '2D2' },
 { mask => 0b0_0000_0110, func => '2D3' },
@@ -300,8 +316,7 @@ sub refresh_map_data {
 }
 
 sub extract_base_memory_data {
-    # get map size
-    $xcount = $proc->get_u32( $OFFSETS[$ver]{x_count} );
+    $xcount = $proc->get_u32( $OFFSETS[$ver]{x_count} ); # map size in cells
     $ycount = $proc->get_u32( $OFFSETS[$ver]{y_count} );
     $ZCOUNT = $proc->get_u32( $OFFSETS[$ver]{z_count} );
 
@@ -366,7 +381,8 @@ sub sync_to_DF {
     $ycell = $range if $ycell <= $range-1;
     $xcell = $xcount-$range-1 if $xcell >= $xcount-$range;
     $ycell = $ycount-$range-1 if $ycell >= $ycount-$range;
-
+    
+    #TODO: When at the edge, only grab at inner edge.
     # cycle through cells in range around cursor to grab data
     for my $bx ( $xcell-$range-1 .. $xcell+$range+1 ) {
         next if ( $bx < 0 || $bx > $xcount-1);
@@ -511,82 +527,90 @@ sub generate_display_list {
     }
 
     glNewList($dl, GL_COMPILE);
-    #glBindTexture(GL_TEXTURE_2D, $texture_ID[2]);       # select mipmapped texture
-    glBegin(GL_TRIANGLES);
-    my $tile = $tiles[$z][type];
-    my $tile_below = $tiles[$z-1][type];
-    for my $rx (($x*16)..($x*16)+15) {
-        for my $ry (($y*16)..($y*16)+15) {
-
-            next if !defined $tile->[$rx][$ry];
-            $type = $tile->[$rx][$ry];
-            $type_below = $tile_below->[$rx][$ry];
-            next if $type == 32;
-
-            my ($below, $north, $south, $west, $east) = (EMPTY,EMPTY,EMPTY,EMPTY,EMPTY);
-            my ($northeast, $southeast, $southwest, $northwest) = (EMPTY,EMPTY,EMPTY,EMPTY);
-            my $x_mod = $rx%16;
-            my $y_mod = $ry%16;
-
-            $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
-
-            if ( $TILE_TYPES[$type][base_visual] == WALL ) {
-                $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
-                $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
-                $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
-                $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                $DRAW_MODEL{Wall}->($rx,$z,$ry,1, $below, $north, $south, $west, $east);
-                next;
-            }
-
-            elsif ( $TILE_TYPES[$tile->[$rx][$ry]][base_visual] == FLOOR ) {
-                $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
-                $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
-                $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
-                $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
-                $DRAW_MODEL{Floor}->($rx,$z,$ry,1, $below, $north, $south, $west, $east);
-                next;
-            }
-
-            elsif ( $TILE_TYPES[$tile->[$rx][$ry]][base_visual] == RAMP ) {
-                next if ( defined $type_below && $TILE_TYPES[$type_below][base_visual] == RAMP );
-                $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $ry != 0;
-                $northeast = $TILE_TYPES[$tile->[$rx+1][$ry-1]][base_visual] if $tile->[$rx+1][$ry-1] && ($ry != 0 || $rx != $x_max);
-                $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $rx != $x_max;
-                $southeast = $TILE_TYPES[$tile->[$rx+1][$ry+1]][base_visual] if $tile->[$rx+1][$ry+1] && ($ry != $y_max || $rx != $x_max);
-                $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $ry != $y_max;
-                $southwest = $TILE_TYPES[$tile->[$rx-1][$ry+1]][base_visual] if $tile->[$rx-1][$ry+1] && ($ry != $y_max || $ry != 0);
-                $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $rx != 0;
-                $northwest = $TILE_TYPES[$tile->[$rx-1][$ry-1]][base_visual] if $tile->[$rx-1][$ry-1] && ($ry != 0|| $ry != 0);
-                
-                my $surroundings = 0;
-                $surroundings += ($north == WALL)       ? 0b1000_0000 : 0;
-                $surroundings += ($west == WALL)        ? 0b0100_0000 : 0;
-                $surroundings += ($south == WALL)       ? 0b0010_0000 : 0;
-                $surroundings += ($east == WALL)        ? 0b0001_0000 : 0;
-                $surroundings += ($northwest == WALL)   ? 0b0000_1000 : 0;
-                $surroundings += ($southwest == WALL)   ? 0b0000_0100 : 0;
-                $surroundings += ($southeast == WALL)   ? 0b0000_0010 : 0;
-                $surroundings += ($northeast == WALL)   ? 0b0000_0001 : 0;
-                
-                $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
-
-                for my $ramp_type ( 0 .. $#ramps ){
-                    my $mask = $ramps[$ramp_type]{mask};
-                    my $bit_comparison = $mask & $surroundings;
-                    if ( $bit_comparison == $mask ){
-                        my $func = $ramps[$ramp_type]{func};
-                        croak "Need following ramp model: $func" if !defined $DRAW_MODEL{$func};
-                        $DRAW_MODEL{$func}->($rx,$z,$ry,1);
-                        last;
-                    }
+    for my $texture ( 0 .. $#texture_ID ) {
+        glBindTexture(GL_TEXTURE_2D, $texture_ID[$texture]);       # select mipmapped texture
+        glBegin(GL_TRIANGLES);
+        my $tile = $tiles[$z][type];
+        my $tile_below = $tiles[$z-1][type];
+        my $tile_above = $tiles[$z+1][type];
+        for my $rx (($x*16)..($x*16)+15) {
+            for my $ry (($y*16)..($y*16)+15) {
+    
+                next if !defined $tile->[$rx][$ry];
+                $type = $tile->[$rx][$ry];
+                next if $type == 32;
+                next if $TILE_TYPES[$type][base_texture] != $texture;
+                $type_below = $tile_below->[$rx][$ry];
+    
+                my ($below, $north, $south, $west, $east) = (EMPTY,EMPTY,EMPTY,EMPTY,EMPTY);
+                my ($northeast, $southeast, $southwest, $northwest) = (EMPTY,EMPTY,EMPTY,EMPTY);
+                my $x_mod = $rx%16;
+                my $y_mod = $ry%16;
+    
+                $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
+    
+                if ( $TILE_TYPES[$type][base_visual] == WALL ) {
+                    $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
+                    $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
+                    $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
+                    $DRAW_MODEL{Wall}->($rx,$z,$ry,1,1);
+                    next;
                 }
-                next;
+    
+                elsif ( $TILE_TYPES[$type][base_visual] == FLOOR ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $y_mod != 0;
+                    $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $y_mod != 15;
+                    $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $x_mod != 15;
+                    
+                    my $brightness_modificator = 1;
+                    $brightness_modificator = 0.75 if( defined $type_above && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    $DRAW_MODEL{Floor}->($rx,$z,$ry,1,$brightness_modificator);
+                    next;
+                }
+    
+                elsif ( $TILE_TYPES[$type][base_visual] == RAMP ) {
+                    next if ( defined $type_below && $TILE_TYPES[$type_below][base_visual] == RAMP );
+                    $north = $TILE_TYPES[$tile->[$rx][$ry-1]][base_visual] if $tile->[$rx][$ry-1] && $ry != 0;
+                    $northeast = $TILE_TYPES[$tile->[$rx+1][$ry-1]][base_visual] if $tile->[$rx+1][$ry-1] && ($ry != 0 || $rx != $x_max);
+                    $east = $TILE_TYPES[$tile->[$rx+1][$ry]][base_visual] if $tile->[$rx+1][$ry] && $rx != $x_max;
+                    $southeast = $TILE_TYPES[$tile->[$rx+1][$ry+1]][base_visual] if $tile->[$rx+1][$ry+1] && ($ry != $y_max || $rx != $x_max);
+                    $south = $TILE_TYPES[$tile->[$rx][$ry+1]][base_visual] if $tile->[$rx][$ry+1] && $ry != $y_max;
+                    $southwest = $TILE_TYPES[$tile->[$rx-1][$ry+1]][base_visual] if $tile->[$rx-1][$ry+1] && ($ry != $y_max || $ry != 0);
+                    $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $rx != 0;
+                    $northwest = $TILE_TYPES[$tile->[$rx-1][$ry-1]][base_visual] if $tile->[$rx-1][$ry-1] && ($ry != 0|| $ry != 0);
+                    
+                    my $surroundings = 0;
+                    $surroundings += ($north == WALL)       ? 0b1000_0000 : 0;
+                    $surroundings += ($west == WALL)        ? 0b0100_0000 : 0;
+                    $surroundings += ($south == WALL)       ? 0b0010_0000 : 0;
+                    $surroundings += ($east == WALL)        ? 0b0001_0000 : 0;
+                    $surroundings += ($northwest == WALL)   ? 0b0000_1000 : 0;
+                    $surroundings += ($southwest == WALL)   ? 0b0000_0100 : 0;
+                    $surroundings += ($southeast == WALL)   ? 0b0000_0010 : 0;
+                    $surroundings += ($northeast == WALL)   ? 0b0000_0001 : 0;
+                    
+                    $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
+    
+                    for my $ramp_type ( 0 .. $#ramps ){
+                        my $mask = $ramps[$ramp_type]{mask};
+                        my $bit_comparison = $mask & $surroundings;
+                        if ( $bit_comparison == $mask ){
+                            my $func = $ramps[$ramp_type]{func};
+                            croak "Need following ramp model: $func" if !defined $DRAW_MODEL{$func};
+                            $DRAW_MODEL{$func}->($rx,$z,$ry,1,1);
+                            last;
+                        }
+                    }
+                    next;
+                }
+    
             }
-
         }
+        glEnd();
     }
-    glEnd();
     glEndList();
 
     return;
@@ -952,13 +976,13 @@ sub render_scene {
     # draw visible cursor
     glDisable(GL_LIGHTING);
     glLineWidth(2);
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[3]);
+    glBindTexture(GL_TEXTURE_2D, $texture_ID[cursor]);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBegin(GL_TRIANGLES);
-    #drawCursor($x_pos,$y_pos,$z_pos,1);
+    glBegin(GL_QUADS);
+    $DRAW_MODEL{Cursor}->($x_pos,$y_pos,$z_pos,1,1);
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[2]);
+    glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);
 
     glLoadIdentity();    # Move back to the origin (for the text, below).
 
@@ -1083,46 +1107,41 @@ sub resize_scene {
 
 sub build_textures {
 
-    print 'loading texture..';
+    print 'loading textures..';
 
-    my $tex = new OpenGL::Image(engine=>'Magick',source=>'grass.png');
-    # Get GL info
-    my($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
-    my($w,$h) = $tex->Get('width','height');
+    @texture_ID = glGenTextures_p(12);    # Generate a texture index, then bind it for future operations.
 
-    @texture_ID = glGenTextures_p(4);    # Generate a texture index, then bind it for future operations.
+    create_texture('grass',grass);
+    create_texture('stone',stone);
+    create_texture('cursor',cursor);
+    create_texture('obsidian',obsidian);
+    create_texture('unknown',unknown);
+    create_texture('minstone',minstone);
+    create_texture('pool',pool);
+    create_texture('water',water);
+    create_texture('soil',soil);
+    create_texture('tree',tree);
+    create_texture('shrub',shrub);
+    create_texture('sapling',sapling);
 
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[0]);                                  # unfiltered texture
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
+    #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
+    #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
+    #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
 
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[1]);                                  # other mimap method, fails hilariously (?)
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-    gluBuild2DMipmaps_s(GL_TEXTURE_2D, 3, $w, $h, GL_RGB, GL_UNSIGNED_BYTE, $tex->Ptr());
-
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[2]);                                   # mip-mapped texture
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
-
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[3]);       # select mipmapped texture
-    $tex = new OpenGL::Image(engine=>'Magick',source=>'cursor.png');
-    ($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
-    ($w,$h) = $tex->Get('width','height');
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
-
-    glBindTexture(GL_TEXTURE_2D, $texture_ID[2]);       # select mipmapped texture
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
-    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-
-    say "   texture loaded.\n";
+    say "   textures loaded.\n";
     return;
+}
+
+sub create_texture {
+    my ($name,$id) = @_;
+    glBindTexture(GL_TEXTURE_2D, $texture_ID[$id]);
+    my $tex = new OpenGL::Image(engine=>'Magick',source=>$name.'.png');
+    my ($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
+    my ($w,$h) = $tex->Get('width','height');
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    glTexImage2D_c(GL_TEXTURE_2D, 0, $ifmt, $w, $h, 0, $fmt, $type, $tex->Ptr());
 }
 
 
