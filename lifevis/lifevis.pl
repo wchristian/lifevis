@@ -1135,7 +1135,7 @@ sub build_textures {
 sub create_texture {
     my ($name,$id) = @_;
     glBindTexture(GL_TEXTURE_2D, $texture_ID[$id]);
-    my $tex = new OpenGL::Image(engine=>'Magick',source=>$name.'.png');
+    my $tex = new OpenGL::Image(engine=>'Magick',source=>"textures/$name.png");
     my ($ifmt,$fmt,$type) = $tex->Get('gl_internalformat','gl_format','gl_type');
     my ($w,$h) = $tex->Get('width','height');
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
