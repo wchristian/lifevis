@@ -2,6 +2,8 @@
 use 5.010;
 use strict;
 
+# TODO: Make auto-converter from ods to this file.
+
 our @TILE_TYPES;
 
 BEGIN {

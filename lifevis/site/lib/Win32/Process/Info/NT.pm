@@ -381,163 +381,163 @@ use constant TOKEN_EXECUTE         => STANDARD_RIGHTS_EXECUTE;
 # Pointer	P
 
 sub GetProcInfo {
-my $self = shift;
-my $opt = ref $_[0] eq 'HASH' ? shift : {};
-
-$CloseHandle ||= _map ('KERNEL32', 'CloseHandle', [qw{N}], 'V');
-$GetModuleFileNameEx ||=
-	_map ('PSAPI', 'GetModuleFileNameEx', [qw{N N P N}], 'I');
-$GetPriorityClass ||=
-	_map ('KERNEL32', 'GetPriorityClass', [qw{N}], 'I');
-$GetProcessAffinityMask ||=
-	_map ('KERNEL32', 'GetProcessAffinityMask', [qw{N P P}], 'I');
-$GetProcessIoCounters ||=
-	_map_opt ('KERNEL32', 'GetProcessIoCounters', [qw{N P}], 'I');
-$GetProcessTimes ||=
-	_map ('KERNEL32', 'GetProcessTimes', [qw{N P P P P}], 'I');
-$GetProcessWorkingSetSize ||=
-	_map ('KERNEL32', 'GetProcessWorkingSetSize', [qw{N P P}], 'I');
-$GetTokenInformation ||=
-	_map ('ADVAPI32', 'GetTokenInformation', [qw{N N P N P}], 'I');
-$LookupAccountSid ||=
-	_map ('ADVAPI32', 'LookupAccountSid', [qw{P P P P P P P}], 'I');
-$OpenProcess ||= _map ('KERNEL32', 'OpenProcess', [qw{N I N}], 'N');
-$OpenProcessToken ||=
-	_map ('ADVAPI32', 'OpenProcessToken', [qw{N N P}], 'I');
-$EnumProcessModules ||=
-	_map ('PSAPI', 'EnumProcessModules', [qw{N P N P}], 'I');
-
-
-my $dac = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-my $tac = TOKEN_READ;
-
-@_ = ListPids ($self) unless @_;
-
-my @pinf;
-
-my $dat;
-my %sid_to_name;
-my @trydac = (
-    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-    PROCESS_QUERY_INFORMATION,
-    );
-
-foreach my $pid (map {$_ eq '.' ? $$ : $_} @_) {
-
-    $^E = 0;
-    $dat = $self->_build_hash (undef, ProcessId => $pid);
-    $self->_build_hash ($dat, Name => 'System Idle Process')
-	unless $pid;
-
-    push @pinf, $dat;
-
-    my $prchdl;
-    foreach my $dac (@trydac) {
-	$prchdl = $OpenProcess->Call ($dac, 0, $pid) and last;
-	}
-    next unless $prchdl;
-
-    my ($cretim, $exttim, $knltim, $usrtim);
-    $cretim = $exttim = $knltim = $usrtim = ' ' x 8;
-    if ($GetProcessTimes->Call ($prchdl, $cretim, $exttim, $knltim, $usrtim)) {
-	my $time = _to_char_date ($cretim);
-	$self->_build_hash ($dat, CreationDate => $time) if $time;
-	$self->_build_hash ($dat,
-		KernelModeTime	=> _ll_to_bigint ($knltim),
-		UserModeTime	=> _ll_to_bigint ($usrtim));
-	}
-
-    my ($minws, $maxws);
-    $minws = $maxws = '    ';
-    if ($GetProcessWorkingSetSize->Call ($prchdl, $minws, $maxws)) {
-	$self->_build_hash ($dat,
-		MinimumWorkingSetSize	=> unpack ('L', $minws),
-		MaximumWorkingSetSize	=> unpack ('L', $maxws));
-	}
-
-    my $procio = '        ' x 6;	# structure is 6 longlongs.
-    if ($GetProcessIoCounters->Call ($prchdl, $procio)) {
-	my ($ro, $wo, $oo, $rb, $wb, $ob) = _ll_to_bigint ($procio);
-	$self->_build_hash ($dat,
-		ReadOperationCount	=> $ro,
-		ReadTransferCount	=> $rb,
-		WriteOperationCount	=> $wo,
-		WriteTransferCount	=> $wb,
-		OtherOperationCount	=> $oo,
-		OtherTransferCount	=> $ob);
-	}
-
-    my $modhdl = '    ';	# Module handle better be 4 bytes.
-    my $modgot = '    ';
-
-    if ($EnumProcessModules->Call ($prchdl, $modhdl, length $modhdl, $modgot)) {
-	$modhdl = unpack ('L', $modhdl);
-	my $mfn = ' ' x MAX_PATH;
-	if ($GetModuleFileNameEx->Call ($prchdl, $modhdl, $mfn, length $mfn)) {
-	    $mfn =~ s/\0.*//;
-	    $mfn =~ s/^\\(\w+)/$ENV{$1} ? $ENV{$1} : "\\$1"/ex;
-	    $mfn =~ s/^\\\?\?\\//;
-	    $self->_build_hash ($dat,
-		ExecutablePath	=> $mfn);
-	    my $base = basename ($mfn);
-	    $self->_build_hash ($dat, Name => $base) if $base;
-	    }
-	}
-
-    my ($tokhdl);
-    $tokhdl = ' ' x 4;		# Token handle better be 4 bytes.
-    {				# Start block, to use as single-iteration loop
-	last if $opt->{no_user_info};
-	$OpenProcessToken->Call ($prchdl, $tac, $tokhdl)
-	    or do {$tokhdl = undef; last; };
-	sub TokenUser {1};	# PER MSDN
-	sub TokenOwner {4};
-	my ($dsize, $size_in, $size_out, $sid, $stat, $use, $void);
-	$tokhdl = unpack 'L', $tokhdl;
-
-	$size_out = ' ' x 4;
-	$void = pack 'p', undef;
-	my $token_type = TokenUser;
-	$GetTokenInformation->Call ($tokhdl, $token_type, $void, 0, $size_out);
-	$size_in = unpack 'L', $size_out;
-	my $tokinf = ' ' x $size_in;
-	$GetTokenInformation->Call ($tokhdl, $token_type, $tokinf, $size_in, $size_out)
-	    or last;
-	my $sidadr = unpack "P$size_in", $tokinf;
-## NO!	my $sidadr = unpack "P4", $tokinf;
-
-	$sid = _text_sid ($sidadr) or last;
-	$self->_build_hash ($dat, OwnerSid => $sid);
-	if ($sid_to_name{$sid}) {
-	    $self->_build_hash ($dat, Owner => $sid_to_name{$sid});
-	    last;
-	    }
-
-	$size_out = $dsize = pack 'L', 0;
-	$use = pack 'S', 0;
-	$stat = $LookupAccountSid->Call ($void, $sidadr, $void, $size_out, $void, $dsize, $use);
-	my ($name, $domain);
-	$name = " " x (unpack 'L', $size_out);
-	$domain = " " x (unpack 'L', $dsize);
-	my $pname = pack 'p', $name;
-	my $pdom = pack 'p', $domain;
-	$LookupAccountSid->Call ($void, $sidadr, $name, $size_out, $domain, $dsize, $use)
-	    or last;
-	$size_out = unpack 'L', $size_out;
-	$dsize = unpack 'L', $dsize;
-	my $user = (substr ($domain, 0, $dsize) . "\\" .
-			substr ($name, 0, $size_out));
-	$sid_to_name{$sid} = $user;
-	$self->_build_hash ($dat, Owner => $user);
-	}
-
-    $CloseHandle->Call ($tokhdl) if $tokhdl && $tokhdl ne '    ';
-    $CloseHandle->Call ($prchdl);
-    }
-  continue {
-    $self->_build_hash ($dat, _status => $^E + 0);
-    }
-return wantarray ? @pinf : \@pinf;
+    my $self = shift;
+    my $opt = ref $_[0] eq 'HASH' ? shift : {};
+    
+    $CloseHandle ||= _map ('KERNEL32', 'CloseHandle', [qw{N}], 'V');
+    $GetModuleFileNameEx ||=
+        _map ('PSAPI', 'GetModuleFileNameEx', [qw{N N P N}], 'I');
+    $GetPriorityClass ||=
+        _map ('KERNEL32', 'GetPriorityClass', [qw{N}], 'I');
+    $GetProcessAffinityMask ||=
+        _map ('KERNEL32', 'GetProcessAffinityMask', [qw{N P P}], 'I');
+    $GetProcessIoCounters ||=
+        _map_opt ('KERNEL32', 'GetProcessIoCounters', [qw{N P}], 'I');
+    $GetProcessTimes ||=
+        _map ('KERNEL32', 'GetProcessTimes', [qw{N P P P P}], 'I');
+    $GetProcessWorkingSetSize ||=
+        _map ('KERNEL32', 'GetProcessWorkingSetSize', [qw{N P P}], 'I');
+    $GetTokenInformation ||=
+        _map ('ADVAPI32', 'GetTokenInformation', [qw{N N P N P}], 'I');
+    $LookupAccountSid ||=
+        _map ('ADVAPI32', 'LookupAccountSid', [qw{P P P P P P P}], 'I');
+    $OpenProcess ||= _map ('KERNEL32', 'OpenProcess', [qw{N I N}], 'N');
+    $OpenProcessToken ||=
+        _map ('ADVAPI32', 'OpenProcessToken', [qw{N N P}], 'I');
+    $EnumProcessModules ||=
+        _map ('PSAPI', 'EnumProcessModules', [qw{N P N P}], 'I');
+    
+    
+    my $dac = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
+    my $tac = TOKEN_READ;
+    
+    @_ = ListPids ($self) unless @_;
+    
+    my @pinf;
+    
+    my $dat;
+    my %sid_to_name;
+    my @trydac = (
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        PROCESS_QUERY_INFORMATION,
+        );
+    
+    foreach my $pid (map {$_ eq '.' ? $$ : $_} @_) {
+    
+        $^E = 0;
+        $dat = $self->_build_hash (undef, ProcessId => $pid);
+        $self->_build_hash ($dat, Name => 'System Idle Process')
+        unless $pid;
+    
+        push @pinf, $dat;
+    
+        my $prchdl;
+        foreach my $dac (@trydac) {
+        $prchdl = $OpenProcess->Call ($dac, 0, $pid) and last;
+        }
+        next unless $prchdl;
+    
+        my ($cretim, $exttim, $knltim, $usrtim);
+        $cretim = $exttim = $knltim = $usrtim = ' ' x 8;
+        if ($GetProcessTimes->Call ($prchdl, $cretim, $exttim, $knltim, $usrtim)) {
+        my $time = _to_char_date ($cretim);
+        $self->_build_hash ($dat, CreationDate => $time) if $time;
+        $self->_build_hash ($dat,
+            KernelModeTime	=> _ll_to_bigint ($knltim),
+            UserModeTime	=> _ll_to_bigint ($usrtim));
+        }
+    
+        my ($minws, $maxws);
+        $minws = $maxws = '    ';
+        if ($GetProcessWorkingSetSize->Call ($prchdl, $minws, $maxws)) {
+        $self->_build_hash ($dat,
+            MinimumWorkingSetSize	=> unpack ('L', $minws),
+            MaximumWorkingSetSize	=> unpack ('L', $maxws));
+        }
+    
+        my $procio = '        ' x 6;	# structure is 6 longlongs.
+        if ($GetProcessIoCounters->Call ($prchdl, $procio)) {
+        my ($ro, $wo, $oo, $rb, $wb, $ob) = _ll_to_bigint ($procio);
+        $self->_build_hash ($dat,
+            ReadOperationCount	=> $ro,
+            ReadTransferCount	=> $rb,
+            WriteOperationCount	=> $wo,
+            WriteTransferCount	=> $wb,
+            OtherOperationCount	=> $oo,
+            OtherTransferCount	=> $ob);
+        }
+    
+        my $modhdl = '    ';	# Module handle better be 4 bytes.
+        my $modgot = '    ';
+    
+        if ($EnumProcessModules->Call ($prchdl, $modhdl, length $modhdl, $modgot)) {
+        $modhdl = unpack ('L', $modhdl);
+        my $mfn = ' ' x MAX_PATH;
+        if ($GetModuleFileNameEx->Call ($prchdl, $modhdl, $mfn, length $mfn)) {
+            $mfn =~ s/\0.*//;
+            $mfn =~ s/^\\(\w+)/$ENV{$1} ? $ENV{$1} : "\\$1"/ex;
+            $mfn =~ s/^\\\?\?\\//;
+            $self->_build_hash ($dat,
+            ExecutablePath	=> $mfn);
+            my $base = basename ($mfn);
+            $self->_build_hash ($dat, Name => $base) if $base;
+            }
+        }
+    
+        my ($tokhdl);
+        $tokhdl = ' ' x 4;		# Token handle better be 4 bytes.
+        {				# Start block, to use as single-iteration loop
+            last if $opt->{no_user_info};
+            $OpenProcessToken->Call ($prchdl, $tac, $tokhdl)
+                or do {$tokhdl = undef; last; };
+            sub TokenUser {1};	# PER MSDN
+            sub TokenOwner {4};
+            my ($dsize, $size_in, $size_out, $sid, $stat, $use, $void);
+            $tokhdl = unpack 'L', $tokhdl;
+        
+            $size_out = ' ' x 4;
+            $void = pack 'p', undef;
+            my $token_type = TokenUser;
+            $GetTokenInformation->Call ($tokhdl, $token_type, $void, 0, $size_out);
+            $size_in = unpack 'L', $size_out;
+            my $tokinf = ' ' x $size_in;
+            $GetTokenInformation->Call ($tokhdl, $token_type, $tokinf, $size_in, $size_out)
+                or last;
+            my $sidadr = unpack "P$size_in", $tokinf;
+        ## NO!	my $sidadr = unpack "P4", $tokinf;
+        
+            $sid = _text_sid ($sidadr) or last;
+            $self->_build_hash ($dat, OwnerSid => $sid);
+            if ($sid_to_name{$sid}) {
+                $self->_build_hash ($dat, Owner => $sid_to_name{$sid});
+                last;
+                }
+        
+            $size_out = $dsize = pack 'L', 0;
+            $use = pack 'S', 0;
+            $stat = $LookupAccountSid->Call ($void, $sidadr, $void, $size_out, $void, $dsize, $use);
+            my ($name, $domain);
+            $name = " " x (unpack 'L', $size_out);
+            $domain = " " x (unpack 'L', $dsize);
+            my $pname = pack 'p', $name;
+            my $pdom = pack 'p', $domain;
+            $LookupAccountSid->Call ($void, $sidadr, $name, $size_out, $domain, $dsize, $use)
+                or last;
+            $size_out = unpack 'L', $size_out;
+            $dsize = unpack 'L', $dsize;
+            my $user = (substr ($domain, 0, $dsize) . "\\" .
+                    substr ($name, 0, $size_out));
+            $sid_to_name{$sid} = $user;
+            $self->_build_hash ($dat, Owner => $user);
+        }
+    
+        $CloseHandle->Call ($tokhdl) if $tokhdl && $tokhdl ne '    ';
+        $CloseHandle->Call ($prchdl);
+        }
+      continue {
+        $self->_build_hash ($dat, _status => $^E + 0);
+        }
+    return wantarray ? @pinf : \@pinf;
 }
 
 sub _to_char_date {

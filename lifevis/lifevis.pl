@@ -34,13 +34,15 @@ use Benchmark ':hireswallclock';
 use Carp;
 use OpenGL qw/ :all /;
 use OpenGL::Image;
-use Image::BMP;
 use Math::Trig;
 use Win32;
 use Win32::Process::List;
 use Win32::Process;
 use Win32::Process::Memory;
 use LWP::Simple;
+use Image::Magick;
+use Win32::GUI::Constants qw ( :window :accelerator );
+use Win32::GuiTest qw(:FUNC :VK);
 
 use English qw(-no_match_vars);
 $OUTPUT_AUTOFLUSH = 1;
@@ -134,6 +136,7 @@ my $dwarf_pid;
 my $ver;
 my $proc;
 my $pe_timestamp;
+my ($DF_window) = FindWindowLike(0, "^Dwarf");
 
 my ($submenid,$menid);
 
@@ -1163,28 +1166,32 @@ sub process_key_press {
         #        $normal_inputs{97} = sub { $y_rot += 2.5; }; # Q
         #        $normal_inputs{100} = sub { $y_rot -= 2.5; }; # E
         $normal_inputs{97} = sub {
-            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
+=cut            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
             my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
             $x_pos += $cos_y * 0.25;
-            $z_pos += $sin_y * 0.25;
+=cut            $z_pos += $sin_y * 0.25;
+            SendMessage($DF_window, WM_KEYDOWN, VK_LEFT, 0);
         }; # A
         $normal_inputs{100} = sub {
-            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
+=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
             my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
             $x_pos -= $cos_y * 0.25;
-            $z_pos -= $sin_y * 0.25;
+=cut             $z_pos -= $sin_y * 0.25;
+            SendMessage($DF_window, WM_KEYDOWN, VK_RIGHT, 0);
         }; # D
         $normal_inputs{119} = sub {
-            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
+=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
             my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
             $x_pos -= $sin_y * 0.25;
-            $z_pos += $cos_y * 0.25;
+=cut             $z_pos += $cos_y * 0.25;
+            SendMessage($DF_window, WM_KEYDOWN, VK_UP, 0);
         }; # W
         $normal_inputs{115} = sub {
-            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
+=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
             my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
             $x_pos += $sin_y * 0.25;
-            $z_pos -= $cos_y * 0.25;
+=cut             $z_pos -= $cos_y * 0.25;
+            SendMessage($DF_window, WM_KEYDOWN, VK_DOWN, 0);
         }; # S
 
         $normal_inputs{113} = sub {
@@ -1220,13 +1227,17 @@ sub process_key_press {
         $normal_inputs{114} = sub { $y_pos += 1; $slice-- if $slice_follows;  }; # R
         $normal_inputs{102} = sub { $y_pos -= 1; $slice++ if $slice_follows;  }; # F
 
-        $normal_inputs{107} = sub { refresh_map_data(); }; # K
+        $normal_inputs{107} = sub { 
+            SendMessage($DF_window, WM_KEYDOWN, VK_K, 0);
+        }; # K
 
         $normal_inputs{27} = sub { glutDestroyWindow($window_ID); exit(1);           }; # ESC
 
         #$normal_inputs{102} = sub { $Filtering_On   = $Filtering_On ? 0 : 1;        }; # F
         #$normal_inputs{120} = sub { $X_Speed = $Y_Speed = 0;                        }; # X
-        #$normal_inputs{32} = $normal_inputs{120};
+        $normal_inputs{32} = sub {
+            SendMessage($DF_window, WM_KEYDOWN, VK_SPACE, 0);
+        }
     }
 
     glutPostRedisplay();
@@ -1249,10 +1260,18 @@ sub process_special_key_press {
         $special_inputs{exist_check} = 1;
         $special_inputs{104} = sub { $z_off -= 0.05;     }; # GLUT_KEY_PAGE_UP
         $special_inputs{105} = sub { $z_off += 0.05;     }; # GLUT_KEY_PAGE_DOWN
-        #$special_inputs{101} = sub { $X_Speed -= 0.01;   }; # GLUT_KEY_UP
-        #$special_inputs{103} = sub { $X_Speed += 0.01;   }; # GLUT_KEY_DOWN
-        #$special_inputs{100} = sub { $Y_Speed -= 0.01;   }; # GLUT_KEY_LEFT
-        #$special_inputs{102} = sub { $Y_Speed += 0.01;   }; # GLUT_KEY_RIGHT
+        $special_inputs{101} = sub {
+            SendMessage($DF_window, WM_KEYDOWN, VK_UP, 0);
+        }; # GLUT_KEY_UP
+        $special_inputs{103} = sub {
+            SendMessage($DF_window, WM_KEYDOWN, VK_DOWN, 0);
+        }; # GLUT_KEY_DOWN
+        $special_inputs{100} = sub {
+            SendMessage($DF_window, WM_KEYDOWN, VK_LEFT, 0);
+        }; # GLUT_KEY_LEFT
+        $special_inputs{102} = sub {
+            SendMessage($DF_window, WM_KEYDOWN, VK_RIGHT, 0);
+        }; # GLUT_KEY_RIGHT
     }
 
     glutPostRedisplay();
