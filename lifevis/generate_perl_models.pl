@@ -51,6 +51,10 @@ sub generateModel {
             $faces[$#faces]{verts}[1]{uv} = ($4-1);
             $faces[$#faces]{verts}[2]{coords} = ($5-1);
             $faces[$#faces]{verts}[2]{uv} = ($6-1);
+            if ( $input =~ m/Cursor/ && $line =~ m/(\d+?)\/(\d+?)\/\d+$/ ) {
+                $faces[$#faces]{verts}[3]{coords} = ($1-1);
+                $faces[$#faces]{verts}[3]{uv} = ($2-1);
+            }
         }
         if ( $line =~ m/^vt (.*?) (.*?)$/ ){
             $uvs[$#uvs+1][0] = ($1+0);
@@ -93,8 +97,8 @@ sub generateModel {
         
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
-        my (\$x, \$y, \$z, \$s) = \@_;
-        my \$brightness = \$y/(\$ZCOUNT-15);
+        my (\$x, \$y, \$z, \$s, \$brightness_modificator) = \@_;
+        my \$brightness = (\$y/(\$ZCOUNT-15)) * \$brightness_modificator;
         glColor3f(\$brightness, \$brightness, \$brightness);";
     
         my @old = (999,999,999);
@@ -107,7 +111,13 @@ sub generateModel {
                     $model .= "\n\n    glNormal3f( $vec );";
                     $model .= "# $side{$vec} face" if defined $side{$vec};
                 }
-                for my $vid ( 0..2) {
+                
+                my $max_verts = 2;
+                if ( $input =~ m/Cursor/ ) {
+                    $max_verts = 3;
+                }
+                
+                for my $vid ( 0..$max_verts) {
                     my $uv = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
                     $model .= "\n    glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
