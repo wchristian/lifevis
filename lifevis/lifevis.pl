@@ -10,7 +10,7 @@ use 5.010;
 use strict;
 use warnings;
 #use diagnostics;
-#=cut
+=cut
 use criticism (
     -exclude => ['ProhibitCallsToUndeclaredSubs',
               'ProhibitConstantPragma',
@@ -26,7 +26,7 @@ use criticism (
               'ProhibitCallsToUnexportedSubs'],
     -severity => 1
 );
-#=cut
+=cut
 use utf8;
 
 use Benchmark ':hireswallclock';
@@ -167,6 +167,56 @@ use constant RAMP => 3;
 use constant STAIR => 4;
 use constant FORTIF => 5;
 use constant PILLAR => 6;
+
+my @ramps = (
+{ mask => 0b0_1111_0000, func => '4S' },
+{ mask => 0b0_1101_0000, func => '3S1' },
+{ mask => 0b0_1110_0000, func => '3S2' },
+{ mask => 0b0_0111_0000, func => '3S3' },
+{ mask => 0b0_1011_0000, func => '3S4' },
+{ mask => 0b0_1100_0010, func => '2S_1D1' },
+{ mask => 0b0_0110_0001, func => '2S_1D2' },
+{ mask => 0b0_0011_1000, func => '2S_1D3' },
+{ mask => 0b0_1001_0100, func => '2S_1D4' },
+{ mask => 0b0_1100_0000, func => '2S1' },
+{ mask => 0b0_0110_0000, func => '2S2' },
+{ mask => 0b0_0011_0000, func => '2S3' },
+{ mask => 0b0_1001_0000, func => '2S4' },
+{ mask => 0b0_1010_0000, func => '1S_1S1' },
+{ mask => 0b0_0101_0000, func => '1S_1S2' },
+{ mask => 0b0_1000_0010, func => '1S_1DR1' },
+{ mask => 0b0_0100_0001, func => '1S_1DR2' },
+{ mask => 0b0_0010_1000, func => '1S_1DR3' },
+{ mask => 0b0_0001_0100, func => '1S_1DR4' },
+{ mask => 0b0_1000_0100, func => '1S_1DL1' },
+{ mask => 0b0_0100_0010, func => '1S_1DL2' },
+{ mask => 0b0_0010_0001, func => '1S_1DL3' },
+{ mask => 0b0_0001_1000, func => '1S_1DL4' },
+{ mask => 0b0_0000_1111, func => '4D' },
+{ mask => 0b0_0000_1101, func => '3D1' },
+{ mask => 0b0_0000_1110, func => '3D2' },
+{ mask => 0b0_0000_0111, func => '3D3' },
+{ mask => 0b0_0000_1011, func => '3D4' },
+{ mask => 0b0_0001_1100, func => '1S_2D4' },
+{ mask => 0b0_1000_0110, func => '1S_2D1' },
+{ mask => 0b0_0100_0011, func => '1S_2D2' },
+{ mask => 0b0_0010_1001, func => '1S_2D3' },
+{ mask => 0b0_1000_0000, func => '1S1' },
+{ mask => 0b0_0100_0000, func => '1S2' },
+{ mask => 0b0_0010_0000, func => '1S3' },
+{ mask => 0b0_0001_0000, func => '1S4' },
+{ mask => 0b0_0000_1001, func => '2D1' },
+{ mask => 0b0_0000_1100, func => '2D2' },
+{ mask => 0b0_0000_0110, func => '2D3' },
+{ mask => 0b0_0000_0011, func => '2D4' },
+{ mask => 0b0_0000_1010, func => '1D_1D1' },
+{ mask => 0b0_0000_0101, func => '1D_1D2' },
+{ mask => 0b0_0000_1000, func => '1D1' },
+{ mask => 0b0_0000_0100, func => '1D2' },
+{ mask => 0b0_0000_0010, func => '1D3' },
+{ mask => 0b0_0000_0001, func => '1D4' },
+{ mask => 0b1_0000_0000, func => 'N' },
+);
 
 our %DRAW_MODEL;
 do 'models.pl';
@@ -318,23 +368,28 @@ sub sync_to_DF {
     $ycell = $ycount-$range-1 if $ycell >= $ycount-$range;
 
     # cycle through cells in range around cursor to grab data
-    for my $bx ( $xcell-$range .. $xcell+$range ) {
-        for my $by ( $ycell-$range .. $ycell+$range ) {
+    for my $bx ( $xcell-$range-1 .. $xcell+$range+1 ) {
+        next if ( $bx < 0 || $bx > $xcount-1);
+        for my $by ( $ycell-$range-1 .. $ycell+$range+1 ) {
+            next if ( $by < 0 || $by > $ycount-1);
 
             # cycle through slices in cell
             my @zoffsets = $proc->get_packs('L', 4, $cells[$bx][$by][offset], $ZCOUNT);
-            $cells[$bx][$by][changed] = 0;
+            $cells[$bx][$by][changed] = 0 if !defined $cells[$bx][$by][changed];
             for my $bz ( 0..$#zoffsets ) {
                 next if ( $zoffsets[$bz] == 0 );                # go to the next block if this one is not allocated
 
                 # process slice in cell and set slice to changed
-                $cells[$bx][$by][z][$bz] = new_process_block(
+                my $slice_changed = new_process_block(
                     $zoffsets[$bz],                             # offset of the current slice
                     $bx,                                        # x location of the current slice
                     $by,                                        # y location of the current slice
                     $bz );
                 # update changed status of cell if necessary
-                $cells[$bx][$by][changed] = 1 if $cells[$bx][$by][z][$bz];  # z location of the current block
+                if ($slice_changed) {
+                    $cells[$bx][$by][z][$bz] = 1;
+                    $cells[$bx][$by][changed] = 1;  # z location of the current block
+                }
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
@@ -355,8 +410,12 @@ sub sync_to_DF {
                     # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                     my $slices = $cells[$bx][$by][z];
                     for my $slice ( 0 .. (@{ $slices } - 1) ) {
-                        generate_display_list( $cache_id, $slice, $by, $bx ) if ( @{ $slices }[$slice] );
+                        if ( @{ $slices }[$slice] ) {
+                            generate_display_list( $cache_id, $slice, $by, $bx );
+                            @{ $slices }[$slice] = 0;
+                        }
                     }
+                    $cells[$bx][$by][changed] = 0;
                 }
 
                 $cache[$cache_id][1]++;
@@ -379,8 +438,12 @@ sub sync_to_DF {
                 # cycle through slices and create displaylists as necessary, storing the ids in the cache entry
                 my $slices = $cells[$bx][$by][z];
                 for my $slice ( 0 .. ( @{ $slices } - 1) ) {
-                    generate_display_list( $cache_id, $slice, $by, $bx ) if ( defined @{ $slices }[$slice] );
+                    if ( @{ $slices }[$slice] ) {
+                        generate_display_list( $cache_id, $slice, $by, $bx );
+                        @{ $slices }[$slice] = 0;
+                    }
                 }
+                $cells[$bx][$by][changed] = 0;
 
                 $protected_caches[$cache_id] = 1;
             }
@@ -391,7 +454,7 @@ sub sync_to_DF {
     $memory_use = $state_array[0]->{PrivatePageCount};
 
     # check that we're not using too much memory and destroy cache entries if necessary
-    while ( $memory_use > 300_787_840 && $deletions < 2 ) { # $cache_limit <= $#cache && 
+    while ( $memory_use > 300_787_840 && $deletions < (2*$range) ) { # $cache_limit <= $#cache && 
         my $delete;
         my $use;
 
@@ -495,86 +558,28 @@ sub generate_display_list {
                 $southwest = $TILE_TYPES[$tile->[$rx-1][$ry+1]][base_visual] if $tile->[$rx-1][$ry+1] && ($ry != $y_max || $ry != 0);
                 $west = $TILE_TYPES[$tile->[$rx-1][$ry]][base_visual] if $tile->[$rx-1][$ry] && $rx != 0;
                 $northwest = $TILE_TYPES[$tile->[$rx-1][$ry-1]][base_visual] if $tile->[$rx-1][$ry-1] && ($ry != 0|| $ry != 0);
+                
+                my $surroundings = 0;
+                $surroundings += ($north == WALL)       ? 0b1000_0000 : 0;
+                $surroundings += ($west == WALL)        ? 0b0100_0000 : 0;
+                $surroundings += ($south == WALL)       ? 0b0010_0000 : 0;
+                $surroundings += ($east == WALL)        ? 0b0001_0000 : 0;
+                $surroundings += ($northwest == WALL)   ? 0b0000_1000 : 0;
+                $surroundings += ($southwest == WALL)   ? 0b0000_0100 : 0;
+                $surroundings += ($southeast == WALL)   ? 0b0000_0010 : 0;
+                $surroundings += ($northeast == WALL)   ? 0b0000_0001 : 0;
+                
+                $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
 
-                if( $north == WALL ) {
-                    if ( $east == WALL) {
-                        if ( $south == WALL) {
-#                            drawTripleNorthEastSouthRamp($rx,$z,$ry,1);
-                        }
-                        elsif ( $west == WALL) {
-#                            drawTripleNorthEastWestRamp($rx,$z,$ry,1);
-                        }
-                        else {
-#                            drawDoubleNorthEastRamp($rx,$z,$ry,1);
-                        }
+                for my $ramp_type ( 0 .. $#ramps ){
+                    my $mask = $ramps[$ramp_type]{mask};
+                    my $bit_comparison = $mask & $surroundings;
+                    if ( $bit_comparison == $mask ){
+                        my $func = $ramps[$ramp_type]{func};
+                        croak "Need following ramp model: $func" if !defined $DRAW_MODEL{$func};
+                        $DRAW_MODEL{$func}->($rx,$z,$ry,1);
+                        last;
                     }
-                    elsif ( $west == WALL) {
-                        if ( $south == WALL) {
-#                            drawTripleNorthWestSouthRamp($rx,$z,$ry,1);
-                        }
-                        else {
-#                            drawDoubleNorthWestRamp($rx,$z,$ry,1);
-                        }
-                    }
-                    elsif ( $south == WALL) {
-                    }
-                    else {
-                        $DRAW_MODEL{SingleNorthRamp1}->($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $east == WALL ) {
-                    if ( $south == WALL) {
-                        if ( $west == WALL) {
-#                            drawTripleEastSouthWestRamp($rx,$z,$ry,1);
-                        }
-                        else {
-#                            drawDoubleSouthEastRamp($rx,$z,$ry,1);
-                        }
-                    }
-                    else {
-#                        drawSingleEastRamp($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $south == WALL ) {
-                    if ( $west == WALL) {
-#                        drawDoubleSouthWestRamp($rx,$z,$ry,1);
-                    }
-                    else {
-#                        drawSingleSouthRamp($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $west == WALL ) {
-                    $DRAW_MODEL{SingleNorthRamp4}->($rx,$z,$ry,1);
-                }
-                elsif( $northeast == WALL ) {
-                    if ( $southeast == WALL) {
-#                        drawDoubleNE_SERamp($rx,$z,$ry,1);
-                    }
-                    elsif ( $northwest == WALL) {
-#                        drawDoubleNE_NWRamp($rx,$z,$ry,1);
-                    }
-                    else {
-#                        drawSingleNorthEastRamp($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $southeast == WALL ) {
-                    if ( $southwest == WALL) {
-#                        drawDoubleSE_SWRamp($rx,$z,$ry,1);
-                    }
-                    else {
-#                        drawSingleSouthEastRamp($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $southwest == WALL ) {
-                    if ( $northwest == WALL) {
-#                        drawDoubleSW_NWRamp($rx,$z,$ry,1);
-                    }
-                    else {
-#                        drawSingleSouthWestRamp($rx,$z,$ry,1);
-                    }
-                }
-                elsif( $northwest == WALL ) {
-#                    drawSingleNorthWestRamp($rx,$z,$ry,1);
                 }
                 next;
             }
@@ -916,8 +921,8 @@ sub render_scene {
     glMatrixMode(GL_MODELVIEW);    # Need to manipulate the ModelView matrix to move our model around.
 
     gluLookAt(
-        $x_pos + $x_off, $y_pos+10 + $y_off, $z_pos + $z_off,
-        $x_pos,$y_pos+10,$z_pos,
+        $x_pos + $x_off, $y_pos + $y_off, $z_pos + $z_off,
+        $x_pos,$y_pos,$z_pos,
         0,1,0);
 
     glLightfv_p(GL_LIGHT1, GL_POSITION,
@@ -1323,5 +1328,6 @@ sub print_opengl_string {
     }
     return;
 }
+
 
 __END__
