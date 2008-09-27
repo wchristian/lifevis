@@ -505,7 +505,7 @@ sub sync_to_DF {
                 # storing the ids in the cache entry
                 my $slices = $cells[$bx][$by][z];
                 for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                    if ( @{$slices}[$slice] ) {
+                    if ( defined @{$slices}[$slice] ) {
                         generate_display_list( $cache_id, $slice, $by, $bx );
                         @{$slices}[$slice] = 0;
                     }
@@ -544,17 +544,15 @@ sub sync_to_DF {
         my $slices = $cache[$delete];
         for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
             glDeleteLists( $cache[$delete][$slice], 1 )
-              if $cache[$delete][$slice];
+              if ( $cache[$delete][$slice] );
         }
 
-        undef ${ $cache[$delete][0] };
+        undef ${ $cache[$delete][cell_ptr] };
 
         undef $cache[$delete];
         push @cache_bucket, $delete;
 
         $deletions++;
-
-        #printf "Commited Memory = %d Bytes\n", $myself->get_memtotal;
     }
 
     @protected_caches = [];
