@@ -55,6 +55,9 @@ use Image::Magick;
 use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw(:FUNC :VK);
 
+use threads;
+use threads::shared;
+
 use Config::Simple;
 tie my %c, "Config::Simple", 'lifevis.cfg';
 
@@ -263,7 +266,9 @@ use Win32::OLE('in');
 my $WMI_service_object = Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
   or croak "WMI connection failed.\n";
 my @state_array;
-my $memory_use;
+my $memory_use :shared;
+
+my $thr = threads->create(\&update_memory_use);
 
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
@@ -504,15 +509,6 @@ sub sync_to_DF {
         }
     }
 
-    # TODO: Fashion this to regularly run in own loop. Maybe thread it?
-    @state_array = in $WMI_service_object->ExecQuery(
-        'SELECT PrivatePageCount FROM Win32_Process'
-         . " WHERE ProcessId = $PROCESS_ID",
-        'WQL',
-        0x10 | 0x20
-    );
-    $memory_use = $state_array[0]->{PrivatePageCount};
-
     # TODO: Limit cache deletions so $c{view_range} is never undercut
     # check that we're not using too much memory and destroy cache entries if necessary
     while ( $memory_use > $c{memory_limit} && $deletions < ( 2 * $c{view_range} ) ) {
@@ -560,6 +556,24 @@ sub sync_to_DF {
     #say "$#cache caches";
     #say "---";
     return $redraw;
+}
+
+sub update_memory_use {
+    my @state_array;
+    my $pid = $PROCESS_ID;
+    my $sleep_time = $c{sync_delay} * $c{full_update_offset};
+    
+    while (1) {
+        @state_array = in $WMI_service_object->ExecQuery(
+            'SELECT PrivatePageCount FROM Win32_Process'
+             . " WHERE ProcessId = $pid",
+            'WQL',
+            0x10 | 0x20
+        );
+        $memory_use = $state_array[0]->{PrivatePageCount};
+        sleep $sleep_time;
+    }
+    
 }
 
 sub generate_display_list {
