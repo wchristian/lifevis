@@ -1,0 +1,2 @@
+[InputOutput::RequireCheckedSyscalls]
+functions = accept bind binmode chdir chmod chown close closedir connect dbmclose dbmopen exec fcntl flock fork ioctl kill link listen mkdir msgctl msgget msgrcv msgsnd open opendir pipe read readdir readline readlink readpipe recv rename rmdir seek seekdir semctl semget semop send setpgrp setpriority setsockopt shmctl shmget shmread shutdown sleep socket socketpair symlink syscall sysopen sysread sysseek system syswrite tell telldir truncate umask unlink utime wait waitpid
