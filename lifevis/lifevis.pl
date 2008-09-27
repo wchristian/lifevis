@@ -9,7 +9,10 @@
 use 5.010;
 use strict;
 use warnings;
-use diagnostics;
+
+#use warnings::unused;
+#use warnings::method;
+#use diagnostics;
 use English qw(-no_match_vars);
 $OUTPUT_AUTOFLUSH = 1;
 
@@ -32,7 +35,8 @@ use criticism (
         'RequireUseOfExceptions',
         'RequireEmacsFileVariables',
         'RequirePodSections',          # TODO : Reconsider this.
-        'ProhibitCallsToUnexportedSubs'
+        'ProhibitCallsToUnexportedSubs',
+        'ProhibitTies'
     ],
     -severity => 1
 );
@@ -60,7 +64,7 @@ use threads;
 use threads::shared;
 
 use Config::Simple;
-tie my %c, "Config::Simple", 'lifevis.cfg';
+tie my %c, 'Config::Simple', 'lifevis.cfg';
 
 # %DB::packages = ( 'main' => 1 );
 
@@ -137,7 +141,7 @@ my @light_diffuse  = ( 0.9,  0.9, 0.9, 1.0 );
 my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
 
 # hashes containing the functions called on certain key presses
-my ( %special_inputs, %normal_inputs );
+#my ( %special_inputs, %normal_inputs ); # disabled until we actually pipe stuff to lifevis again
 
 my $last_mouse_x;
 my $last_mouse_y;
@@ -149,7 +153,7 @@ my $dwarf_pid;
 my $ver;
 my $proc;
 my $pe_timestamp;
-my ($DF_window) = FindWindowLike( 0, '^Dwarf' );
+my ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
 
 my ( $submenid, $menid );
 
@@ -579,7 +583,7 @@ sub update_memory_use {
         $memory_use = $state_array[0]->{PrivatePageCount};
         sleep $sleep_time;
     }
-
+    return 1;
 }
 
 sub generate_display_list {
@@ -732,7 +736,7 @@ sub new_process_block {
      #my @designation_data = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{designation_off}, 256);
      #my @ocupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
 
-    my ( $rx, $ry, $y, $x, $tile );
+    my ( $rx, $ry, $tile );
 
     my $bx_scaled  = $bx * 16;
     my $by_scaled  = $by * 16;
@@ -1333,110 +1337,13 @@ sub create_texture {
 
 sub process_key_press {
     my $key = shift;
-    my $c   = uc chr $key;
 
-    if ( !defined $normal_inputs{exist_check} ) {
-        $normal_inputs{exist_check} = 1;
+    my $scan = VkKeyScan($key);
+    $scan &= 0xff;
 
-#        $normal_inputs{108} = sub { $Light_On       = $Light_On     ? 0 : 1;        }; # L
-#        $normal_inputs{116} = sub { $Texture_On     = $Texture_On   ? 0 : 1;        }; # T
-
-        #        $normal_inputs{97} = sub { $y_rot += 2.5; }; # Q
-        #        $normal_inputs{100} = sub { $y_rot -= 2.5; }; # E
-        $normal_inputs{97} = sub {
-
-=cut            my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
-            my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
-            $x_pos += $cos_y * 0.25;
-=cut            $z_pos += $sin_y * 0.25;
-
-            SendMessage( $DF_window, WM_KEYDOWN, VK_LEFT, 0 );
-        };    # A
-        $normal_inputs{100} = sub {
-
-=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
-            my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
-            $x_pos -= $cos_y * 0.25;
-=cut             $z_pos -= $sin_y * 0.25;
-
-            SendMessage( $DF_window, WM_KEYDOWN, VK_RIGHT, 0 );
-        };    # D
-        $normal_inputs{119} = sub {
-
-=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
-            my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
-            $x_pos -= $sin_y * 0.25;
-=cut             $z_pos += $cos_y * 0.25;
-
-            SendMessage( $DF_window, WM_KEYDOWN, VK_UP, 0 );
-        };    # W
-        $normal_inputs{115} = sub {
-
-=cut             my $cos_y = $cos_cache{$y_rot} ||= cos($y_rot * PIOVER180);
-            my $sin_y = $sin_cache{$y_rot} ||= sin($y_rot * PIOVER180);
-            $x_pos += $sin_y * 0.25;
-=cut             $z_pos -= $cos_y * 0.25;
-
-            SendMessage( $DF_window, WM_KEYDOWN, VK_DOWN, 0 );
-        };    # S
-
-        $normal_inputs{113} = sub {
-            $y_rot -= 2;
-            $y_rot -= 360 if ( $y_rot > 360 );
-            $y_rot += 360 if ( $y_rot < 0 );
-            reposition_camera();
-        };    # Q
-
-        $normal_inputs{101} = sub {
-            $y_rot += 2;
-            $y_rot -= 360 if ( $y_rot > 360 );
-            $y_rot += 360 if ( $y_rot < 0 );
-            reposition_camera();
-        };    # E
-
-        $normal_inputs{116} = sub {
-            $slice--;
-            reposition_camera();
-        };    # T
-
-        $normal_inputs{103} = sub {
-            $slice++;
-            reposition_camera();
-        };    # G
-
-        $normal_inputs{122} = sub {
-            $slice         = $slice         ? 0 : $zmouse;
-            $slice_follows = $slice_follows ? 0 : 1;
-            reposition_camera();
-        };    # Z
-
-        $normal_inputs{114} =
-          sub { $y_pos += 1; $slice-- if $slice_follows; };    # R
-        $normal_inputs{102} =
-          sub { $y_pos -= 1; $slice++ if $slice_follows; };    # F
-
-        $normal_inputs{107} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_K, 0 );
-        };                                                     # K
-
-        $normal_inputs{27} =
-          sub { glutDestroyWindow($window_ID); exit 1; };      # ESC
-
-#$normal_inputs{102} = sub { $Filtering_On   = $Filtering_On ? 0 : 1;        }; # F
-#$normal_inputs{120} = sub { $X_Speed = $Y_Speed = 0;                        }; # X
-        $normal_inputs{32} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_SPACE, 0 );
-          }
-    }
+    PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
     glutPostRedisplay();
-
-    if ( $normal_inputs{$key} ) {
-        $normal_inputs{$key}->();
-        return;
-    }
-
-    printf "KP: No action for %d.\n", $key;
     return;
 }
 
@@ -1445,32 +1352,29 @@ sub process_key_press {
 sub process_special_key_press {
     my $key = shift;
 
-    if ( !defined $special_inputs{exist_check} ) {
-        $special_inputs{exist_check} = 1;
-        $special_inputs{104} = sub { $z_off -= 0.05; };    # GLUT_KEY_PAGE_UP
-        $special_inputs{105} = sub { $z_off += 0.05; };    # GLUT_KEY_PAGE_DOWN
-        $special_inputs{101} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_UP, 0 );
-        };                                                 # GLUT_KEY_UP
-        $special_inputs{103} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_DOWN, 0 );
-        };                                                 # GLUT_KEY_DOWN
-        $special_inputs{100} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_LEFT, 0 );
-        };                                                 # GLUT_KEY_LEFT
-        $special_inputs{102} = sub {
-            SendMessage( $DF_window, WM_KEYDOWN, VK_RIGHT, 0 );
-        };                                                 # GLUT_KEY_RIGHT
+    if ( $key >= GLUT_KEY_F1 && $key <= GLUT_KEY_F12 ) {
+        PostMessage( $DF_window, WM_KEYDOWN, $key + 111, 0 );
+    }
+    elsif ( $key >= GLUT_KEY_LEFT && $key <= GLUT_KEY_DOWN ) {
+        PostMessage( $DF_window, WM_KEYDOWN, $key - 63, 0 );
+    }
+    elsif ( $key >= GLUT_KEY_PAGE_UP && $key <= GLUT_KEY_PAGE_DOWN ) {
+        PostMessage( $DF_window, WM_KEYDOWN, $key - 71, 0 );
+    }
+    elsif ( $key == GLUT_KEY_HOME ) {
+        PostMessage( $DF_window, WM_KEYDOWN, VK_HOME, 0 );
+    }
+    elsif ( $key == GLUT_KEY_END ) {
+        PostMessage( $DF_window, WM_KEYDOWN, VK_END, 0 );
+    }
+    elsif ( $key == GLUT_KEY_INSERT ) {
+        PostMessage( $DF_window, WM_KEYDOWN, VK_INSERT, 0 );
+    }
+    else {
+        printf "SKP: No action for %d.\n", $key;
     }
 
     glutPostRedisplay();
-
-    if ( $special_inputs{$key} ) {
-        $special_inputs{$key}->();
-        return;
-    }
-
-    printf "SKP: No action for %d.\n", $key;
     return;
 }
 
