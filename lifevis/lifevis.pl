@@ -47,7 +47,45 @@ use utf8;
 
 use Benchmark ':hireswallclock';
 
+use threads;
+use threads::shared;
 use Carp;
+
+use Config::Simple;
+
+use Win32::OLE('in');
+my $memory_use;
+my %c;
+
+BEGIN {
+    share($memory_use);
+    tie %c, 'Config::Simple', 'lifevis.cfg';
+
+    sub update_memory_use {
+        my @state_array;
+        my $pid        = $PROCESS_ID;
+        my $sleep_time = ( $c{sync_delay} * $c{full_update_offset} ) / 1000;
+        my $WMI_service_object =
+             Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
+          or croak "WMI connection failed.\n";
+
+        while (1) {
+            @state_array = in $WMI_service_object->ExecQuery(
+                'SELECT PrivatePageCount FROM Win32_Process'
+                  . " WHERE ProcessId = $pid",
+                'WQL',
+                0x10 | 0x20
+            );
+            $memory_use = $state_array[0]->{PrivatePageCount};
+            sleep $sleep_time;
+        }
+        return 1;
+    }
+    my $thr = threads->create( \&update_memory_use );
+    $thr->detach();
+
+}
+
 use OpenGL qw/ :all /;
 use OpenGL::Image;
 use Math::Trig;
@@ -59,12 +97,6 @@ use LWP::Simple;
 use Image::Magick;
 use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw(:FUNC :VK);
-
-use threads;
-use threads::shared;
-
-use Config::Simple;
-tie my %c, 'Config::Simple', 'lifevis.cfg';
 
 # %DB::packages = ( 'main' => 1 );
 
@@ -275,14 +307,6 @@ my @ramps = (
 
 our %DRAW_MODEL;
 do 'models.pl';
-
-use Win32::OLE('in');
-my $WMI_service_object = Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
-  or croak "WMI connection failed.\n";
-my $memory_use : shared;
-
-my $thr = threads->create( \&update_memory_use );
-$thr->detach();
 
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
@@ -614,24 +638,6 @@ sub sync_to_DF {
     #say "$#cache caches";
     #say "---";
     return $redraw;
-}
-
-sub update_memory_use {
-    my @state_array;
-    my $pid        = $PROCESS_ID;
-    my $sleep_time = ( $c{sync_delay} * $c{full_update_offset} ) / 1000;
-
-    while (1) {
-        @state_array = in $WMI_service_object->ExecQuery(
-            'SELECT PrivatePageCount FROM Win32_Process'
-              . " WHERE ProcessId = $pid",
-            'WQL',
-            0x10 | 0x20
-        );
-        $memory_use = $state_array[0]->{PrivatePageCount};
-        sleep $sleep_time;
-    }
-    return 1;
 }
 
 sub generate_display_list {
