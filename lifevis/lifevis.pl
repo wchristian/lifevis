@@ -83,9 +83,7 @@ BEGIN {
         }
         return 1;
     }
-    my $thr = threads->create( 
-                                {'stack_size' => 64},
-                                \&update_memory_use );
+    my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
     $thr->detach();
 
 }
@@ -231,7 +229,7 @@ use constant cache_ptr => 3;
 #use constant changed => 0;
 
 my @tiles;
-use constant type => 0;
+use constant type  => 0;
 use constant desig => 1;
 
 my @cache;
@@ -314,6 +312,9 @@ my @ramps = (
 my $updating;
 $updating = 0;
 
+my $redraw;
+$redraw = 0;
+
 our %DRAW_MODEL;
 do 'models.pl';
 
@@ -342,7 +343,7 @@ create_menu();
 # Register the callback function to do the drawing.
 glutDisplayFunc( \&render_scene );
 
-glutIdleFunc(\&idle_tasks);                  # If there's nothing to do, draw.
+glutIdleFunc( \&idle_tasks );    # If there's nothing to do, draw.
 
 # It's a good idea to know when our window's resized.
 glutReshapeFunc( \&resize_scene );
@@ -385,12 +386,18 @@ glutMainLoop();
 my @cell_offsets;
 
 sub refresh_map_data {
-    if ( $updating == 0 ) {
-        my $corout = new Coro \&sync_to_DF;
-        my $success = $corout->ready;
-        cede();
-    }
-    glutPostRedisplay();# if sync_to_DF();
+
+    #if ( $updating == 0 && Coro::nready < 1 ) {
+    my $corout  = new Coro \&sync_to_DF;
+    my $success = $corout->ready;
+
+    #cede();
+    #}
+    cede();
+
+    #$cedes--;
+    glutPostRedisplay() if $redraw;
+    #$redraw = 0;
     glutTimerFunc( $c{sync_delay}, \&refresh_map_data, 0 );
     return;
 }
@@ -425,10 +432,7 @@ sub extract_base_memory_data {
 }
 
 sub sync_to_DF {
-    #say "entry";
-    $updating = 1;
-    my $redraw     = 0;
-    my $deletions  = 0;
+    $redraw = 0;
     my $start_time = new Benchmark;
 
     $xmouse_old = $xmouse;
@@ -453,16 +457,18 @@ sub sync_to_DF {
         || $ymouse != $ymouse_old
         || $zmouse != $zmouse_old );
 
-    #say 'leaving';
-    $updating = 0;
-    
-    $delay_full_update++;
-    return 0 if ( $delay_full_update < $c{full_update_offset} && $redraw == 0 );
-    $delay_full_update = 0;
-
     # update camera system with mouse data
     ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
     reposition_camera();    # sets up initial camera position offsets
+    glutPostRedisplay() if $redraw;
+
+    $delay_full_update++;
+    return
+      if ( ( $delay_full_update < $c{full_update_offset} && $redraw == 0 )
+        || $updating == 1 );
+    $delay_full_update = 0;
+
+    $updating = 1;
 
     # calculate cell coords from mouse coords
     $xcell = int $xmouse / 16;
@@ -503,8 +509,13 @@ sub sync_to_DF {
                     $cells[$bx][$by][z][$bz] = 1;     # slice was changed
                     $cells[$bx][$by][changed] = 1;    # cell was changed
                 }
-                cede() if $first_run_done;
-                $cedes++;
+
+                if ($first_run_done) { # && $cedes < 100 ) {
+                cede();
+                }
+
+                #    $cedes++;
+                #}
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
@@ -573,8 +584,12 @@ sub sync_to_DF {
                                 $bx );
                             @{$slices}[$slice] = 0;
                         }
+
+                        #if ( $cedes < 100 ) {
                         cede();
-                        $cedes++;
+
+                        #    $cedes++;
+                        #}
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
@@ -587,9 +602,9 @@ sub sync_to_DF {
             else {
 
                 my $slices = $cells[$bx][$by][z];
-                
+
                 next if !defined $slices;
-                
+
                 # cell is not in cache
 
                 # get fresh cache id either from end of cache or out of bucket
@@ -616,6 +631,8 @@ sub sync_to_DF {
             }
         }
     }
+
+    my $deletions = 0;
 
 # TODO: Limit cache deletions so $c{view_range} is never undercut
 # check that we're not using too much memory and destroy cache entries if necessary
@@ -665,7 +682,8 @@ sub sync_to_DF {
     #say "$#cache caches";
     #say "---";
     $first_run_done = 1;
-    return $redraw;
+    glutPostRedisplay() if $redraw;
+    return;
 }
 
 sub generate_display_list {
@@ -707,7 +725,9 @@ sub generate_display_list {
 
                 next if !defined $tile->[$rx][$ry];
                 $type = $tile->[$rx][$ry];
+                next if !defined $type;
                 next if $type == 32;
+                next if !defined $TILE_TYPES[$type][base_texture];
                 next if $TILE_TYPES[$type][base_texture] != $texture;
                 $type_below = $tile_below->[$rx][$ry];
 
@@ -828,10 +848,13 @@ sub new_process_block {
         $block_offset + $OFFSETS[$ver]{type_off},    # starting offset
         256
       );                                             # number of units
-    my @designation_data = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{designation_off}, 256);
-     #my @ocupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
+    my @designation_data =
+      $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{designation_off},
+        256 );
 
-    my ( $rx, $ry, $tile, $desig);
+#my @ocupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
+
+    my ( $rx, $ry, $tile, $desig );
 
     my $bx_scaled  = $bx * 16;
     my $by_scaled  = $by * 16;
@@ -841,18 +864,18 @@ sub new_process_block {
 
         # this calculates the real x and y values
         # of this tile on the overall map_base
-        $rx = $bx_scaled + $x;
-        $tile = $tiles[$bz][type][$rx] ||= [];
+        $rx    = $bx_scaled + $x;
+        $tile  = $tiles[$bz][type][$rx] ||= [];
         $desig = $tiles[$bz][desig][$rx] ||= [];
 
         # cycle through 16 x and 16 y values,
         # which generate a total of 256 tile indexes
         for my $y ( 0 .. 15 ) {
-            if ( ( $designation_data[$tile_index] & 512 ) == 512 ){
+            if ( ( $designation_data[$tile_index] & 512 ) == 512 ) {
                 ++$tile_index;
-                next; # skip tile if it is hidden
+                next;    # skip tile if it is hidden
             }
-            
+
             $ry = $by_scaled + $y;
 
             if ( !defined $tile->[$ry]
@@ -1189,6 +1212,7 @@ sub menu {
 
 sub idle_tasks {
     cede();
+
     #$cedes--;
     #glutPostRedisplay();
     return;
@@ -1240,14 +1264,14 @@ sub render_scene {
         for my $by ( $ycell - $c{view_range} .. $ycell + $c{view_range} ) {
 
             #next unless $cells[$bx][$by][cache_ptr];
-            
+
             my $cache_ptr = $cells[$bx][$by][cache_ptr];
-            
+
             next if !defined $cache_ptr;
-            
-            next if !defined $cache[ $cache_ptr ];
-            
-            my $slices = $cache[ $cache_ptr ];
+
+            next if !defined $cache[$cache_ptr];
+
+            my $slices = $cache[$cache_ptr];
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
                 glCallList( $slices->[$slice] ) if $slices->[$slice];
             }
@@ -1330,20 +1354,21 @@ sub render_scene {
     }
 
     if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
-        glRasterPos2i( 2, 134 );
+        $buf = sprintf 'Desigs: 0b%059b',
+          $tiles[$zmouse][desig][$xmouse][$ymouse];
+        glRasterPos2i( 2, 286 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     }
 
     $buf = sprintf 'Desigs: 0b%059b', 512;
-    glRasterPos2i( 2, 146 );
+    glRasterPos2i( 2, 274 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
     glRasterPos2i( 2, 158 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'Cedes: %d', $cedes;
+    $buf = sprintf 'Working threads: %d', Coro::nready;
     glRasterPos2i( 2, 170 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
@@ -1374,7 +1399,9 @@ sub render_scene {
 
     #ourDoFPS();    # And collect our statistics.
     cede();
+
     #$cedes--;
+
     return;
 }
 
@@ -1396,7 +1423,7 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 45.0, $width / $height, 0.1, 100.0 );
+    gluPerspective( 45.0, $width / $height, 0.1, 1000000.0 );
 
     glMatrixMode(GL_MODELVIEW);
 
