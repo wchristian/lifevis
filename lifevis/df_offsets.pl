@@ -152,5 +152,9 @@ our @OFFSETS = (
             mouse_x   => 0x009fc294,
             mouse_y   => 0x009fc298,
             mouse_z   => 0x009fc29c,
+            creature_vector => 0x01583224,
+            creature_race => 0x8C,
+            creature_x => 0x94,
+            creature_y => 0x96,
         },
 ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT

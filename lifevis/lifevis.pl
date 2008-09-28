@@ -120,7 +120,8 @@ use constant water    => 7;
 use constant soil     => 8;
 use constant tree     => 9;
 use constant shrub    => 10;
-use constant sapling  => 10;
+use constant sapling  => 11;
+use constant creature => 12;
 
 # Object and scene global variables.
 
@@ -200,6 +201,13 @@ use constant cell_ptr => 0;
 
 my @cache_bucket;
 my @protected_caches;
+
+my @creatures;
+use constant race => 0;
+use constant c_x  => 1;
+use constant c_y  => 2;
+use constant c_z  => 3;
+use constant name => 4;
 
 our @TILE_TYPES;
 do 'df_internals.pl';
@@ -374,6 +382,7 @@ sub extract_base_memory_data {
             $cells[$bx][$by][offset] = $yoffsets[$by];
         }
     }
+
     return;
 }
 
@@ -454,6 +463,47 @@ sub sync_to_DF {
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
+    }
+
+    my @creature_vector_offsets =
+      $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
+    my $creature_list_length =
+      ( $creature_vector_offsets[1] + 8 - $creature_vector_offsets[0] ) / 4;
+    my @creature_offsets =
+      $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
+        $creature_list_length );
+
+    for my $creature ( 0 .. $#creature_offsets ) {
+
+        #say $proc->hexdump( $creature, 0x688 );
+
+        my $race = $proc->get_u32( $creature_offsets[$creature] + 140 );
+        my $rx   = $proc->get_u16( $creature_offsets[$creature] + 148 );
+        my $ry   = $proc->get_u16( $creature_offsets[$creature] + 150 );
+        my $rz   = $proc->get_u16( $creature_offsets[$creature] + 152 );
+
+        my $name_length = $proc->get_u32( $creature_offsets[$creature] + 20 );
+        $proc->get_buf( $creature_offsets[$creature] + 4,
+            $name_length, my $name );
+        my $bx = int $rx / 16;
+        my $by = int $ry / 16;
+
+        if (   !defined $creatures[$creature]
+            || $creatures[$creature][c_x] != $rx
+            || $creatures[$creature][c_y] != $ry
+            || $creatures[$creature][c_z] != $rz
+            || $creatures[$creature][race] != $race
+            || $creatures[$creature][name] ne $name )
+        {
+            $cells[$bx][$by][changed] = 1;
+            $cells[$bx][$by][z][$rz] = 1;
+        }
+
+        $creatures[$creature][race] = $race;
+        $creatures[$creature][c_x]  = $rx;
+        $creatures[$creature][c_y]  = $ry;
+        $creatures[$creature][c_z]  = $rz;
+        $creatures[$creature][name] = $name;
     }
 
     # cycle through cells in range around cursor to generate display lists
@@ -599,6 +649,19 @@ sub generate_display_list {
     }
 
     glNewList( $dl, GL_COMPILE );
+
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+    glBegin(GL_TRIANGLES);
+    for my $creature (@creatures) {
+        next if $creature->[c_z] != $z;
+        next if $creature->[c_x] < ( $x * 16 );
+        next if $creature->[c_y] < ( $y * 16 );
+        next if $creature->[c_x] > ( $x * 16 ) + 15;
+        next if $creature->[c_y] > ( $y * 16 ) + 15;
+        $DRAW_MODEL{Creature}->( $creature->[c_x], $z, $creature->[c_y], 1, 1 );
+    }
+    glEnd();
+
     for my $texture ( 0 .. $#texture_ID ) {
         glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );
         glBegin(GL_TRIANGLES);
@@ -1287,7 +1350,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(12);
+    @texture_ID = glGenTextures_p(13);
 
     create_texture( 'grass',    grass );
     create_texture( 'stone',    stone );
@@ -1301,6 +1364,7 @@ sub build_textures {
     create_texture( 'tree',     tree );
     create_texture( 'shrub',    shrub );
     create_texture( 'sapling',  sapling );
+    create_texture( 'creature', creature );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
