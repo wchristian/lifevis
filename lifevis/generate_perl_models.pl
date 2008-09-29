@@ -8,13 +8,13 @@ use Math::Trig ':pi';
 my %side = (
                 "0,0,1" => "south",
                 "0,-1,0" => "bottom",
-                "-1,0,0" => "left",
+                "-1,0,0" => "west",
                 "0,1,0" => "top",
-                "1,0,0" => "right",
+                "1,0,0" => "east",
                 "0,0,-1" => "north",
-                "0.707106781186547,0.707106781186547,0" => "top right",
+                "0.707106781186547,0.707106781186547,0" => "top east",
                 "0,0.707106781186547,0.707106781186547" => "top south",
-                "-0.707106781186547,0.707106781186547,0" => "top left",
+                "-0.707106781186547,0.707106781186547,0" => "top west",
                 "0,0.707106781186547,-0.707106781186547" => "top north",
 
             );
@@ -97,19 +97,38 @@ sub generateModel {
         
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
-        my (\$x, \$y, \$z, \$s, \$brightness_modificator) = \@_;
+        my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
         my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
         glColor3f(\$brightness, \$brightness, \$brightness);";
     
         my @old = (999,999,999);
         for my $nid ( 0..$#normals) {
+            my $vec;
+            my $close = 0;
             for my $fid ( 0..$#faces) {
                 next if ( $faces[$fid]{normal} != $nid );
                 
                 if( $old[0] != $normals[$nid][0] || $old[1] != $normals[$nid][1] || $old[2] != $normals[$nid][2] ) {
-                    my $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
+                    $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
+                    if ( $input =~ m/Wall/ && defined $side{$vec} ) {
+                        $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
+                        $close = 1;
+                    }
+                    if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree)/ && defined $side{$vec} ) {
+                        if ( $side{$vec} eq 'bottom' ) {
+                            $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
+                        }
+                        else {
+                            $model .= "\n\nif ( \$$side{$vec} == EMPTY || \$$side{$vec} == RAMP_TOP ) {";
+                            
+                        }
+                        $close = 1;
+                    }
+                    
                     $model .= "\n\n    glNormal3f( $vec );";
                     $model .= "# $side{$vec} face" if defined $side{$vec};
+                    undef @old if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/);
+                    undef $vec if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/);
                 }
                 
                 my $max_verts = 2;
@@ -122,7 +141,12 @@ sub generateModel {
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
                     $model .= "\n    glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
                 }
+                $vec = "$old[0],$old[1],$old[2]" if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && defined $old[0]);
                 @old = ( $normals[$nid][0],$normals[$nid][1],$normals[$nid][2]);
+            }
+            if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && $close ) {
+                $model .= "\n}";
+                
             }
         }
         
@@ -166,6 +190,11 @@ BEGIN {
 	eval \"use constant STAIR => 4\"          unless(defined &STAIR);
 	eval \"use constant FORTIF => 5\"         unless(defined &FORTIF);
 	eval \"use constant PILLAR => 6\"         unless(defined &PILLAR);
+    eval \"use constant RAMP_TOP => 7\"           unless(defined &RAMP_TOP);
+    eval \"use constant TREE => 8\"           unless(defined &TREE);
+    eval \"use constant SHRUB => 9\"           unless(defined &SHRUB);
+    eval \"use constant SAPLING => 10\"           unless(defined &SAPLING);
+    eval \"use constant BOULDER => 11\"           unless(defined &BOULDER);
 }
 
 our \$ZCOUNT;

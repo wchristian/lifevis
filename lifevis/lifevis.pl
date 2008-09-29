@@ -324,8 +324,11 @@ my $redraw;
 $redraw = 0;
 
 our %DRAW_MODEL;
-do 'models.pl';
-
+unless ( my $return = do 'models.pl') {
+	    warn "couldn't parse models.pl: $@" if $@;
+	    warn "couldn't do models.pl: $!"    unless defined $return;
+	    warn "couldn't run models.pl"       unless $return;
+	}
 # ------
 # The main() function.  Inits OpenGL.  Calls our own init function,
 # then passes control onto OpenGL.
@@ -782,13 +785,14 @@ sub generate_display_list {
                 if ( $TILE_TYPES[$type][base_visual] == WALL ) {
                     $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
                       if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
                     $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
                       if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
                     $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                       if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-                    $DRAW_MODEL{Wall}->( $rx, $z, $ry, 1, $brightness_mod );
+                    die 'horribly' if !defined $DRAW_MODEL{Wall};
+                    $DRAW_MODEL{Wall}->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
                     next;
                 }
 
@@ -808,7 +812,7 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     
                     $DRAW_MODEL{Floor}
-                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                      ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY  );
                     next;
                 }
 
@@ -828,7 +832,7 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     
                     $DRAW_MODEL{Tree}
-                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                      ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY  );
                     next;
                 }
 
@@ -848,7 +852,7 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     
                     $DRAW_MODEL{Shrub}
-                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                      ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY  );
                     next;
                 }
 
@@ -868,7 +872,7 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     
                     $DRAW_MODEL{Boulder}
-                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                      ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY  );
                     next;
                 }
 
@@ -888,7 +892,7 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     
                     $DRAW_MODEL{Sapling}
-                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                      ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY  );
                     next;
                 }
 
@@ -1689,11 +1693,11 @@ sub process_active_mouse_motion {
 
     if ( $middle_mouse == 0 ) {
 
-        $y_rot -= ( 180 * $new_x / 300 ) * -1;
+        $y_rot -= ( 180 * $new_x / 300 ) * -1 * $c{sensitivity};
         $y_rot -= 360 if ( $y_rot > 360 );
         $y_rot += 360 if ( $y_rot < 0 );
 
-        my $diff = ( 180 * $new_y / 300 ) * -0.75;
+        my $diff = ( 180 * $new_y / 300 ) * -0.75 * $c{sensitivity};
         $x_rot += $diff
           if ( ( $x_rot + $diff ) > -89 and ( $x_rot + $diff ) < 89 );
     }
