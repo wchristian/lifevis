@@ -98,7 +98,7 @@ sub generateModel {
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator) = \@_;
-        my \$brightness = (\$y/(\$ZCOUNT-15)) * \$brightness_modificator;
+        my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
         glColor3f(\$brightness, \$brightness, \$brightness);";
     
         my @old = (999,999,999);

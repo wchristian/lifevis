@@ -52,6 +52,7 @@ use threads::shared;
 use Carp;
 
 use Coro qw[ cede ];
+use Coro::Timer qw[ sleep ];
 
 use Config::Simple;
 
@@ -157,6 +158,8 @@ use constant tree     => 9;
 use constant shrub    => 10;
 use constant sapling  => 11;
 use constant creature => 12;
+use constant grassb    => 13;
+use constant boulder    => 14;
 
 # Object and scene global variables.
 
@@ -249,6 +252,7 @@ our @TILE_TYPES;
 do 'df_internals.pl';
 use constant base_visual  => 0;
 use constant base_texture => 1;
+use constant brightness_mod => 2;
 use constant EMPTY        => 0;
 use constant FLOOR        => 1;
 use constant WALL         => 2;
@@ -257,6 +261,10 @@ use constant STAIR        => 4;
 use constant FORTIF       => 5;
 use constant PILLAR       => 6;
 use constant RAMP_TOP     => 7;
+use constant TREE => 8;
+use constant SHRUB => 9;
+use constant SAPLING => 10;
+use constant BOULDER => 11;
 
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
 my @ramps = (
@@ -377,6 +385,24 @@ refresh_map_data();
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
 print "switching to main loop...\n";
+
+
+my $corout  = new Coro \&sleep_test;
+#my $success = $corout->ready;
+
+sub sleep_test {
+    my $old_time;
+    my $time;
+    while (1) {
+        $time = time;
+        if ( $time > ($old_time + 1) ) {
+            say $time;
+            $old_time = $time;
+        }
+        cede();
+    }
+}
+
 glutMainLoop();
 
 ################################################################################
@@ -443,6 +469,15 @@ sub sync_to_DF {
     $xmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_x} );
     $ymouse = $proc->get_u32( $OFFSETS[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_z} );
+    
+    #say $proc->get_u32( $OFFSETS[$ver]{viewport_x} );
+    #say $proc->get_u32( $OFFSETS[$ver]{viewport_y} );
+    #say $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
+    #say $proc->get_u32( $OFFSETS[$ver]{window_grid_x} );
+    #say $proc->get_u32( $OFFSETS[$ver]{window_grid_y} );
+    #say " ";
+    #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
+    #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
 
     # normalize mouse data if out of bounds, i.e. cursor not in use
     if ( $xmouse > $xcount * 16 || $ymouse > $ycount * 16 || $zmouse > $ZCOUNT )
@@ -691,6 +726,7 @@ sub generate_display_list {
     my $dl;
     my $type;
     my $type_below;
+    my $brightness_mod;
 
     if ( $cache[$id][ $z + 2 ] ) {
         $dl = $cache[$id][ $z + 2 ];
@@ -715,6 +751,8 @@ sub generate_display_list {
     glEnd();
 
     for my $texture ( 0 .. $#texture_ID ) {
+        
+        
         glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );
         glBegin(GL_TRIANGLES);
         my $tile       = $tiles[$z][type];
@@ -730,6 +768,7 @@ sub generate_display_list {
                 next if !defined $TILE_TYPES[$type][base_texture];
                 next if $TILE_TYPES[$type][base_texture] != $texture;
                 $type_below = $tile_below->[$rx][$ry];
+                $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
                 my ( $below, $north, $south, $west, $east ) =
                   ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
@@ -749,7 +788,7 @@ sub generate_display_list {
                       if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
                     $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                       if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-                    $DRAW_MODEL{Wall}->( $rx, $z, $ry, 1, 1 );
+                    $DRAW_MODEL{Wall}->( $rx, $z, $ry, 1, $brightness_mod );
                     next;
                 }
 
@@ -764,12 +803,92 @@ sub generate_display_list {
                     $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                       if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
 
-                    my $brightness_modificator = 1;
-                    $brightness_modificator = 0.75
+                    $brightness_mod *= 0.75
                       if ( defined $type_above
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    
                     $DRAW_MODEL{Floor}
-                      ->( $rx, $z, $ry, 1, $brightness_modificator );
+                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == TREE ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    
+                    $DRAW_MODEL{Tree}
+                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == SHRUB ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    
+                    $DRAW_MODEL{Shrub}
+                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == BOULDER ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    
+                    $DRAW_MODEL{Boulder}
+                      ->( $rx, $z, $ry, 1, $brightness_mod );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == SAPLING ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                    
+                    $DRAW_MODEL{Sapling}
+                      ->( $rx, $z, $ry, 1, $brightness_mod );
                     next;
                 }
 
@@ -821,7 +940,7 @@ sub generate_display_list {
                             my $func = $ramps[$ramp_type]{func};
                             croak "Need following ramp model: $func"
                               if !defined $DRAW_MODEL{$func};
-                            $DRAW_MODEL{$func}->( $rx, $z, $ry, 1, 1 );
+                            $DRAW_MODEL{$func}->( $rx, $z, $ry, 1, $brightness_mod );
                             last;
                         }
                     }
@@ -854,7 +973,7 @@ sub new_process_block {
 
 #my @ocupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
 
-    my ( $rx, $ry, $tile, $desig );
+    my ( $rx, $ry, $tile, $desig, $desig_below);
 
     my $bx_scaled  = $bx * 16;
     my $by_scaled  = $by * 16;
@@ -867,17 +986,19 @@ sub new_process_block {
         $rx    = $bx_scaled + $x;
         $tile  = $tiles[$bz][type][$rx] ||= [];
         $desig = $tiles[$bz][desig][$rx] ||= [];
+        $desig_below = $tiles[$bz-1][desig][$rx] ||= [];
 
         # cycle through 16 x and 16 y values,
         # which generate a total of 256 tile indexes
         for my $y ( 0 .. 15 ) {
-            if ( ( $designation_data[$tile_index] & 512 ) == 512 ) {
-                ++$tile_index;
-                next;    # skip tile if it is hidden
-            }
 
             $ry = $by_scaled + $y;
-
+            
+            if ( ( $designation_data[$tile_index] & 512 ) == 512 && ( !defined $desig_below->[$ry] || ( $desig_below->[$ry] & 512 ) == 512 ) ) {
+                ++$tile_index;
+                next;    # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
+            }
+            
             if ( !defined $tile->[$ry]
                 || $tile->[$ry] != $type_data[$tile_index] )
             {
@@ -1282,11 +1403,11 @@ sub render_scene {
     glDisable(GL_LIGHTING);
     glLineWidth(2);
     glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    glPolygonMode( GL_FRONT, GL_LINE );
     glBegin(GL_QUADS);
-    $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1 );
+    $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1000 );
     glEnd();
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    glPolygonMode( GL_FRONT, GL_FILL );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
 
     glLoadIdentity();    # Move back to the origin (for the text, below).
@@ -1297,7 +1418,8 @@ sub render_scene {
     glPushMatrix();      # But we like our current view too; so we save it here.
 
     glLoadIdentity();    # Now we set up a new projection for the text.
-    glOrtho( 0, $c{window_width}, 0, $c{window_height}, -1.0, 1.0 );
+    
+    gluOrtho2D(0,$c{window_width},$c{window_height},0);
 
     glDisable(GL_TEXTURE_2D);    # Lit or textured text looks awful.
     glDisable(GL_LIGHTING);
@@ -1308,60 +1430,60 @@ sub render_scene {
     glColor4f( 0.6, 1.0, 0.6, .75 );
 
     $buf = sprintf 'x_rot: %d', $x_rot;
-    glRasterPos2i( 2, 2 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'y_rot: %d', $y_rot;
     glRasterPos2i( 2, 14 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'z_pos: %f', $z_pos;
+    $buf = sprintf 'y_rot: %d', $y_rot;
     glRasterPos2i( 2, 26 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'y_pos: %f', $y_pos;
+    $buf = sprintf 'z_pos: %f', $z_pos;
     glRasterPos2i( 2, 38 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'x_pos: %f', $x_pos;
+    $buf = sprintf 'y_pos: %f', $y_pos;
     glRasterPos2i( 2, 50 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'z_off: %f', $z_off;
+    $buf = sprintf 'x_pos: %f', $x_pos;
     glRasterPos2i( 2, 62 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'y_off: %f', $y_off;
+    $buf = sprintf 'z_off: %f', $z_off;
     glRasterPos2i( 2, 74 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'x_off: %f', $x_off;
+    $buf = sprintf 'y_off: %f', $y_off;
     glRasterPos2i( 2, 86 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'Mem: %f', ( ( $memory_use / $c{memory_limit} ) * 100 );
+    $buf = sprintf 'x_off: %f', $x_off;
     glRasterPos2i( 2, 98 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
+    $buf = sprintf 'Mem: %f', ( ( $memory_use / $c{memory_limit} ) * 100 );
     glRasterPos2i( 2, 110 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
+    glRasterPos2i( 2, 122 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
         $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
-        glRasterPos2i( 2, 122 );
+        glRasterPos2i( 2, 134 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     }
 
     if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
         $buf = sprintf 'Desigs: 0b%059b',
           $tiles[$zmouse][desig][$xmouse][$ymouse];
-        glRasterPos2i( 2, 286 );
+        glRasterPos2i( 2, $c{window_height}-14 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     }
 
     $buf = sprintf 'Desigs: 0b%059b', 512;
-    glRasterPos2i( 2, 274 );
+    glRasterPos2i( 2, $c{window_height}-2 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
@@ -1369,7 +1491,7 @@ sub render_scene {
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     $buf = sprintf 'Working threads: %d', Coro::nready;
-    glRasterPos2i( 2, 170 );
+    glRasterPos2i( 2, 146 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "X";
@@ -1379,20 +1501,22 @@ sub render_scene {
 
 #    glTranslatef(6.0,$c{window_height} - 14,0.0);
 #
-#    glColor4f(0.2,0.2,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
+    glColor4f(0.2,0.2,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
 #
-#    glBegin(GL_QUADS);
-#    glVertex3f(  0.0, -2.0, 0.0);
-#    glVertex3f(  0.0, 12.0, 0.0);
-#    glVertex3f(140.0, 12.0, 0.0);
-#    glVertex3f(140.0, -2.0, 0.0);
-#    glEnd();
+    glBegin(GL_QUADS);
+    glVertex3f(  $c{window_width}-20,  $c{window_height}-20, 0.0);
+    glVertex3f(  $c{window_width}-20, $c{window_height}, 0.0);
+    glVertex3f( $c{window_width}, $c{window_height}, 0.0);
+    glVertex3f( $c{window_width},  $c{window_height}-20.0, 0.0);
+    glEnd();
 #
 #    glColor4f(0.9,0.2,0.2,.75);
 #    $buf = sprintf 'FPS: %f F: %2d", $FrameRate, $FrameCount;
 #    glRasterPos2i(6,0);
 #    print_opengl_string(GLUT_BITMAP_HELVETICA_12,$buf);
 
+
+    
     glPopMatrix();   # Done with this special projection matrix.  Throw it away.
 
     glutSwapBuffers();    # All done drawing.  Let's show it.
@@ -1447,7 +1571,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(13);
+    @texture_ID = glGenTextures_p(15);
 
     create_texture( 'grass',    grass );
     create_texture( 'stone',    stone );
@@ -1462,6 +1586,8 @@ sub build_textures {
     create_texture( 'shrub',    shrub );
     create_texture( 'sapling',  sapling );
     create_texture( 'creature', creature );
+    create_texture( 'grassb',   grassb );
+    create_texture( 'boulder',   boulder );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.

@@ -156,5 +156,12 @@ our @OFFSETS = (
             creature_race => 0x8C,
             creature_x => 0x94,
             creature_y => 0x96,
+            viewport_x => 0x00D457F4,
+            viewport_y => 0x00D73868,
+            viewport_z => 0x00D73844,
+            window_grid_x => 0x01706D4C,
+            window_grid_y => 0x01706D50,
+            menu_state => 0x01393260,
+            view_state => 0x009FC368,
         },
 ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT
