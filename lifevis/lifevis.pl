@@ -58,6 +58,7 @@ use Config::Simple;
 
 use Win32::OLE('in');
 my $memory_use;
+$memory_use = 0;
 my %c;
 
 BEGIN {
@@ -160,6 +161,13 @@ use constant sapling  => 11;
 use constant creature => 12;
 use constant grassb   => 13;
 use constant boulder  => 14;
+use constant shrub_dead  => 15;
+use constant tree_dead => 16;
+use constant sapling_dead => 17;
+use constant constructed_floor_detailed => 18;
+use constant constructed_wall => 19;
+use constant grass_dry => 20;
+use constant lava => 21;
 
 # Object and scene global variables.
 
@@ -177,6 +185,7 @@ reposition_camera();    # sets up initial camera position offsets
 # Settings for our light.  Try playing with these (or add more lights).
 my @light_ambient  = ( 0.7,  0.7, 0.7, 1.0 );
 my @light_diffuse  = ( 0.9,  0.9, 0.9, 1.0 );
+#my @light_specular  = ( 0.9,  0, 0, 1.0 );
 my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
 
 # hashes containing the functions called on certain key presses
@@ -248,14 +257,19 @@ use constant c_x    => 1;
 use constant c_y    => 2;
 use constant c_z    => 3;
 use constant name   => 4;
-use constant active => 5;
-use constant cell_x => 6;
-use constant cell_y => 7;
+use constant cell_x => 5;
+use constant cell_y => 6;
+
+my %creatures_present;
 
 my @creature_display_lists;
 
 our @TILE_TYPES;
-do 'df_internals.pl';
+unless ( my $return = do 'df_internals.pl' ) {
+    warn "couldn't parse df_internals.pl: $@" if $@;
+    warn "couldn't do df_internals.pl: $!" unless defined $return;
+    warn "couldn't run df_internals.pl" unless $return;
+}
 use constant base_visual    => 0;
 use constant base_texture   => 1;
 use constant brightness_mod => 2;
@@ -326,6 +340,9 @@ my @ramps = (
 my $updating;
 $updating = 0;
 
+my $creature_updating;
+$creature_updating = 0;
+
 my $redraw;
 $redraw = 0;
 
@@ -391,8 +408,8 @@ Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 my $cedes;
 
-generate_creature_display_lists();
 refresh_map_data();
+generate_creature_display_lists();
 
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
@@ -507,8 +524,21 @@ sub sync_to_DF {
     reposition_camera();    # sets up initial camera position offsets
     glutPostRedisplay() if $redraw;
 
-    #   my $start_time = new Benchmark;
+    # calculate cell coords from mouse coords
+    $xcell = int $xmouse / 16;
+    $ycell = int $ymouse / 16;
+    $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
+    $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
+    $xcell = $xcount - $c{view_range} - 1 if $xcell >= $xcount - $c{view_range};
+    $ycell = $ycount - $c{view_range} - 1 if $ycell >= $ycount - $c{view_range};
+    
+    $delay_full_update++;
 
+    #   my $start_time = new Benchmark;
+    
+    return if $creature_updating == 1;
+    
+    $creature_updating = 1;
     my @creature_vector_offsets =
       $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
     my $creature_list_length =
@@ -517,10 +547,16 @@ sub sync_to_DF {
       $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
         $creature_list_length );
 
-    while ( my ( $key, $value ) = each %creatures ) {
-        $value->[active] = 0;
+    while ( my ( $key, $value ) = each %creatures_present ) {
+        $value = 0;
     }
-
+    
+    for my $creature (@creature_offsets) {
+        $creatures_present{$creature} = 1;
+    }
+    
+    my $counter = 0;
+    
     for my $creature (@creature_offsets) {
 
         #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
@@ -539,7 +575,6 @@ sub sync_to_DF {
         $creatures{$creature}[c_y]    = $ry;
         $creatures{$creature}[c_z]    = $rz;
         $creatures{$creature}[name]   = $name;
-        $creatures{$creature}[active] = 1;
 
         # get old and new cell location and compare
         my $old_x = $creatures{$creature}[cell_x];
@@ -568,21 +603,18 @@ sub sync_to_DF {
             $creatures{$creature}[cell_x] = $bx;
             $creatures{$creature}[cell_y] = $by;
         }
+        $counter++;
+        if ( $counter == $c{creature_batch} ) {
+            $counter = 0;
+            cede();
+        }
     }
+    $creature_updating = 0;
 
     #    my $end_time = new Benchmark;
     #    my $time_difference = timediff( $end_time, $start_time );
     #    print 'leaving the code took:', timestr($time_difference), "\n";
 
-    # calculate cell coords from mouse coords
-    $xcell = int $xmouse / 16;
-    $ycell = int $ymouse / 16;
-    $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
-    $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
-    $xcell = $xcount - $c{view_range} - 1 if $xcell >= $xcount - $c{view_range};
-    $ycell = $ycount - $c{view_range} - 1 if $ycell >= $ycount - $c{view_range};
-
-    $delay_full_update++;
     return
       if ( ( $delay_full_update < $c{full_update_offset} && $redraw == 0 )
         || $updating == 1 );
@@ -714,6 +746,7 @@ sub sync_to_DF {
 
 # TODO: Limit cache deletions so $c{view_range} is never undercut
 # check that we're not using too much memory and destroy cache entries if necessary
+    
     while ($memory_use > $c{memory_limit}
         && $deletions < ( 2 * $c{view_range} ) )
     {
@@ -1109,9 +1142,15 @@ sub init_process_connection {
     ### lower priority of dwarf fortress ###########################################
     Win32::Process::Open( my $dwarf_process, $dwarf_pid, 1 );
     $dwarf_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
-    croak 'Could not lower process priority, this is really odd and'
+    croak 'Could not lower DF process priority, this is really odd and'
       . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
       unless ($dwarf_process);
+
+    Win32::Process::Open( my $self_process, $PROCESS_ID, 1 );
+    $self_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
+    croak 'Could not lower own process priority, this is really odd and'
+      . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
+      unless ($self_process);
 
     ### actually read stuff from memory ############################################
     $proc = Win32::Process::Memory->new(
@@ -1343,11 +1382,14 @@ sub initialize_opengl {
 
     glLightfv_p( GL_LIGHT1, GL_AMBIENT, @light_ambient );
     glLightfv_p( GL_LIGHT1, GL_DIFFUSE, @light_diffuse );
+#    glLightfv_p( GL_LIGHT1, GL_SPECULAR, @light_specular );
 
     glEnable(GL_LIGHT1);
 
     # A handy trick -- have surface material mirror the color.
     glColorMaterial( GL_FRONT, GL_AMBIENT_AND_DIFFUSE );
+    #glMaterialfv_p( GL_FRONT_AND_BACK, GL_SPECULAR, 1, 1, 1, 1);
+    #glMaterialfv_p(GL_FRONT_AND_BACK, GL_SHININESS, 127);
     glEnable(GL_COLOR_MATERIAL);
     return;
 }
@@ -1468,7 +1510,7 @@ sub render_scene {
             my @creature_list = @{ $cells[$bx][$by][creature_list] };
             for my $entry (@creature_list) {
                 last if !defined $entry;
-                next unless $creatures{$entry}[active];
+                next unless $creatures_present{$entry};
                 my $x = $creatures{$entry}[c_x];
                 my $z = $creatures{$entry}[c_z];
                 my $y = $creatures{$entry}[c_y];
@@ -1666,7 +1708,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(15);
+    @texture_ID = glGenTextures_p(22);
 
     create_texture( 'grass',    grass );
     create_texture( 'stone',    stone );
@@ -1683,6 +1725,13 @@ sub build_textures {
     create_texture( 'creature', creature );
     create_texture( 'grassb',   grassb );
     create_texture( 'boulder',  boulder );
+    create_texture( 'shrub_dead',  shrub_dead );
+    create_texture( 'tree_dead',  tree_dead );
+    create_texture( 'sapling_dead',  sapling_dead );
+    create_texture( 'constructed_floor_detailed',  constructed_floor_detailed );
+    create_texture( 'constructed_wall',  constructed_wall );
+    create_texture( 'grass_dry',  grass_dry );
+    create_texture( 'lava',  lava );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
