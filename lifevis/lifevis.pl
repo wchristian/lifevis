@@ -226,7 +226,8 @@ my @cells;
 use constant changed   => 0;
 use constant z         => 1;
 use constant offset    => 2;
-use constant cache_ptr => 3;
+use constant creature_list    => 3;
+use constant cache_ptr => 4;
 
 # slice constants
 #use constant changed => 0;
@@ -241,12 +242,17 @@ use constant cell_ptr => 0;
 my @cache_bucket;
 my @protected_caches;
 
-my @creatures;
+my %creatures;
 use constant race => 0;
 use constant c_x  => 1;
 use constant c_y  => 2;
 use constant c_z  => 3;
 use constant name => 4;
+use constant active => 5;
+use constant cell_x => 6;
+use constant cell_y => 7;
+
+my @creature_display_lists;
 
 our @TILE_TYPES;
 do 'df_internals.pl';
@@ -383,6 +389,8 @@ Use first letter of shown display mode settings to alter.
 Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 my $cedes;
+
+generate_creature_display_lists();
 refresh_map_data();
 
 # Pass off control to OpenGL.
@@ -462,7 +470,6 @@ sub extract_base_memory_data {
 
 sub sync_to_DF {
     $redraw = 0;
-    my $start_time = new Benchmark;
 
     $xmouse_old = $xmouse;
     $ymouse_old = $ymouse;
@@ -499,6 +506,74 @@ sub sync_to_DF {
     ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
     reposition_camera();    # sets up initial camera position offsets
     glutPostRedisplay() if $redraw;
+    
+    
+#   my $start_time = new Benchmark;
+
+    my @creature_vector_offsets =
+      $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
+    my $creature_list_length =
+      ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
+    my @creature_offsets =
+      $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
+        $creature_list_length );
+      
+    while ( my ($key, $value) = each %creatures) {
+        $value->[active] = 0;
+    }
+
+    for my $creature ( @creature_offsets ) {
+
+#        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
+
+        # extract data of current creature
+        my $race = $proc->get_u32( $creature + 140 );
+        my $rx   = $proc->get_u16( $creature + 148 );
+        my $ry   = $proc->get_u16( $creature + 150 );
+        my $rz   = $proc->get_u16( $creature + 152 );
+        my $name_length = $proc->get_u32( $creature + 20 );
+        $proc->get_buf( $creature + 4,
+            $name_length, my $name );
+        
+        # update record of current creature
+        $creatures{$creature}[race] = $race;
+        $creatures{$creature}[c_x]  = $rx;
+        $creatures{$creature}[c_y]  = $ry;
+        $creatures{$creature}[c_z]  = $rz;
+        $creatures{$creature}[name] = $name;
+        $creatures{$creature}[active] = 1;
+        
+        # get old and new cell location and compare
+        my $old_x = $creatures{$creature}[cell_x];
+        my $old_y = $creatures{$creature}[cell_y];
+        my $bx = int $rx / 16;
+        my $by = int $ry / 16;
+        if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+            # creature moved to other cell or is new
+            
+            # get creature list of old cell then cycle through it and remove the old entry
+            if ( defined $old_x ) {
+                $redraw = 1;
+                my $creature_list = $cells[$old_x][$old_y][creature_list];
+                for my $entry ( @{$creature_list} ) {
+                    if ( $entry == $creature ) {
+                        $entry = $creature_list->[$#$creature_list];
+                        pop @{$creature_list};
+                        last;
+                    }
+                }
+            }
+            
+            # add entry to new cell and update cell coordinates
+            push @{$cells[$bx][$by][creature_list]}, $creature;
+            $creatures{$creature}[cell_x] = $bx;
+            $creatures{$creature}[cell_y] = $by;
+        }
+    }
+
+#    my $end_time = new Benchmark;
+#    my $time_difference = timediff( $end_time, $start_time );
+#    print 'leaving the code took:', timestr($time_difference), "\n";
 
     $delay_full_update++;
     return
@@ -557,47 +632,6 @@ sub sync_to_DF {
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
-    }
-
-    my @creature_vector_offsets =
-      $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
-    my $creature_list_length =
-      ( $creature_vector_offsets[1] + 8 - $creature_vector_offsets[0] ) / 4;
-    my @creature_offsets =
-      $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
-        $creature_list_length );
-
-    for my $creature ( 0 .. $#creature_offsets ) {
-
-        #say $proc->hexdump( $creature, 0x688 );
-
-        my $race = $proc->get_u32( $creature_offsets[$creature] + 140 );
-        my $rx   = $proc->get_u16( $creature_offsets[$creature] + 148 );
-        my $ry   = $proc->get_u16( $creature_offsets[$creature] + 150 );
-        my $rz   = $proc->get_u16( $creature_offsets[$creature] + 152 );
-
-        my $name_length = $proc->get_u32( $creature_offsets[$creature] + 20 );
-        $proc->get_buf( $creature_offsets[$creature] + 4,
-            $name_length, my $name );
-        my $bx = int $rx / 16;
-        my $by = int $ry / 16;
-
-        if (   !defined $creatures[$creature]
-            || $creatures[$creature][c_x] != $rx
-            || $creatures[$creature][c_y] != $ry
-            || $creatures[$creature][c_z] != $rz
-            || $creatures[$creature][race] != $race
-            || $creatures[$creature][name] ne $name )
-        {
-            $cells[$bx][$by][changed] = 1;
-            $cells[$bx][$by][z][$rz] = 1;
-        }
-
-        $creatures[$creature][race] = $race;
-        $creatures[$creature][c_x]  = $rx;
-        $creatures[$creature][c_y]  = $ry;
-        $creatures[$creature][c_z]  = $rz;
-        $creatures[$creature][name] = $name;
     }
 
     # cycle through cells in range around cursor to generate display lists
@@ -711,10 +745,6 @@ sub sync_to_DF {
     }
 
     @protected_caches = [];
-
-    my $end_time = new Benchmark;
-    my $time_difference = timediff( $end_time, $start_time );
-    print 'leaving the code took:', timestr($time_difference), "\n";
     $updating = 0;
 
     #say "$#cache caches";
@@ -722,6 +752,17 @@ sub sync_to_DF {
     $first_run_done = 1;
     glutPostRedisplay() if $redraw;
     return;
+}
+
+sub generate_creature_display_lists {
+    my $dl = glGenLists(1);
+    push @creature_display_lists, $dl;
+    glNewList( $dl, GL_COMPILE );
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+    glBegin(GL_TRIANGLES);
+    $DRAW_MODEL{Creature}->( 0, 0, 0, 1, 1 );
+    glEnd();
+    glEndList();
 }
 
 sub generate_display_list {
@@ -740,18 +781,6 @@ sub generate_display_list {
     }
 
     glNewList( $dl, GL_COMPILE );
-
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
-    glBegin(GL_TRIANGLES);
-    for my $creature (@creatures) {
-        next if $creature->[c_z] != $z;
-        next if $creature->[c_x] < ( $x * 16 );
-        next if $creature->[c_y] < ( $y * 16 );
-        next if $creature->[c_x] > ( $x * 16 ) + 15;
-        next if $creature->[c_y] > ( $y * 16 ) + 15;
-        $DRAW_MODEL{Creature}->( $creature->[c_x], $z, $creature->[c_y], 1, 1 );
-    }
-    glEnd();
 
     for my $texture ( 0 .. $#texture_ID ) {
         
@@ -1061,7 +1090,7 @@ sub init_process_connection {
 
     ### actually read stuff from memory ############################################
     $proc = Win32::Process::Memory->new(
-        { pid => $dwarf_pid, access => 'read/query' } )
+        { pid => $dwarf_pid, access => 'read/write/query' } )
       ;    # open process with read access
     croak 'Could not open memory access to Dwarf Fortress, this is really odd'
       . ' and should not happen, try running as'
@@ -1400,6 +1429,19 @@ sub render_scene {
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
                 glCallList( $slices->[$slice] ) if $slices->[$slice];
             }
+            
+            next if !defined $cells[$bx][$by][creature_list];
+            my @creature_list = @{$cells[$bx][$by][creature_list]};
+            for my $entry ( @creature_list ) {
+                last if !defined $entry;
+                next unless $creatures{$entry}[active];
+                my $x = $creatures{$entry}[c_x];
+                my $z = $creatures{$entry}[c_z];
+                my $y = $creatures{$entry}[c_y];
+                glTranslatef ( $x, $z, $y );
+                glCallList( $creature_display_lists[0] );
+                glTranslatef ( -$x, -$z, -$y );
+            }
         }
     }
 
@@ -1629,6 +1671,11 @@ sub process_key_press {
 
     my $scan = VkKeyScan($key);
     $scan &= 0xff;
+    
+    if ( $scan == VK_F ) {
+        $proc->set_u32($OFFSETS[$ver]{mouse_z}, $zmouse+1); # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
+        print "moo";
+    }
 
     PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
