@@ -480,21 +480,15 @@ sub sync_to_DF {
     $ymouse = $proc->get_u32( $OFFSETS[$ver]{mouse_y} );
     $zmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_z} );
     
-    #say $proc->get_u32( $OFFSETS[$ver]{viewport_x} );
-    #say $proc->get_u32( $OFFSETS[$ver]{viewport_y} );
-    #say $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
-    #say $proc->get_u32( $OFFSETS[$ver]{window_grid_x} );
-    #say $proc->get_u32( $OFFSETS[$ver]{window_grid_y} );
-    #say " ";
     #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
     #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
 
-    # normalize mouse data if out of bounds, i.e. cursor not in use
+    # use viewport coords if out of bounds, i.e. cursor not in use
     if ( $xmouse > $xcount * 16 || $ymouse > $ycount * 16 || $zmouse > $ZCOUNT )
     {
-        $xmouse = $xmouse_old;
-        $ymouse = $ymouse_old;
-        $zmouse = $zmouse_old;
+        $xmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_x} ) + int ( $proc->get_u32( $OFFSETS[$ver]{window_grid_x} ) / 6 );
+        $ymouse = $proc->get_u32( $OFFSETS[$ver]{viewport_y} ) + int ( $proc->get_u32( $OFFSETS[$ver]{window_grid_y} ) / 3 );
+        $zmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
     }
 
     $redraw = 1
@@ -575,14 +569,6 @@ sub sync_to_DF {
 #    my $time_difference = timediff( $end_time, $start_time );
 #    print 'leaving the code took:', timestr($time_difference), "\n";
 
-    $delay_full_update++;
-    return
-      if ( ( $delay_full_update < $c{full_update_offset} && $redraw == 0 )
-        || $updating == 1 );
-    $delay_full_update = 0;
-
-    $updating = 1;
-
     # calculate cell coords from mouse coords
     $xcell = int $xmouse / 16;
     $ycell = int $ymouse / 16;
@@ -591,13 +577,28 @@ sub sync_to_DF {
     $xcell = $xcount - $c{view_range} - 1 if $xcell >= $xcount - $c{view_range};
     $ycell = $ycount - $c{view_range} - 1 if $ycell >= $ycount - $c{view_range};
 
+    $delay_full_update++;
+    return
+      if ( ( $delay_full_update < $c{full_update_offset} && $redraw == 0 )
+        || $updating == 1 );
+    $delay_full_update = 0;
+
+    $updating = 1;
+
+    my $min_x_range = $xcell - $c{view_range};
+    $min_x_range = 0 if $min_x_range < 0;
+    my $max_x_range = $xcell + $c{view_range};
+    $max_x_range = $xcount-1 if $max_x_range > $xcount-1;
+    my $min_y_range = $ycell - $c{view_range};
+    $min_y_range = 0 if $min_y_range < 0;
+    my $max_y_range = $ycell + $c{view_range};
+    $max_y_range = $ycount-1 if $max_y_range > $ycount-1;
+    
     #TODO: When at the edge, only grab at inner edge.
     # cycle through cells in range around cursor to grab data
-    for my $bx ( $xcell - $c{view_range} - 1 .. $xcell + $c{view_range} + 1 ) {
+    for my $bx ( $min_x_range-1 .. $max_x_range+1 ) {
         next if ( $bx < 0 || $bx > $xcount - 1 );
-        for
-          my $by ( $ycell - $c{view_range} - 1 .. $ycell + $c{view_range} + 1 )
-        {
+        for my $by ( $min_y_range-1 .. $max_y_range+1 ) {
             next if ( $by < 0 || $by > $ycount - 1 );
 
             # cycle through slices in cell
@@ -635,8 +636,8 @@ sub sync_to_DF {
     }
 
     # cycle through cells in range around cursor to generate display lists
-    for my $bx ( $xcell - $c{view_range} .. $xcell + $c{view_range} ) {
-        for my $by ( $ycell - $c{view_range} .. $ycell + $c{view_range} ) {
+    for my $bx ( $min_x_range .. $max_x_range ) {
+        for my $by ( $min_y_range .. $max_y_range ) {
 
             my $cache_id;
 
@@ -1414,8 +1415,17 @@ sub render_scene {
     glColor3f( 1, 1, 1 );    # Basic polygon color
 
     # cycle through cells in range around cursor to render
-    for my $bx ( $xcell - $c{view_range} .. $xcell + $c{view_range} ) {
-        for my $by ( $ycell - $c{view_range} .. $ycell + $c{view_range} ) {
+    my $min_x_range = $xcell - $c{view_range};
+    $min_x_range = 0 if $min_x_range < 0;
+    my $max_x_range = $xcell + $c{view_range};
+    $max_x_range = $xcount if $max_x_range > $xcount;
+    my $min_y_range = $ycell - $c{view_range};
+    $min_y_range = 0 if $min_y_range < 0;
+    my $max_y_range = $ycell + $c{view_range};
+    $max_y_range = $ycount if $max_y_range > $ycount;
+    
+    for my $bx ( $min_x_range .. $max_x_range ) {
+        for my $by ( $min_y_range .. $max_y_range ) {
 
             #next unless $cells[$bx][$by][cache_ptr];
 
@@ -1550,11 +1560,24 @@ sub render_scene {
     glColor4f(0.2,0.2,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
 #
     glBegin(GL_QUADS);
+    glVertex3f(  $c{window_width}-42,  $c{window_height}-20, 0.0);
+    glVertex3f(  $c{window_width}-42, $c{window_height}, 0.0);
+    glVertex3f( $c{window_width}-22, $c{window_height}, 0.0);
+    glVertex3f( $c{window_width}-22,  $c{window_height}-20.0, 0.0);
+    glEnd();
+    
+    glBegin(GL_QUADS);
     glVertex3f(  $c{window_width}-20,  $c{window_height}-20, 0.0);
     glVertex3f(  $c{window_width}-20, $c{window_height}, 0.0);
     glVertex3f( $c{window_width}, $c{window_height}, 0.0);
     glVertex3f( $c{window_width},  $c{window_height}-20.0, 0.0);
     glEnd();
+    
+    glColor4f(1,1,0.2,0.75);    # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
+    glRasterPos2i( $c{window_width}-36, $c{window_height}-6 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
+    glRasterPos2i( $c{window_width}-14, $c{window_height}-6 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
 #
 #    glColor4f(0.9,0.2,0.2,.75);
 #    $buf = sprintf 'FPS: %f F: %2d", $FrameRate, $FrameCount;
@@ -1725,6 +1748,22 @@ sub process_mouse_click {
     if ( $button == GLUT_LEFT_BUTTON && $state == GLUT_DOWN ) {
         $last_mouse_x = $x;
         $last_mouse_y = $y;
+        say ( ($c{window_width}-42) ." $x ". ($c{window_width}-22) );
+        say ( ($c{window_height}-20) ." $y ". ($c{window_height}) );
+        if ( $x > $c{window_width}-42 && $x < $c{window_width}-22
+            && $y > $c{window_height}-20 && $y < $c{window_height} ) {
+            --$c{view_range} unless $c{view_range} < 1;
+            glutPostRedisplay();
+        }
+        
+        if ( $x > $c{window_width}-20 && $x < $c{window_width}
+            && $y > $c{window_height}-20 && $y < $c{window_height} ) {
+            my $size = ( $xcount > $ycount) ? $xcount : $ycount;
+            ++$c{view_range} if ( $c{view_range} < $size / 2);
+            say $c{view_range} . ' ' . $xcount;
+            glutPostRedisplay();
+            $redraw = 1;
+        }
     }
 
     $middle_mouse = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
@@ -1733,6 +1772,16 @@ sub process_mouse_click {
 
 sub process_active_mouse_motion {
     my ( $x, $y ) = @_;
+        
+    if ( $x > $c{window_width}-42 && $x < $c{window_width}-22
+        && $y > $c{window_height}-20 && $y < $c{window_height} ) {
+        return;
+    }
+    
+    if ( $x > $c{window_width}-20 && $x < $c{window_width}
+        && $y > $c{window_height}-20 && $y < $c{window_height} ) {
+        return;
+    }
 
     my ( $new_x, $new_y ) = ( 0, 0 );
     $new_x = $x - $last_mouse_x if ($last_mouse_x);
