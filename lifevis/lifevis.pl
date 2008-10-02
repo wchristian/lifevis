@@ -10,6 +10,11 @@ use 5.010;
 use strict;
 use warnings;
 
+use Win32::Detached;
+
+open STDERR, '>>error.txt';
+open STDOUT, '>>log.txt';
+
 #use warnings::unused;
 #use warnings::method;
 #use diagnostics;
@@ -168,6 +173,7 @@ use constant constructed_floor_detailed => 18;
 use constant constructed_wall => 19;
 use constant grass_dry => 20;
 use constant lava => 21;
+use constant test => 22;
 
 # Object and scene global variables.
 
@@ -434,6 +440,7 @@ sub sleep_test {
 
 glutMainLoop();
 
+print "moo";
 ################################################################################
 ## Rendering Functions #########################################################
 ################################################################################
@@ -661,12 +668,7 @@ sub sync_to_DF {
                     $cells[$bx][$by][changed] = 1;    # cell was changed
                 }
 
-                if ($first_run_done) {                # && $cedes < 100 ) {
-                    cede();
-                }
-
-                #    $cedes++;
-                #}
+                cede();
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
@@ -694,12 +696,8 @@ sub sync_to_DF {
                                 $bx );
                             @{$slices}[$slice] = 0;
                         }
-
-                        #if ( $cedes < 100 ) {
+                        glutPostRedisplay();
                         cede();
-
-                        #    $cedes++;
-                        #}
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
@@ -734,6 +732,8 @@ sub sync_to_DF {
                         generate_display_list( $cache_id, $slice, $by, $bx );
                         @{$slices}[$slice] = 0;
                     }
+                    glutPostRedisplay();
+                    cede();
                 }
                 $cells[$bx][$by][changed] = 0;
 
@@ -1532,6 +1532,16 @@ sub render_scene {
     glPolygonMode( GL_FRONT, GL_FILL );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
 
+
+=cut    glBindTexture( GL_TEXTURE_2D, $texture_ID[test] );
+    glEnable(GL_POINT_SPRITE);
+    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+	glPointSize(50.0);
+    glBegin(GL_POINTS);
+    glVertex3f($x_pos, $y_pos, $z_pos);
+=cut    glEnd();
+
+
     glLoadIdentity();    # Move back to the origin (for the text, below).
 
     # We need to change the projection matrix for the text rendering.
@@ -1684,7 +1694,7 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 45.0, $width / $height, 0.1, 1000000.0 );
+    gluPerspective( 45.0, $width / $height, 0.1, 1300.0 );
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -1708,7 +1718,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(22);
+    @texture_ID = glGenTextures_p(23);
 
     create_texture( 'grass',    grass );
     create_texture( 'stone',    stone );
@@ -1732,6 +1742,7 @@ sub build_textures {
     create_texture( 'constructed_wall',  constructed_wall );
     create_texture( 'grass_dry',  grass_dry );
     create_texture( 'lava',  lava );
+    create_texture( 'curses3_960x300',  test );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
