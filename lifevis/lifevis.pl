@@ -12,7 +12,6 @@ use warnings;
 
 #use Win32::Detached;
 
-
 #open STDERR, '>>error.txt';
 #open STDOUT, '>>log.txt';
 
@@ -147,36 +146,35 @@ use constant PI => 4 * atan2 1, 1;
 use constant PIOVER180 => PI / 180;
 
 # Some global variables.
-my $first_run_done;
 
 # Window and texture IDs, window width and height.
 my $window_ID;
 
 my @texture_ID;
 
-use constant grass    => 0;
-use constant stone    => 1;
-use constant cursor   => 2;
-use constant obsidian => 3;
-use constant unknown  => 4;
-use constant minstone => 5;
-use constant pool     => 6;
-use constant water    => 7;
-use constant soil     => 8;
-use constant tree     => 9;
-use constant shrub    => 10;
-use constant sapling  => 11;
-use constant creature => 12;
-use constant grassb   => 13;
-use constant boulder  => 14;
-use constant shrub_dead  => 15;
-use constant tree_dead => 16;
-use constant sapling_dead => 17;
+use constant grass                      => 0;
+use constant stone                      => 1;
+use constant cursor                     => 2;
+use constant obsidian                   => 3;
+use constant unknown                    => 4;
+use constant minstone                   => 5;
+use constant pool                       => 6;
+use constant water                      => 7;
+use constant soil                       => 8;
+use constant tree                       => 9;
+use constant shrub                      => 10;
+use constant sapling                    => 11;
+use constant creature                   => 12;
+use constant grassb                     => 13;
+use constant boulder                    => 14;
+use constant shrub_dead                 => 15;
+use constant tree_dead                  => 16;
+use constant sapling_dead               => 17;
 use constant constructed_floor_detailed => 18;
-use constant constructed_wall => 19;
-use constant grass_dry => 20;
-use constant lava => 21;
-use constant test => 22;
+use constant constructed_wall           => 19;
+use constant grass_dry                  => 20;
+use constant lava                       => 21;
+use constant test                       => 22;
 
 # Object and scene global variables.
 
@@ -192,8 +190,9 @@ my $middle_mouse = 0;
 reposition_camera();    # sets up initial camera position offsets
 
 # Settings for our light.  Try playing with these (or add more lights).
-my @light_ambient  = ( 0.7,  0.7, 0.7, 1.0 );
-my @light_diffuse  = ( 0.9,  0.9, 0.9, 1.0 );
+my @light_ambient = ( 0.7, 0.7, 0.7, 1.0 );
+my @light_diffuse = ( 0.9, 0.9, 0.9, 1.0 );
+
 #my @light_specular  = ( 0.9,  0, 0, 1.0 );
 my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
 
@@ -213,9 +212,6 @@ my $pe_timestamp;
 my ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
 
 my ( $submenid, $menid );
-
-my $current_data_proc_task;
-my $max_data_proc_tasks;
 
 my $delay_full_update = 40;
 
@@ -349,15 +345,6 @@ my @ramps = (
     { mask => 0b1_0000_0000, func => 'N' },
 );
 
-my $updating;
-$updating = 0;
-
-my $creature_updating;
-$creature_updating = 0;
-
-my $redraw;
-$redraw = 0;
-
 our %DRAW_MODEL;
 unless ( my $return = do 'models.pl' ) {
     warn "couldn't parse models.pl: $@" if $@;
@@ -418,28 +405,28 @@ Use first letter of shown display mode settings to alter.
 Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 
-refresh_map_data();
+my $main_loop = $Coro::main;
+
+my $loc_loop = new Coro \&location_update_loop;
+my $success2 = $loc_loop->ready;
+
+my $current_data_proc_task = 0;
+my $max_data_proc_tasks    = 0;
+
+my $land_loop = new Coro \&landscape_update_loop;
+my $success3  = $land_loop->ready;
+
+#refresh_map_data();
 generate_creature_display_lists();
+
+my $current_creat_proc_task = 0;
+my $max_creat_proc_tasks    = 0;
+my $creat_loop              = new Coro \&creature_update_loop;
+my $success                 = $creat_loop->ready;
 
 # Pass off control to OpenGL.
 # Above functions are called as appropriate.
 print "switching to main loop...\n";
-
-#my $corout = new Coro \&sleep_test;
-#my $success = $corout->ready;
-
-sub sleep_test {
-    my $old_time;
-    my $time;
-    while (1) {
-        $time = time;
-        if ( $time > ( $old_time + 1 ) ) {
-            say $time;
-            $old_time = $time;
-        }
-        cede();
-    }
-}
 
 glutMainLoop();
 
@@ -447,21 +434,6 @@ print "moo";
 ################################################################################
 ## Rendering Functions #########################################################
 ################################################################################
-
-my @cell_offsets;
-
-sub refresh_map_data {
-    my $corout  = new Coro \&sync_to_DF;
-    my $success = $corout->ready;
-
-    cede();
-
-    glutPostRedisplay() if $redraw;
-
-    #$redraw = 0;
-    glutTimerFunc( $c{sync_delay}, \&refresh_map_data, 0 );
-    return;
-}
 
 sub extract_base_memory_data {
     $xcount = $proc->get_u32( $OFFSETS[$ver]{x_count} );    # map size in cells
@@ -484,7 +456,6 @@ sub extract_base_memory_data {
         # for each y-column in this x-slice and cycle through
         my @yoffsets = $proc->get_packs( 'L', 4, $xoffsets[$bx], $ycount );
         for my $by ( 0 .. $ycount - 1 ) {
-            $cell_offsets[$bx][$by] = $yoffsets[$by];
             $cells[$bx][$by][offset] = $yoffsets[$by];
         }
     }
@@ -492,311 +463,306 @@ sub extract_base_memory_data {
     return;
 }
 
-sub sync_to_DF {
-    $redraw = 0;
+sub creature_update_loop {
+    while (1) {
 
-    $xmouse_old = $xmouse;
-    $ymouse_old = $ymouse;
-    $zmouse_old = $zmouse;
+        my @creature_vector_offsets =
+          $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
+        my $creature_list_length =
+          ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
+        my @creature_offsets =
+          $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
+            $creature_list_length );
 
-    # get mouse data
-    $xmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_x} );
-    $ymouse = $proc->get_u32( $OFFSETS[$ver]{mouse_y} );
-    $zmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_z} );
+        while ( my ( $key, $value ) = each %creatures_present ) {
+            $value = 0;
+        }
 
-    #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
-    #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
+        for my $creature (@creature_offsets) {
+            $creatures_present{$creature} = 1;
+        }
 
-    # use viewport coords if out of bounds, i.e. cursor not in use
-    if ( $xmouse > $xcount * 16 || $ymouse > $ycount * 16 || $zmouse > $ZCOUNT )
-    {
-        $xmouse =
-          $proc->get_u32( $OFFSETS[$ver]{viewport_x} ) +
-          int( $proc->get_u32( $OFFSETS[$ver]{window_grid_x} ) / 6 );
-        $ymouse =
-          $proc->get_u32( $OFFSETS[$ver]{viewport_y} ) +
-          int( $proc->get_u32( $OFFSETS[$ver]{window_grid_y} ) / 3 );
-        $zmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
-    }
+        $current_creat_proc_task = 0;
+        $max_creat_proc_tasks    = $#creature_offsets;
 
-    $redraw = 1
-      if ( $xmouse != $xmouse_old
-        || $ymouse != $ymouse_old
-        || $zmouse != $zmouse_old );
+        for my $creature (@creature_offsets) {
 
-    # update camera system with mouse data
-    ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
-    reposition_camera();    # sets up initial camera position offsets
-    glutPostRedisplay() if $redraw;
+            #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
 
-    # calculate cell coords from mouse coords
-    $xcell = int $xmouse / 16;
-    $ycell = int $ymouse / 16;
-    $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
-    $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
-    $xcell = $xcount - $c{view_range} - 1 if $xcell >= $xcount - $c{view_range};
-    $ycell = $ycount - $c{view_range} - 1 if $ycell >= $ycount - $c{view_range};
-    
-    $delay_full_update++;
+            # extract data of current creature
+            my $race        = $proc->get_u32( $creature + 140 );
+            my $rx          = $proc->get_u16( $creature + 148 );
+            my $ry          = $proc->get_u16( $creature + 150 );
+            my $rz          = $proc->get_u16( $creature + 152 );
+            my $name_length = $proc->get_u32( $creature + 20 );
+            $proc->get_buf( $creature + 4, $name_length, my $name );
 
-    #   my $start_time = new Benchmark;
-    
-    return if $creature_updating == 1;
-    
-    $creature_updating = 1;
-    my @creature_vector_offsets =
-      $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
-    my $creature_list_length =
-      ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
-    my @creature_offsets =
-      $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
-        $creature_list_length );
+            # update record of current creature
+            $creatures{$creature}[race] = $race;
+            $creatures{$creature}[c_x]  = $rx;
+            $creatures{$creature}[c_y]  = $ry;
+            $creatures{$creature}[c_z]  = $rz;
+            $creatures{$creature}[name] = $name;
 
-    while ( my ( $key, $value ) = each %creatures_present ) {
-        $value = 0;
-    }
-    
-    for my $creature (@creature_offsets) {
-        $creatures_present{$creature} = 1;
-    }
-    
-    my $counter = 0;
-    
-    $current_data_proc_task = 0;
-    $max_data_proc_tasks = $#creature_offsets;
+            # get old and new cell location and compare
+            my $old_x = $creatures{$creature}[cell_x];
+            my $old_y = $creatures{$creature}[cell_y];
+            my $bx    = int $rx / 16;
+            my $by    = int $ry / 16;
+            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
 
-    for my $creature (@creature_offsets) {
-        #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
+                # creature moved to other cell or is new
 
-        # extract data of current creature
-        my $race        = $proc->get_u32( $creature + 140 );
-        my $rx          = $proc->get_u16( $creature + 148 );
-        my $ry          = $proc->get_u16( $creature + 150 );
-        my $rz          = $proc->get_u16( $creature + 152 );
-        my $name_length = $proc->get_u32( $creature + 20 );
-        $proc->get_buf( $creature + 4, $name_length, my $name );
-
-        # update record of current creature
-        $creatures{$creature}[race]   = $race;
-        $creatures{$creature}[c_x]    = $rx;
-        $creatures{$creature}[c_y]    = $ry;
-        $creatures{$creature}[c_z]    = $rz;
-        $creatures{$creature}[name]   = $name;
-
-        # get old and new cell location and compare
-        my $old_x = $creatures{$creature}[cell_x];
-        my $old_y = $creatures{$creature}[cell_y];
-        my $bx    = int $rx / 16;
-        my $by    = int $ry / 16;
-        if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
-
-            # creature moved to other cell or is new
-
-            # get creature list of old cell then cycle through it and remove the old entry
-            if ( defined $old_x ) {
-                $redraw = 1;
-                my $creature_list = $cells[$old_x][$old_y][creature_list];
-                for my $entry ( @{$creature_list} ) {
-                    if ( $entry == $creature ) {
-                        $entry = $creature_list->[$#$creature_list];
-                        pop @{$creature_list};
-                        last;
+  # get creature list of old cell then cycle through it and remove the old entry
+                if ( defined $old_x ) {
+                    glutPostRedisplay();
+                    my $creature_list = $cells[$old_x][$old_y][creature_list];
+                    for my $entry ( @{$creature_list} ) {
+                        if ( $entry == $creature ) {
+                            $entry = $creature_list->[$#$creature_list];
+                            pop @{$creature_list};
+                            last;
+                        }
                     }
                 }
+
+                # add entry to new cell and update cell coordinates
+                push @{ $cells[$bx][$by][creature_list] }, $creature;
+                $creatures{$creature}[cell_x] = $bx;
+                $creatures{$creature}[cell_y] = $by;
             }
 
-            # add entry to new cell and update cell coordinates
-            push @{ $cells[$bx][$by][creature_list] }, $creature;
-            $creatures{$creature}[cell_x] = $bx;
-            $creatures{$creature}[cell_y] = $by;
+            for ( 0 .. $c{creature_update_slow_rate} ) {
+                cede();
+            }
+            $current_creat_proc_task++;
         }
-        cede() if time >= $next_cede_time;
-        $current_data_proc_task++;
     }
-    $creature_updating = 0;
+}
 
-    #    my $end_time = new Benchmark;
-    #    my $time_difference = timediff( $end_time, $start_time );
-    #    print 'leaving the code took:', timestr($time_difference), "\n";
+sub location_update_loop {
 
-    return
-      if ( ( $delay_full_update < $c{full_update_offset} && $redraw == 0 )
-        || $updating == 1 );
-    $delay_full_update = 0;
+    while (1) {
+        $xmouse_old = $xmouse;
+        $ymouse_old = $ymouse;
+        $zmouse_old = $zmouse;
 
-    $updating = 1;
+        # get mouse data
+        $xmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_x} );
+        $ymouse = $proc->get_u32( $OFFSETS[$ver]{mouse_y} );
+        $zmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_z} );
 
-    my $min_x_range = $xcell - $c{view_range};
-    $min_x_range = 0 if $min_x_range < 0;
-    my $max_x_range = $xcell + $c{view_range};
-    $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
-    my $min_y_range = $ycell - $c{view_range};
-    $min_y_range = 0 if $min_y_range < 0;
-    my $max_y_range = $ycell + $c{view_range};
-    $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
+        #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
+        #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
 
-    
-    $current_data_proc_task = 0;
-    $max_data_proc_tasks = "?";
-    
-    #TODO: When at the edge, only grab at inner edge.
-    # cycle through cells in range around cursor to grab data
-    for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
-        next if ( $bx < 0 || $bx > $xcount - 1 );
-        for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
-            next if ( $by < 0 || $by > $ycount - 1 );
+        # use viewport coords if out of bounds, i.e. cursor not in use
+        if (   $xmouse > $xcount * 16
+            || $ymouse > $ycount * 16
+            || $zmouse > $ZCOUNT )
+        {
+            $xmouse =
+              $proc->get_u32( $OFFSETS[$ver]{viewport_x} ) +
+              int( $proc->get_u32( $OFFSETS[$ver]{window_grid_x} ) / 6 );
+            $ymouse =
+              $proc->get_u32( $OFFSETS[$ver]{viewport_y} ) +
+              int( $proc->get_u32( $OFFSETS[$ver]{window_grid_y} ) / 3 );
+            $zmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
+        }
 
-            # cycle through slices in cell
-            my @zoffsets =
-              $proc->get_packs( 'L', 4, $cells[$bx][$by][offset], $ZCOUNT );
-            $cells[$bx][$by][changed] = 0 if !defined $cells[$bx][$by][changed];
-            for my $bz ( 0 .. $#zoffsets ) {
+        glutPostRedisplay()
+          if ( $xmouse != $xmouse_old
+            || $ymouse != $ymouse_old
+            || $zmouse != $zmouse_old );
 
-                # go to the next block if this one is not allocated
-                next if ( $zoffsets[$bz] == 0 );
+        # update camera system with mouse data
+        ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
+        reposition_camera();    # sets up initial camera position offsets
 
-                # process slice in cell and set slice to changed
-                my $slice_changed = new_process_block(
-                    $zoffsets[$bz],    # offset of the current slice
-                    $bx,               # x location of the current slice
-                    $by,               # y location of the current slice
-                    $bz
-                );
+        # calculate cell coords from mouse coords
+        $xcell = int $xmouse / 16;
+        $ycell = int $ymouse / 16;
+        $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
+        $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
+        $xcell = $xcount - $c{view_range} - 1
+          if $xcell >= $xcount - $c{view_range};
+        $ycell = $ycount - $c{view_range} - 1
+          if $ycell >= $ycount - $c{view_range};
 
-                # update changed status of cell if necessary
-                if ($slice_changed) {
-                    $cells[$bx][$by][z][$bz] = 1;     # slice was changed
-                    $cells[$bx][$by][changed] = 1;    # cell was changed
+        for ( 0 .. $c{cursor_update_slow_rate} ) {
+            cede();
+        }
+    }
+}
+
+sub landscape_update_loop {
+    while (1) {
+        my $min_x_range = $xcell - $c{view_range};
+        $min_x_range = 0 if $min_x_range < 0;
+        my $max_x_range = $xcell + $c{view_range};
+        $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
+        my $min_y_range = $ycell - $c{view_range};
+        $min_y_range = 0 if $min_y_range < 0;
+        my $max_y_range = $ycell + $c{view_range};
+        $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
+
+        #TODO: When at the edge, only grab at inner edge.
+        # cycle through cells in range around cursor to grab data
+        for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
+            next if ( $bx < 0 || $bx > $xcount - 1 );
+            for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
+                next if ( $by < 0 || $by > $ycount - 1 );
+
+                # cycle through slices in cell
+                my @zoffsets =
+                  $proc->get_packs( 'L', 4, $cells[$bx][$by][offset], $ZCOUNT );
+                $cells[$bx][$by][changed] = 0
+                  if !defined $cells[$bx][$by][changed];
+                for my $bz ( 0 .. $#zoffsets ) {
+
+                    # go to the next block if this one is not allocated
+                    next if ( $zoffsets[$bz] == 0 );
+
+                    # process slice in cell and set slice to changed
+                    my $slice_changed = new_process_block(
+                        $zoffsets[$bz],    # offset of the current slice
+                        $bx,               # x location of the current slice
+                        $by,               # y location of the current slice
+                        $bz
+                    );
+
+                    # update changed status of cell if necessary
+                    if ($slice_changed) {
+                        $cells[$bx][$by][z][$bz] = 1;     # slice was changed
+                        $cells[$bx][$by][changed] = 1;    # cell was changed
+                    }
+
+                    for ( 0 .. $c{landscape_update_slow_rate} ) {
+                        cede();
+                    }
+                    $current_data_proc_task++;
                 }
-
-                cede() if time >= $next_cede_time;
-                $current_data_proc_task++;
             }
-            $redraw = 1 if $cells[$bx][$by][changed];
         }
-    }
 
-    
-    $current_data_proc_task = 0;
-    $max_data_proc_tasks = "?";
-    # cycle through cells in range around cursor to generate display lists
-    for my $bx ( $min_x_range .. $max_x_range ) {
-        for my $by ( $min_y_range .. $max_y_range ) {
+        # cycle through cells in range around cursor to generate display lists
+        for my $bx ( $min_x_range .. $max_x_range ) {
+            for my $by ( $min_y_range .. $max_y_range ) {
 
-            my $cache_id;
+                my $cache_id;
 
-            if ( defined $cells[$bx][$by][cache_ptr] ) {
-                $cache_id = $cells[$bx][$by][cache_ptr];
+                if ( defined $cells[$bx][$by][cache_ptr] ) {
+                    $cache_id = $cells[$bx][$by][cache_ptr];
 
-                # cell is in cache
-                if ( $cells[$bx][$by][changed] ) {
+                    # cell is in cache
+                    if ( $cells[$bx][$by][changed] ) {
+
+                        # cycle through slices and
+                        # create displaylists as necessary,
+                        # storing the ids in the cache entry
+                        my $slices = $cells[$bx][$by][z];
+                        for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
+                            if ( @{$slices}[$slice] ) {
+                                generate_display_list( $cache_id, $slice, $by,
+                                    $bx );
+                                @{$slices}[$slice] = 0;
+                            }
+                            glutPostRedisplay();
+                            for ( 0 .. $c{landscape_update_slow_rate} ) {
+                                cede();
+                            }
+                            $current_data_proc_task++;
+                        }
+                        $cells[$bx][$by][changed] = 0;
+                    }
+
+                    $cache[$cache_id][1]++;
+
+                }
+                else {
+
+                    my $slices = $cells[$bx][$by][z];
+
+                    next if !defined $slices;
+
+                    # cell is not in cache
+
+                  # get fresh cache id either from end of cache or out of bucket
+                    $cache_id = $#cache + 1;
+                    $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
+
+                    # set up link to cell and back-link to cache id
+                    $cache[$cache_id][cell_ptr] = \$cells[$bx][$by][cache_ptr];
+                    $cells[$bx][$by][cache_ptr] = $cache_id;
+                    $cache[$cache_id][1]        = 0;
 
                     # cycle through slices and
                     # create displaylists as necessary,
                     # storing the ids in the cache entry
-                    my $slices = $cells[$bx][$by][z];
                     for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                        if ( @{$slices}[$slice] ) {
+                        if ( defined @{$slices}[$slice] ) {
                             generate_display_list( $cache_id, $slice, $by,
                                 $bx );
                             @{$slices}[$slice] = 0;
                         }
                         glutPostRedisplay();
-                        cede() if time >= $next_cede_time;
+                        for ( 0 .. $c{landscape_update_slow_rate} ) {
+                            cede();
+                        }
                         $current_data_proc_task++;
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
 
-                $cache[$cache_id][1]++;
-
-                $protected_caches[$cache_id] = 1;
-
-            }
-            else {
-
-                my $slices = $cells[$bx][$by][z];
-
-                next if !defined $slices;
-
-                # cell is not in cache
-
-                # get fresh cache id either from end of cache or out of bucket
-                $cache_id = $#cache + 1;
-                $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
-
-                # set up link to cell and back-link to cache id
-                $cache[$cache_id][cell_ptr] = \$cells[$bx][$by][cache_ptr];
-                $cells[$bx][$by][cache_ptr] = $cache_id;
-                $cache[$cache_id][1]        = 0;
-
-                # cycle through slices and
-                # create displaylists as necessary,
-                # storing the ids in the cache entry
-                for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                    if ( defined @{$slices}[$slice] ) {
-                        generate_display_list( $cache_id, $slice, $by, $bx );
-                        @{$slices}[$slice] = 0;
-                    }
-                    glutPostRedisplay();
-                    cede() if time >= $next_cede_time;
-                    $current_data_proc_task++;
-                }
-                $cells[$bx][$by][changed] = 0;
-
                 $protected_caches[$cache_id] = 1;
             }
         }
-    }
 
-    my $deletions = 0;
+        my $deletions = 0;
 
 # TODO: Limit cache deletions so $c{view_range} is never undercut
 # check that we're not using too much memory and destroy cache entries if necessary
-    
-    while ($memory_use > $c{memory_limit}
-        && $deletions < ( 2 * $c{view_range} ) )
-    {
-        my $delete;
-        my $use;
 
-        for my $id ( 0 .. $#cache ) {
+        while ($memory_use > $c{memory_limit}
+            && $deletions < ( 2 * $c{view_range} ) )
+        {
+            my $delete;
+            my $use;
 
-            # skip empty caches
-            next if !defined $cache[$id][1];
+            for my $id ( 0 .. $#cache ) {
 
-            # skip caches we're currently looking at
-            next if $protected_caches[$id];
+                # skip empty caches
+                next if !defined $cache[$id][1];
 
-            if ( !defined $use || $cache[$id][1] < $use ) {
-                $delete = $id;
-                $use    = $cache[$id][1];
+                # skip caches we're currently looking at
+                next if $protected_caches[$id];
+
+                if ( !defined $use || $cache[$id][1] < $use ) {
+                    $delete = $id;
+                    $use    = $cache[$id][1];
+                }
             }
+
+            last if !defined $delete;
+
+            my $slices = $cache[$delete];
+            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
+                glDeleteLists( $cache[$delete][$slice], 1 )
+                  if ( $cache[$delete][$slice] );
+            }
+
+            undef ${ $cache[$delete][cell_ptr] };
+
+            undef $cache[$delete];
+            push @cache_bucket, $delete;
+
+            $deletions++;
         }
 
-        last if !defined $delete;
+        @protected_caches = [];
 
-        my $slices = $cache[$delete];
-        for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-            glDeleteLists( $cache[$delete][$slice], 1 )
-              if ( $cache[$delete][$slice] );
-        }
-
-        undef ${ $cache[$delete][cell_ptr] };
-
-        undef $cache[$delete];
-        push @cache_bucket, $delete;
-
-        $deletions++;
+        $max_data_proc_tasks    = $current_data_proc_task;
+        $current_data_proc_task = 0;
     }
-
-    @protected_caches = [];
-    $updating         = 0;
-
-    #say "$#cache caches";
-    #say "---";
-    $first_run_done = 1;
-    glutPostRedisplay() if $redraw;
     return;
 }
 
@@ -1389,12 +1355,14 @@ sub initialize_opengl {
 
     glLightfv_p( GL_LIGHT1, GL_AMBIENT, @light_ambient );
     glLightfv_p( GL_LIGHT1, GL_DIFFUSE, @light_diffuse );
-#    glLightfv_p( GL_LIGHT1, GL_SPECULAR, @light_specular );
+
+    #    glLightfv_p( GL_LIGHT1, GL_SPECULAR, @light_specular );
 
     glEnable(GL_LIGHT1);
 
     # A handy trick -- have surface material mirror the color.
     glColorMaterial( GL_FRONT, GL_AMBIENT_AND_DIFFUSE );
+
     #glMaterialfv_p( GL_FRONT_AND_BACK, GL_SPECULAR, 1, 1, 1, 1);
     #glMaterialfv_p(GL_FRONT_AND_BACK, GL_SHININESS, 127);
     glEnable(GL_COLOR_MATERIAL);
@@ -1448,6 +1416,10 @@ sub idle_tasks {
 # Routine which actually does the drawing
 
 sub render_scene {
+
+    while ( time < $next_cede_time ) {
+        cede();
+    }
     my $buf;    # For our strings.
 
     # Enables, disables or otherwise adjusts
@@ -1537,7 +1509,6 @@ sub render_scene {
     glPolygonMode( GL_FRONT, GL_FILL );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
 
-
 =cut    glBindTexture( GL_TEXTURE_2D, $texture_ID[test] );
     glEnable(GL_POINT_SPRITE);
     glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
@@ -1545,7 +1516,6 @@ sub render_scene {
     glBegin(GL_POINTS);
     glVertex3f($x_pos, $y_pos, $z_pos);
 =cut    glEnd();
-
 
     glLoadIdentity();    # Move back to the origin (for the text, below).
 
@@ -1635,6 +1605,10 @@ sub render_scene {
     glRasterPos2i( 2, 172 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
+    $buf = "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks";
+    glRasterPos2i( 2, 186 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
     #$buf = "X";
     #glRasterPos2i(146,144); print_opengl_string(GLUT_BITMAP_HELVETICA_12,$buf);
 
@@ -1676,7 +1650,7 @@ sub render_scene {
     glPopMatrix();   # Done with this special projection matrix.  Throw it away.
 
     glutSwapBuffers();    # All done drawing.  Let's show it.
-    
+
     $next_cede_time = time + $c{redraw_delay};
     cede();
     return;
@@ -1726,29 +1700,29 @@ sub build_textures {
     # Generate a texture index, then bind it for future operations.
     @texture_ID = glGenTextures_p(23);
 
-    create_texture( 'grass',    grass );
-    create_texture( 'stone',    stone );
-    create_texture( 'cursor',   cursor );
-    create_texture( 'obsidian', obsidian );
-    create_texture( 'unknown',  unknown );
-    create_texture( 'minstone', minstone );
-    create_texture( 'pool',     pool );
-    create_texture( 'water',    water );
-    create_texture( 'soil',     soil );
-    create_texture( 'tree',     tree );
-    create_texture( 'shrub',    shrub );
-    create_texture( 'sapling',  sapling );
-    create_texture( 'creature', creature );
-    create_texture( 'grassb',   grassb );
-    create_texture( 'boulder',  boulder );
-    create_texture( 'shrub_dead',  shrub_dead );
-    create_texture( 'tree_dead',  tree_dead );
-    create_texture( 'sapling_dead',  sapling_dead );
-    create_texture( 'constructed_floor_detailed',  constructed_floor_detailed );
-    create_texture( 'constructed_wall',  constructed_wall );
-    create_texture( 'grass_dry',  grass_dry );
-    create_texture( 'lava',  lava );
-    create_texture( 'curses3_960x300',  test );
+    create_texture( 'grass',                      grass );
+    create_texture( 'stone',                      stone );
+    create_texture( 'cursor',                     cursor );
+    create_texture( 'obsidian',                   obsidian );
+    create_texture( 'unknown',                    unknown );
+    create_texture( 'minstone',                   minstone );
+    create_texture( 'pool',                       pool );
+    create_texture( 'water',                      water );
+    create_texture( 'soil',                       soil );
+    create_texture( 'tree',                       tree );
+    create_texture( 'shrub',                      shrub );
+    create_texture( 'sapling',                    sapling );
+    create_texture( 'creature',                   creature );
+    create_texture( 'grassb',                     grassb );
+    create_texture( 'boulder',                    boulder );
+    create_texture( 'shrub_dead',                 shrub_dead );
+    create_texture( 'tree_dead',                  tree_dead );
+    create_texture( 'sapling_dead',               sapling_dead );
+    create_texture( 'constructed_floor_detailed', constructed_floor_detailed );
+    create_texture( 'constructed_wall',           constructed_wall );
+    create_texture( 'grass_dry',                  grass_dry );
+    create_texture( 'lava',                       lava );
+    create_texture( 'curses3_960x300',            test );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -1859,7 +1833,6 @@ sub process_mouse_click {
             my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
             ++$c{view_range} if ( $c{view_range} < $size / 2 );
             glutPostRedisplay();
-            $redraw = 1;
         }
     }
 
