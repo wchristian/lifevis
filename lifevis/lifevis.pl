@@ -214,6 +214,9 @@ my ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
 
 my ( $submenid, $menid );
 
+my $current_data_proc_task;
+my $max_data_proc_tasks;
+
 my $delay_full_update = 40;
 
 my $cache_limit =
@@ -559,8 +562,10 @@ sub sync_to_DF {
     
     my $counter = 0;
     
-    for my $creature (@creature_offsets) {
+    $current_data_proc_task = 0;
+    $max_data_proc_tasks = $#creature_offsets;
 
+    for my $creature (@creature_offsets) {
         #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
 
         # extract data of current creature
@@ -587,7 +592,7 @@ sub sync_to_DF {
 
             # creature moved to other cell or is new
 
-  # get creature list of old cell then cycle through it and remove the old entry
+            # get creature list of old cell then cycle through it and remove the old entry
             if ( defined $old_x ) {
                 $redraw = 1;
                 my $creature_list = $cells[$old_x][$old_y][creature_list];
@@ -606,6 +611,7 @@ sub sync_to_DF {
             $creatures{$creature}[cell_y] = $by;
         }
         cede() if time >= $next_cede_time;
+        $current_data_proc_task++;
     }
     $creature_updating = 0;
 
@@ -629,6 +635,10 @@ sub sync_to_DF {
     my $max_y_range = $ycell + $c{view_range};
     $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
 
+    
+    $current_data_proc_task = 0;
+    $max_data_proc_tasks = "?";
+    
     #TODO: When at the edge, only grab at inner edge.
     # cycle through cells in range around cursor to grab data
     for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
@@ -660,11 +670,15 @@ sub sync_to_DF {
                 }
 
                 cede() if time >= $next_cede_time;
+                $current_data_proc_task++;
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
     }
 
+    
+    $current_data_proc_task = 0;
+    $max_data_proc_tasks = "?";
     # cycle through cells in range around cursor to generate display lists
     for my $bx ( $min_x_range .. $max_x_range ) {
         for my $by ( $min_y_range .. $max_y_range ) {
@@ -689,6 +703,7 @@ sub sync_to_DF {
                         }
                         glutPostRedisplay();
                         cede() if time >= $next_cede_time;
+                        $current_data_proc_task++;
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
@@ -725,6 +740,7 @@ sub sync_to_DF {
                     }
                     glutPostRedisplay();
                     cede() if time >= $next_cede_time;
+                    $current_data_proc_task++;
                 }
                 $cells[$bx][$by][changed] = 0;
 
@@ -1613,6 +1629,10 @@ sub render_scene {
 
     $buf = sprintf 'Working threads: %d', Coro::nready;
     glRasterPos2i( 2, 146 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks";
+    glRasterPos2i( 2, 172 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "X";
