@@ -10,10 +10,11 @@ use 5.010;
 use strict;
 use warnings;
 
-use Win32::Detached;
+#use Win32::Detached;
 
-open STDERR, '>>error.txt';
-open STDOUT, '>>log.txt';
+
+#open STDERR, '>>error.txt';
+#open STDOUT, '>>log.txt';
 
 #use warnings::unused;
 #use warnings::method;
@@ -56,9 +57,6 @@ use threads;
 use threads::shared;
 use Carp;
 
-use Coro qw[ cede ];
-use Coro::Timer qw[ sleep ];
-
 use Config::Simple;
 
 use Win32::OLE('in');
@@ -94,6 +92,11 @@ BEGIN {
     $thr->detach();
 
 }
+
+use Time::HiRes qw ( time );
+use Coro qw[ cede ];
+my $next_cede_time = 0;
+$c{redraw_delay} = 1 / $c{fps_limit};
 
 use OpenGL qw/ :all /;
 use OpenGL::Image;
@@ -367,7 +370,6 @@ connect_to_DF();
 
 extract_base_memory_data();
 
-#exit;
 glutInit();
 
 print 'setting up OpenGL environment...   ';
@@ -412,7 +414,6 @@ Page up/down will move cube away from/towards camera.
 Use first letter of shown display mode settings to alter.
 Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
-my $cedes;
 
 refresh_map_data();
 generate_creature_display_lists();
@@ -421,8 +422,7 @@ generate_creature_display_lists();
 # Above functions are called as appropriate.
 print "switching to main loop...\n";
 
-my $corout = new Coro \&sleep_test;
-
+#my $corout = new Coro \&sleep_test;
 #my $success = $corout->ready;
 
 sub sleep_test {
@@ -448,16 +448,11 @@ print "moo";
 my @cell_offsets;
 
 sub refresh_map_data {
-
-    #if ( $updating == 0 && Coro::nready < 1 ) {
     my $corout  = new Coro \&sync_to_DF;
     my $success = $corout->ready;
 
-    #cede();
-    #}
     cede();
 
-    #$cedes--;
     glutPostRedisplay() if $redraw;
 
     #$redraw = 0;
@@ -610,11 +605,7 @@ sub sync_to_DF {
             $creatures{$creature}[cell_x] = $bx;
             $creatures{$creature}[cell_y] = $by;
         }
-        $counter++;
-        if ( $counter == $c{creature_batch} ) {
-            $counter = 0;
-            cede();
-        }
+        cede() if time >= $next_cede_time;
     }
     $creature_updating = 0;
 
@@ -668,7 +659,7 @@ sub sync_to_DF {
                     $cells[$bx][$by][changed] = 1;    # cell was changed
                 }
 
-                cede();
+                cede() if time >= $next_cede_time;
             }
             $redraw = 1 if $cells[$bx][$by][changed];
         }
@@ -697,7 +688,7 @@ sub sync_to_DF {
                             @{$slices}[$slice] = 0;
                         }
                         glutPostRedisplay();
-                        cede();
+                        cede() if time >= $next_cede_time;
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
@@ -733,7 +724,7 @@ sub sync_to_DF {
                         @{$slices}[$slice] = 0;
                     }
                     glutPostRedisplay();
-                    cede();
+                    cede() if time >= $next_cede_time;
                 }
                 $cells[$bx][$by][changed] = 0;
 
@@ -1434,8 +1425,6 @@ sub menu {
 sub idle_tasks {
     cede();
 
-    #$cedes--;
-    #glutPostRedisplay();
     return;
 }
 
@@ -1667,12 +1656,9 @@ sub render_scene {
     glPopMatrix();   # Done with this special projection matrix.  Throw it away.
 
     glutSwapBuffers();    # All done drawing.  Let's show it.
-
-    #ourDoFPS();    # And collect our statistics.
+    
+    $next_cede_time = time + $c{redraw_delay};
     cede();
-
-    #$cedes--;
-
     return;
 }
 
