@@ -16,7 +16,7 @@ use warnings;
 #use warnings::method;
 #use diagnostics;
 
-#=cut
+=cut
 use criticism (
     -exclude => [
         'ProhibitCallsToUndeclaredSubs',
@@ -41,7 +41,7 @@ use criticism (
     -severity => 1
 );
 
-#=cut
+=cut
 use Carp;
 use utf8;
 use English qw(-no_match_vars);
@@ -224,7 +224,7 @@ sub run {
 # hashes containing the functions called on certain key presses
 #my ( %special_inputs, %normal_inputs ); # disabled until we actually pipe stuff to lifevis again
 
-    $DF_window = FindWindowLike( 0, '^Dwarf Fortress$' );
+    ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
 
     my $slice         = 0;
     my $slice_follows = 0;
@@ -417,13 +417,14 @@ sub creature_update_loop {
 
         for my $creature (@creature_offsets) {
 
-            #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
+            #say $proc->hexdump( $creature, 0x688 );
 
             # extract data of current creature
             my $rx = $proc->get_u16( $creature + 148 );
             next if ( $rx > $xcount * 16 );
             my $rz = $proc->get_u16( $creature + 152 );
             next if ( $rz > $ZCOUNT + 1 );
+            
             my $race        = $proc->get_u32( $creature + 140 );
             my $ry          = $proc->get_u16( $creature + 150 );
             my $name_length = $proc->get_u32( $creature + 20 );
@@ -1761,7 +1762,7 @@ sub process_key_press {
           ;    # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
         print "moo";
     }
-
+    
     PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
     glutPostRedisplay();
