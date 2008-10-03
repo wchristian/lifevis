@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # $Id$
 # $Revision$
@@ -6,22 +6,17 @@
 # $Date$
 # $Source$
 
+package Lifevis;
+
 use 5.010;
 use strict;
 use warnings;
 
-#use Win32::Detached;
-
-#open STDERR, '>>error.txt';
-#open STDOUT, '>>log.txt';
-
 #use warnings::unused;
 #use warnings::method;
 #use diagnostics;
-use English qw(-no_match_vars);
-$OUTPUT_AUTOFLUSH = 1;
 
-=cut
+#=cut
 use criticism (
     -exclude => [
         'ProhibitCallsToUndeclaredSubs',
@@ -46,26 +41,101 @@ use criticism (
     -severity => 1
 );
 
-=cut
-
+#=cut
+use Carp;
 use utf8;
+use English qw(-no_match_vars);
+$OUTPUT_AUTOFLUSH = 1;
 
-use Benchmark ':hireswallclock';
+use lib '.';
+use Lifevis::constants;
+use Lifevis::df_offsets;
 
 use threads;
 use threads::shared;
-use Carp;
 
 use Config::Simple;
 
 use Win32::OLE('in');
+
 my $memory_use;
 $memory_use = 0;
+our $ZCOUNT;
+our @TILE_TYPES;
+our %DRAW_MODEL;
 my %c;
+tie %c, 'Config::Simple', 'lifevis.cfg';
+
+my @OFFSETS = get_df_offsets();
+my $ver;
+my $proc;
+
+my ( $xcount, $ycount )
+  ;    # dimensions of the map data we're dealing with, counts in cells
+my ( $x_max, $y_max )
+  ;             # dimensions of the map data we're dealing with, counts in tiles
+my $map_base;   # offset of the address where the map blocks start
+
+my @cells;
+my %creatures_present;
+my $current_creat_proc_task = 0;
+my $max_creat_proc_tasks    = 0;
+my %creatures;
+
+# cursor coordinates  in tiles at last refresh
+my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
+
+# current cursor coordinates in tiles
+my ( $xmouse, $ymouse, $zmouse ) = ( 0, 0, 15 );
+
+# Camera position and rotation variables.
+my ( $x_pos, $y_pos, $z_pos, $x_off, $y_off, $z_off, $x_rot, $y_rot );
+
+# current cursor coordinates in cells
+my ( $xcell, $ycell ) = ( $c{view_range}, $c{view_range} );
+
+my $min_x_range;
+my $max_x_range;
+my $min_y_range;
+my $max_y_range;
+
+my $current_data_proc_task = 0;
+my $max_data_proc_tasks    = 0;
+my @cache;
+my @cache_bucket;
+my @protected_caches;
+
+my @texture_ID;
+my @creature_display_lists;
+my @tiles;
+my @ramps;
+
+my $dwarf_pid;
+my $pe_timestamp;
+
+# Settings for our light.  Try playing with these (or add more lights).
+my @light_ambient = ( 0.7, 0.7, 0.7, 1.0 );
+my @light_diffuse = ( 0.9, 0.9, 0.9, 1.0 );
+
+#my @light_specular  = ( 0.9,  0, 0, 1.0 );
+my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
+
+my ( $submenid, $menid );
+my $window_ID;
+my $DF_window;
+my $next_cede_time = 0;
+
+my $middle_mouse = 0;
+my $last_mouse_x;
+my $last_mouse_y;
+my $mouse_dist = 40;
+
+my ( %sin_cache, %cos_cache );
+
+__PACKAGE__->run(@ARGV) unless caller();
 
 BEGIN {
     share($memory_use);
-    tie %c, 'Config::Simple', 'lifevis.cfg';
 
     sub update_memory_use {
         my @state_array;
@@ -92,290 +162,206 @@ BEGIN {
 
 }
 
-use Time::HiRes qw ( time );
-use Coro qw[ cede ];
-my $next_cede_time = 0;
-$c{redraw_delay} = 1 / $c{fps_limit};
+sub run {
+    use Benchmark ':hireswallclock';
 
-use OpenGL qw/ :all /;
-use OpenGL::Image;
-use Math::Trig;
-use Win32;
-use Win32::Process::List;
-use Win32::Process;
-use Win32::Process::Memory;
-use LWP::Simple;
-use Image::Magick;
-use Win32::GUI::Constants qw ( :window :accelerator );
-use Win32::GuiTest qw(:FUNC :VK);
+    use Time::HiRes qw ( time );
+    use Coro qw[ cede ];
+    $c{redraw_delay} = 1 / $c{fps_limit};
 
-# %DB::packages = ( 'main' => 1 );
+    use OpenGL qw/ :all /;
+    use OpenGL::Image;
+    use Math::Trig;
+    use Win32;
+    use Win32::Process::List;
+    use Win32::Process;
+    use Win32::Process::Memory;
+    use LWP::Simple;
+    use Image::Magick;
+    use Win32::GUI::Constants qw ( :window :accelerator );
+    use Win32::GuiTest qw(:FUNC :VK);
 
-# Dwarf Fortress 3D Map Viewer
-#
-# The base intention of this program is to provide an OpenGL engine capable of
-# rendering ascii-based map files in such a way as to semi-accurately display
-# the interior layout of a dwarven fortress and surroundings.
-#
-# It is Public Domain software.
-#
-# This program based on this:
-#
-### ----------------------
-### OpenGL cube demo.
-###
-### Written by Chris Halsall (chalsall@chalsall.com) for the
-### O'Reilly Network on Linux.com (oreilly.linux.com).
-### May 2000.
-###
-### Released into the Public Domain; do with it as you wish.
-### We would like to hear about interesting uses.
-###
-### Coded to the groovy tunes of Yello: Pocket Universe.
-###
-### Translated from C to Perl by J-L Morel <jl_morel@bribes.org>
-### ( http://www.bribes.org/perl/wopengl.html )
+    # %DB::packages = ( 'main' => 1 );
 
-# Some global variables.
+  # Dwarf Fortress 3D Map Viewer
+  #
+  # The base intention of this program is to provide an OpenGL engine capable of
+  # rendering ascii-based map files in such a way as to semi-accurately display
+  # the interior layout of a dwarven fortress and surroundings.
+  #
+  # It is Public Domain software.
+  #
+  # This program based on this:
+  #
+    ### ----------------------
+    ### OpenGL cube demo.
+    ###
+    ### Written by Chris Halsall (chalsall@chalsall.com) for the
+    ### O'Reilly Network on Linux.com (oreilly.linux.com).
+    ### May 2000.
+    ###
+    ### Released into the Public Domain; do with it as you wish.
+    ### We would like to hear about interesting uses.
+    ###
+    ### Coded to the groovy tunes of Yello: Pocket Universe.
+    ###
+    ### Translated from C to Perl by J-L Morel <jl_morel@bribes.org>
+    ### ( http://www.bribes.org/perl/wopengl.html )
 
-# Window and texture IDs, window width and height.
-my $window_ID;
+    # Some global variables.
 
-use lib '.';
-use Lifevis::constants;
+    # Window and texture IDs, window width and height.
 
-my @texture_ID;
+    # Object and scene global variables.
 
-# Object and scene global variables.
-
-# Camera position and rotation variables.
-my ( $x_pos, $y_pos, $z_pos, $x_off, $y_off, $z_off, $x_rot, $y_rot );
-$x_pos = 0;
-$y_pos = 0;
-$z_pos = 0;
-$x_rot = -45.0;
-$y_rot = 157.5;
-my $mouse_dist   = 40;
-my $middle_mouse = 0;
-reposition_camera();    # sets up initial camera position offsets
-
-# Settings for our light.  Try playing with these (or add more lights).
-my @light_ambient = ( 0.7, 0.7, 0.7, 1.0 );
-my @light_diffuse = ( 0.9, 0.9, 0.9, 1.0 );
-
-#my @light_specular  = ( 0.9,  0, 0, 1.0 );
-my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
+    $x_pos = 0;
+    $y_pos = 0;
+    $z_pos = 0;
+    $x_rot = -45.0;
+    $y_rot = 157.5;
+    reposition_camera();    # sets up initial camera position offsets
 
 # hashes containing the functions called on certain key presses
 #my ( %special_inputs, %normal_inputs ); # disabled until we actually pipe stuff to lifevis again
 
-my $last_mouse_x;
-my $last_mouse_y;
+    $DF_window = FindWindowLike( 0, '^Dwarf Fortress$' );
 
-my ( %sin_cache, %cos_cache );
+    my $slice         = 0;
+    my $slice_follows = 0;
 
-our @OFFSETS;
-my $dwarf_pid;
-my $ver;
-my $proc;
-my $pe_timestamp;
-my ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
-
-my ( $submenid, $menid );
-
-my $delay_full_update = 40;
-
-my $cache_limit =
-  ( 1 + ( 2 * $c{view_range} ) ) * ( 1 + ( 2 * $c{view_range} ) );
-
-# current cursor coordinates in cells
-my ( $xcell, $ycell ) = ( $c{view_range}, $c{view_range} );
-
-# current cursor coordinates in tiles
-my ( $xmouse, $ymouse, $zmouse ) = ( 0, 0, 15 );
-
-# cursor coordinates  in tiles at last refresh
-my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
-
-# dimensions of the map data we're dealing with, counts in cells
-my ( $xcount, $ycount );
-our $ZCOUNT;
-
-# dimensions of the map data we're dealing with, counts in tiles
-my ( $x_max, $y_max );
-
-my $slice         = 0;
-my $slice_follows = 0;
-
-my $map_base;    # offset of the address where the map blocks start
-
-my @cells;
-
-# slice constants
-#use constant changed => 0;
-
-my @tiles;
-
-my @cache;
-
-my @cache_bucket;
-my @protected_caches;
-
-my %creatures;
-
-my %creatures_present;
-
-my @creature_display_lists;
-
-our @TILE_TYPES;
-unless ( my $return = do 'df_internals.pl' ) {
-    warn "couldn't parse df_internals.pl: $@" if $@;
-    warn "couldn't do df_internals.pl: $!" unless defined $return;
-    warn "couldn't run df_internals.pl" unless $return;
-}
+    unless ( my $return = do 'df_internals.pl' ) {
+        warn "couldn't parse df_internals.pl: $@" if $@;
+        warn "couldn't do df_internals.pl: $!" unless defined $return;
+        warn "couldn't run df_internals.pl" unless $return;
+    }
 
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
-my @ramps = (
-    { mask => 0b0_1111_0000, func => '4S' },
-    { mask => 0b0_1101_0000, func => '3S1' },
-    { mask => 0b0_1110_0000, func => '3S2' },
-    { mask => 0b0_0111_0000, func => '3S3' },
-    { mask => 0b0_1011_0000, func => '3S4' },
-    { mask => 0b0_1100_0010, func => '2S_1D1' },
-    { mask => 0b0_0110_0001, func => '2S_1D2' },
-    { mask => 0b0_0011_1000, func => '2S_1D3' },
-    { mask => 0b0_1001_0100, func => '2S_1D4' },
-    { mask => 0b0_1100_0000, func => '2S1' },
-    { mask => 0b0_0110_0000, func => '2S2' },
-    { mask => 0b0_0011_0000, func => '2S3' },
-    { mask => 0b0_1001_0000, func => '2S4' },
-    { mask => 0b0_1010_0000, func => '1S_1S1' },
-    { mask => 0b0_0101_0000, func => '1S_1S2' },
-    { mask => 0b0_1000_0100, func => '1S_1DL1' },
-    { mask => 0b0_0100_0010, func => '1S_1DL2' },
-    { mask => 0b0_0010_0001, func => '1S_1DL3' },
-    { mask => 0b0_0001_1000, func => '1S_1DL4' },
-    { mask => 0b0_1000_0010, func => '1S_1DR1' },
-    { mask => 0b0_0100_0001, func => '1S_1DR2' },
-    { mask => 0b0_0010_1000, func => '1S_1DR3' },
-    { mask => 0b0_0001_0100, func => '1S_1DR4' },
-    { mask => 0b0_1000_0000, func => '1S1' },
-    { mask => 0b0_0100_0000, func => '1S2' },
-    { mask => 0b0_0010_0000, func => '1S3' },
-    { mask => 0b0_0001_0000, func => '1S4' },
-    { mask => 0b0_0000_1111, func => '4D' },
-    { mask => 0b0_0000_1101, func => '3D1' },
-    { mask => 0b0_0000_1110, func => '3D2' },
-    { mask => 0b0_0000_0111, func => '3D3' },
-    { mask => 0b0_0000_1011, func => '3D4' },
-    { mask => 0b0_0001_1100, func => '1S_2D4' },
-    { mask => 0b0_1000_0110, func => '1S_2D1' },
-    { mask => 0b0_0100_0011, func => '1S_2D2' },
-    { mask => 0b0_0010_1001, func => '1S_2D3' },
-    { mask => 0b0_0000_1001, func => '2D1' },
-    { mask => 0b0_0000_1100, func => '2D2' },
-    { mask => 0b0_0000_0110, func => '2D3' },
-    { mask => 0b0_0000_0011, func => '2D4' },
-    { mask => 0b0_0000_1010, func => '1D_1D1' },
-    { mask => 0b0_0000_0101, func => '1D_1D2' },
-    { mask => 0b0_0000_1000, func => '1D1' },
-    { mask => 0b0_0000_0100, func => '1D2' },
-    { mask => 0b0_0000_0010, func => '1D3' },
-    { mask => 0b0_0000_0001, func => '1D4' },
-    { mask => 0b1_0000_0000, func => 'N' },
-);
+    @ramps = (
+        { mask => 0b0_1111_0000, func => '4S' },
+        { mask => 0b0_1101_0000, func => '3S1' },
+        { mask => 0b0_1110_0000, func => '3S2' },
+        { mask => 0b0_0111_0000, func => '3S3' },
+        { mask => 0b0_1011_0000, func => '3S4' },
+        { mask => 0b0_1100_0010, func => '2S_1D1' },
+        { mask => 0b0_0110_0001, func => '2S_1D2' },
+        { mask => 0b0_0011_1000, func => '2S_1D3' },
+        { mask => 0b0_1001_0100, func => '2S_1D4' },
+        { mask => 0b0_1100_0000, func => '2S1' },
+        { mask => 0b0_0110_0000, func => '2S2' },
+        { mask => 0b0_0011_0000, func => '2S3' },
+        { mask => 0b0_1001_0000, func => '2S4' },
+        { mask => 0b0_1010_0000, func => '1S_1S1' },
+        { mask => 0b0_0101_0000, func => '1S_1S2' },
+        { mask => 0b0_1000_0100, func => '1S_1DL1' },
+        { mask => 0b0_0100_0010, func => '1S_1DL2' },
+        { mask => 0b0_0010_0001, func => '1S_1DL3' },
+        { mask => 0b0_0001_1000, func => '1S_1DL4' },
+        { mask => 0b0_1000_0010, func => '1S_1DR1' },
+        { mask => 0b0_0100_0001, func => '1S_1DR2' },
+        { mask => 0b0_0010_1000, func => '1S_1DR3' },
+        { mask => 0b0_0001_0100, func => '1S_1DR4' },
+        { mask => 0b0_1000_0000, func => '1S1' },
+        { mask => 0b0_0100_0000, func => '1S2' },
+        { mask => 0b0_0010_0000, func => '1S3' },
+        { mask => 0b0_0001_0000, func => '1S4' },
+        { mask => 0b0_0000_1111, func => '4D' },
+        { mask => 0b0_0000_1101, func => '3D1' },
+        { mask => 0b0_0000_1110, func => '3D2' },
+        { mask => 0b0_0000_0111, func => '3D3' },
+        { mask => 0b0_0000_1011, func => '3D4' },
+        { mask => 0b0_0001_1100, func => '1S_2D4' },
+        { mask => 0b0_1000_0110, func => '1S_2D1' },
+        { mask => 0b0_0100_0011, func => '1S_2D2' },
+        { mask => 0b0_0010_1001, func => '1S_2D3' },
+        { mask => 0b0_0000_1001, func => '2D1' },
+        { mask => 0b0_0000_1100, func => '2D2' },
+        { mask => 0b0_0000_0110, func => '2D3' },
+        { mask => 0b0_0000_0011, func => '2D4' },
+        { mask => 0b0_0000_1010, func => '1D_1D1' },
+        { mask => 0b0_0000_0101, func => '1D_1D2' },
+        { mask => 0b0_0000_1000, func => '1D1' },
+        { mask => 0b0_0000_0100, func => '1D2' },
+        { mask => 0b0_0000_0010, func => '1D3' },
+        { mask => 0b0_0000_0001, func => '1D4' },
+        { mask => 0b1_0000_0000, func => 'N' },
+    );
 
-our %DRAW_MODEL;
-unless ( my $return = do 'models.pl' ) {
-    warn "couldn't parse models.pl: $@" if $@;
-    warn "couldn't do models.pl: $!" unless defined $return;
-    warn "couldn't run models.pl" unless $return;
-}
+    unless ( my $return = do 'models.pl' ) {
+        warn "couldn't parse models.pl: $@" if $@;
+        warn "couldn't do models.pl: $!" unless defined $return;
+        warn "couldn't run models.pl" unless $return;
+    }
 
-# ------
-# The main() function.  Inits OpenGL.  Calls our own init function,
-# then passes control onto OpenGL.
+    # ------
+    # The main() function.  Inits OpenGL.  Calls our own init function,
+    # then passes control onto OpenGL.
 
-connect_to_DF();
+    connect_to_DF();
 
-extract_base_memory_data();
+    extract_base_memory_data();
 
-glutInit();
+    glutInit();
 
-print 'setting up OpenGL environment...   ';
-glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
-glutInitWindowSize( $c{window_width}, $c{window_height} );
-glutInitWindowPosition( 390, 250 );
+    print 'setting up OpenGL environment...   ';
+    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
+    glutInitWindowSize( $c{window_width}, $c{window_height} );
+    glutInitWindowPosition( 390, 250 );
 
-$window_ID = glutCreateWindow(PROGRAM_TITLE);    # Open a window
+    $window_ID = glutCreateWindow(PROGRAM_TITLE);    # Open a window
 
-create_menu();
+    create_menu();
 
 # Set up Callback functions ####################################################
 
-# Register the callback function to do the drawing.
-glutDisplayFunc( \&render_scene );
+    # Register the callback function to do the drawing.
+    glutDisplayFunc( \&render_scene );
 
-glutIdleFunc( \&idle_tasks );    # If there's nothing to do, draw.
+    glutIdleFunc( \&idle_tasks );    # If there's nothing to do, draw.
 
-# It's a good idea to know when our window's resized.
-glutReshapeFunc( \&resize_scene );
+    # It's a good idea to know when our window's resized.
+    glutReshapeFunc( \&resize_scene );
 
-glutKeyboardFunc( \&process_key_press );    # And let's get some keyboard input.
-glutSpecialFunc( \&process_special_key_press );
+    glutKeyboardFunc( \&process_key_press )
+      ;                              # And let's get some keyboard input.
+    glutSpecialFunc( \&process_special_key_press );
 
-glutMotionFunc( \&process_active_mouse_motion );
-glutMouseFunc( \&process_mouse_click );
+    glutMotionFunc( \&process_active_mouse_motion );
+    glutMouseFunc( \&process_mouse_click );
 
-print "OpenGL environment ready.\n";
+    print "OpenGL environment ready.\n";
 
-print "initializing OpenGL...\n";
+    print "initializing OpenGL...\n";
 
-# OK, OpenGL's ready to go.  Let's call our own init function.
-initialize_opengl( $c{window_width}, $c{window_height} );
+    # OK, OpenGL's ready to go.  Let's call our own init function.
+    initialize_opengl( $c{window_width}, $c{window_height} );
 
-print "OpenGL initialized.\n";
+    print "OpenGL initialized.\n";
 
-# Print out a bit of help dialog.
-print PROGRAM_TITLE, "\n";
-print << 'TXT';
-Use arrow keys to rotate, 'R' to reverse, 'X' to stop.
-Page up/down will move cube away from/towards camera.
-Use first letter of shown display mode settings to alter.
-Q or [Esc] to quit; OpenGL window must have focus for input.
-TXT
+    # Print out a bit of help dialog.
+    print PROGRAM_TITLE, "\n";
 
-my $main_loop = $Coro::main;
+    my $main_loop = $Coro::main;
 
-my $min_x_range;
-my $max_x_range;
-my $min_y_range;
-my $max_y_range;
+    my $loc_loop = new Coro \&location_update_loop;
+    my $success2 = $loc_loop->ready;
 
-my $loc_loop = new Coro \&location_update_loop;
-my $success2 = $loc_loop->ready;
+    my $land_loop = new Coro \&landscape_update_loop;
+    my $success3  = $land_loop->ready;
 
-my $current_data_proc_task = 0;
-my $max_data_proc_tasks    = 0;
+    #refresh_map_data();
+    generate_creature_display_lists();
 
-my $land_loop = new Coro \&landscape_update_loop;
-my $success3  = $land_loop->ready;
+    my $creat_loop = new Coro \&creature_update_loop;
+    my $success    = $creat_loop->ready;
 
-#refresh_map_data();
-generate_creature_display_lists();
+    # Pass off control to OpenGL.
+    # Above functions are called as appropriate.
+    print "switching to main loop...\n";
 
-my $current_creat_proc_task = 0;
-my $max_creat_proc_tasks    = 0;
-my $creat_loop              = new Coro \&creature_update_loop;
-my $success                 = $creat_loop->ready;
+    glutMainLoop();
 
-# Pass off control to OpenGL.
-# Above functions are called as appropriate.
-print "switching to main loop...\n";
-
-glutMainLoop();
-
-print "moo";
+    print "moo";
+}
 ################################################################################
 ## Rendering Functions #########################################################
 ################################################################################
@@ -434,15 +420,15 @@ sub creature_update_loop {
             #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
 
             # extract data of current creature
-            my $rx          = $proc->get_u16( $creature + 148 );
-            next if ($rx > $xcount*16);
-            my $rz          = $proc->get_u16( $creature + 152 );
-            next if ($rz > $ZCOUNT+1);
+            my $rx = $proc->get_u16( $creature + 148 );
+            next if ( $rx > $xcount * 16 );
+            my $rz = $proc->get_u16( $creature + 152 );
+            next if ( $rz > $ZCOUNT + 1 );
             my $race        = $proc->get_u32( $creature + 140 );
             my $ry          = $proc->get_u16( $creature + 150 );
             my $name_length = $proc->get_u32( $creature + 20 );
             $proc->get_buf( $creature + 4, $name_length, my $name );
-            
+
             # update record of current creature
             $creatures{$creature}[race] = $race;
             $creatures{$creature}[c_x]  = $rx;
@@ -533,7 +519,7 @@ sub location_update_loop {
           if $xcell >= $xcount - $c{view_range};
         $ycell = $ycount - $c{view_range} - 1
           if $ycell >= $ycount - $c{view_range};
-          
+
         $min_x_range = $xcell - $c{view_range};
         $min_x_range = 0 if $min_x_range < 0;
         $max_x_range = $xcell + $c{view_range};
@@ -590,7 +576,7 @@ sub landscape_update_loop {
                 }
             }
         }
-        
+
         # cycle through cells in range around cursor to generate display lists
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
@@ -1042,7 +1028,9 @@ sub new_process_block {
       $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{designation_off},
         256 );
 
-    my @occupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
+    my @occupation_data =
+      $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{occupancy_off},
+        256 );
 
     my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
 
@@ -1110,9 +1098,6 @@ sub ask {
 }
 
 sub connect_to_DF {
-
-    do 'df_offsets.pl';
-
     $ver = init_process_connection();
 
     refresh_datastore() unless $ver;
@@ -1296,7 +1281,8 @@ sub process_xml {
     say "--- -- -\n$message\n--- -- -" if defined $message;
     push @OFFSETS, \%config_hash;
 
-    open my $HANDLE, '<', 'df_offsets.pl' or croak("horribly: $OS_ERROR");
+    open my $HANDLE, '<', 'Lifevis/df_offsets.pm'
+      or croak("horribly: $OS_ERROR");
     @data_store = <$HANDLE>;
     close $HANDLE or croak("horribly: $OS_ERROR");
 
@@ -1830,7 +1816,7 @@ sub process_mouse_click {
             && $y > $c{window_height} - 20
             && $y < $c{window_height} )
         {
-            --$c{view_range} unless $c{view_range} < 1;
+            --$c{view_range} if $c{view_range} > 0;
             glutPostRedisplay();
         }
 

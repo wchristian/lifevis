@@ -4,7 +4,7 @@ use strict;
 
 use base 'Exporter';
 
-our @EXPORT = ( qw( @OFFSETS ) );
+our @EXPORT = ( qw( get_df_offsets ) );
 
 my @OFFSETS = (
         {
@@ -168,34 +168,10 @@ my @OFFSETS = (
             menu_state => 0x01393260,
             view_state => 0x009FC368,
         },
-        {
-            version => "v0.28.181.39a",
-            PE => 0x487b4e8b,
-            map_loc => 0x01554028,
-            x_count => 0x01554040,
-            y_count => 0x01554044,
-            z_count => 0x01554048,
-            pe_timestamp_offset => 0x00400108,
-            type_off        => 0x0000005e,
-            designation_off => 0x00000260,
-            occupancy_off   => 0x00000660,
-            mouse_x   => 0x009d6284,
-            mouse_y   => 0x009d6288,
-            mouse_z   => 0x009d628c,
-        },
-        {
-            version => "v0.28.181.39b",
-            PE => 0x487c9338,
-            map_loc => 0x01555028,
-            x_count => 0x01555040,
-            y_count => 0x01555044,
-            z_count => 0x01555048,
-            pe_timestamp_offset => 0x00400108,
-            type_off        => 0x0000005e,
-            designation_off => 0x00000260,
-            occupancy_off   => 0x00000660,
-            mouse_x   => 0x009d7284,
-            mouse_y   => 0x009d7288,
-            mouse_z   => 0x009d728c,
-        },
 ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT
+
+
+
+sub get_df_offsets {
+    return @OFFSETS;
+}
