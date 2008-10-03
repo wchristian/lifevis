@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 use 5.010;
 use strict;
 
@@ -99,7 +99,7 @@ sub generateModel {
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
         my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
-        glColor3f(\$brightness, \$brightness, \$brightness);";
+        OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);";
     
         my @old = (999,999,999);
         for my $nid ( 0..$#normals) {
@@ -125,7 +125,7 @@ sub generateModel {
                         $close = 1;
                     }
                     
-                    $model .= "\n\n    glNormal3f( $vec );";
+                    $model .= "\n\n    OpenGL::glNormal3f( $vec );";
                     $model .= "# $side{$vec} face" if defined $side{$vec};
                     undef @old if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/);
                     undef $vec if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/);
@@ -139,7 +139,7 @@ sub generateModel {
                 for my $vid ( 0..$max_verts) {
                     my $uv = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
-                    $model .= "\n    glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
+                    $model .= "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
                 }
                 $vec = "$old[0],$old[1],$old[2]" if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && defined $old[0]);
                 @old = ( $normals[$nid][0],$normals[$nid][1],$normals[$nid][2]);
@@ -176,33 +176,34 @@ foreach my $file (@filelist) {
     $code .= "\n\n$model";
 }
 
-open my $OUT, ">", "models.pl" or die( "horribly: ".$! );
-print $OUT "#!/usr/bin/perl -w
-use 5.010;
+open my $OUT, ">", 'Lifevis\models.pm' or die( "horribly: ".$! );
+print $OUT "package Lifevis::models;
 use strict;
 
-BEGIN {
-	eval \"use constant base_visual => 0\"    unless(defined &base_visual);
-	eval \"use constant EMPTY => 0\"          unless(defined &EMPTY);
-	eval \"use constant FLOOR => 1\"          unless(defined &FLOOR);
-	eval \"use constant WALL => 2\"           unless(defined &WALL);
-	eval \"use constant RAMP => 3\"           unless(defined &RAMP);
-	eval \"use constant STAIR => 4\"          unless(defined &STAIR);
-	eval \"use constant FORTIF => 5\"         unless(defined &FORTIF);
-	eval \"use constant PILLAR => 6\"         unless(defined &PILLAR);
-    eval \"use constant RAMP_TOP => 7\"           unless(defined &RAMP_TOP);
-    eval \"use constant TREE => 8\"           unless(defined &TREE);
-    eval \"use constant SHRUB => 9\"           unless(defined &SHRUB);
-    eval \"use constant SAPLING => 10\"           unless(defined &SAPLING);
-    eval \"use constant BOULDER => 11\"           unless(defined &BOULDER);
-}
+use base 'Exporter';
 
-our \$ZCOUNT;
+use lib '.';
+use lib '..';
+use Lifevis::constants;
 
-our \%DRAW_MODEL;
+our \@EXPORT = ( qw( get_model_subs set_zcount_for_models ) );
+
+my \$ZCOUNT;
+
+my \%DRAW_MODEL;
 
 $code
 
+
+sub get_model_subs {
+    return \%DRAW_MODEL;
+}
+
+sub set_zcount_for_models {
+    (\$ZCOUNT) = \@_;
+}
+
+1;
 ";
 close $OUT;    
 

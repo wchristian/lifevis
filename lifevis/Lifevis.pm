@@ -48,8 +48,11 @@ use English qw(-no_match_vars);
 $OUTPUT_AUTOFLUSH = 1;
 
 use lib '.';
+use lib '..';
 use Lifevis::constants;
 use Lifevis::df_offsets;
+use Lifevis::df_internals;
+use Lifevis::models;
 
 use threads;
 use threads::shared;
@@ -60,9 +63,8 @@ use Win32::OLE('in');
 
 my $memory_use;
 $memory_use = 0;
-our $ZCOUNT;
-our @TILE_TYPES;
-our %DRAW_MODEL;
+my @TILE_TYPES = get_df_tile_type_data();
+my %DRAW_MODEL = get_model_subs();
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
 
@@ -70,7 +72,7 @@ my @OFFSETS = get_df_offsets();
 my $ver;
 my $proc;
 
-my ( $xcount, $ycount )
+my ( $xcount, $ycount, $zcount )
   ;    # dimensions of the map data we're dealing with, counts in cells
 my ( $x_max, $y_max )
   ;             # dimensions of the map data we're dealing with, counts in tiles
@@ -229,12 +231,6 @@ sub run {
     my $slice         = 0;
     my $slice_follows = 0;
 
-    unless ( my $return = do 'df_internals.pl' ) {
-        warn "couldn't parse df_internals.pl: $@" if $@;
-        warn "couldn't do df_internals.pl: $!" unless defined $return;
-        warn "couldn't run df_internals.pl" unless $return;
-    }
-
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
     @ramps = (
         { mask => 0b0_1111_0000, func => '4S' },
@@ -369,7 +365,8 @@ sub run {
 sub extract_base_memory_data {
     $xcount = $proc->get_u32( $OFFSETS[$ver]{x_count} );    # map size in cells
     $ycount = $proc->get_u32( $OFFSETS[$ver]{y_count} );
-    $ZCOUNT = $proc->get_u32( $OFFSETS[$ver]{z_count} );
+    $zcount = $proc->get_u32( $OFFSETS[$ver]{z_count} );
+    set_zcount_for_models($zcount);
 
     $x_max = ( $xcount * 16 ) - 1;
     $y_max = ( $ycount * 16 ) - 1;
@@ -423,7 +420,7 @@ sub creature_update_loop {
             my $rx = $proc->get_u16( $creature + 148 );
             next if ( $rx > $xcount * 16 );
             my $rz = $proc->get_u16( $creature + 152 );
-            next if ( $rz > $ZCOUNT + 1 );
+            next if ( $rz > $zcount + 1 );
             
             my $race        = $proc->get_u32( $creature + 140 );
             my $ry          = $proc->get_u16( $creature + 150 );
@@ -491,7 +488,7 @@ sub location_update_loop {
         # use viewport coords if out of bounds, i.e. cursor not in use
         if (   $xmouse > $xcount * 16
             || $ymouse > $ycount * 16
-            || $zmouse > $ZCOUNT )
+            || $zmouse > $zcount )
         {
             $xmouse =
               $proc->get_u32( $OFFSETS[$ver]{viewport_x} ) +
@@ -548,7 +545,7 @@ sub landscape_update_loop {
 
                 # cycle through slices in cell
                 my @zoffsets =
-                  $proc->get_packs( 'L', 4, $cells[$bx][$by][offset], $ZCOUNT );
+                  $proc->get_packs( 'L', 4, $cells[$bx][$by][offset], $zcount );
                 $cells[$bx][$by][changed] = 0
                   if !defined $cells[$bx][$by][changed];
                 for my $bz ( 0 .. $#zoffsets ) {

@@ -1,13 +1,16 @@
-#!/usr/bin/perl -w
-use 5.010;
+package Lifevis::df_internals;
 use strict;
-use warnings;
+
+use base 'Exporter';
+
+our @EXPORT = ( qw( get_df_tile_type_data ) );
 
 # TODO: Make auto-converter from ods to this file.
 
-our @TILE_TYPES;
+my @TILE_TYPES;
 
 use lib '.';
+use lib '..';
 use Lifevis::constants;
 
 my @light_variance = ( 0.9, 0.85, 0.82, 0.8 );
@@ -308,5 +311,8 @@ $TILE_TYPES[517] = [STAIR_UP,unknown,0.9];    #   MAPTILE_STAIR_UP_CONSTRUCTED,
 $TILE_TYPES[518] = [RAMP,constructed_wall,0.9];    #   MAPTILE_RAMP_CONSTRUCTED,
 
 
+sub get_df_tile_type_data {
+    return @TILE_TYPES;
+}
 
 1;

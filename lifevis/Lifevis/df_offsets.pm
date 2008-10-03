@@ -1,4 +1,3 @@
-#!/usr/bin/perl -w
 package Lifevis::df_offsets;
 use strict;
 
@@ -175,3 +174,5 @@ my @OFFSETS = (
 sub get_df_offsets {
     return @OFFSETS;
 }
+
+1;
