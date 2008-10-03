@@ -1,0 +1,3 @@
+- fix up ground texture on boulders
+- stop too big range values from crashing lifevis
+- disable cursor when not active ingame
