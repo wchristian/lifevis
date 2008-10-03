@@ -70,7 +70,7 @@ BEGIN {
     sub update_memory_use {
         my @state_array;
         my $pid        = $PROCESS_ID;
-        my $sleep_time = ( $c{sync_delay} * $c{full_update_offset} ) / 1000;
+        my $sleep_time = 2;
         my $WMI_service_object =
              Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
           or croak "WMI connection failed.\n";
@@ -465,7 +465,6 @@ sub extract_base_memory_data {
 
 sub creature_update_loop {
     while (1) {
-
         my @creature_vector_offsets =
           $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
         my $creature_list_length =
@@ -490,13 +489,15 @@ sub creature_update_loop {
             #        say $proc->hexdump( $creature_offsets[$creature], 0x688 );
 
             # extract data of current creature
-            my $race        = $proc->get_u32( $creature + 140 );
             my $rx          = $proc->get_u16( $creature + 148 );
-            my $ry          = $proc->get_u16( $creature + 150 );
+            next if ($rx > $xcount*16);
             my $rz          = $proc->get_u16( $creature + 152 );
+            next if ($rz > $ZCOUNT+1);
+            my $race        = $proc->get_u32( $creature + 140 );
+            my $ry          = $proc->get_u16( $creature + 150 );
             my $name_length = $proc->get_u32( $creature + 20 );
             $proc->get_buf( $creature + 4, $name_length, my $name );
-
+            
             # update record of current creature
             $creatures{$creature}[race] = $race;
             $creatures{$creature}[c_x]  = $rx;
@@ -643,7 +644,7 @@ sub landscape_update_loop {
                 }
             }
         }
-
+        
         # cycle through cells in range around cursor to generate display lists
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {

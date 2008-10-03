@@ -26,11 +26,12 @@ read/written from as many coroutines as you want.
 
 package Coro::Channel;
 
+use strict qw(vars subs);
 no warnings;
 
 use Coro ();
 
-$VERSION = 4.747;
+our $VERSION = 4.749;
 
 =item $q = new Coro:Channel $maxsize
 

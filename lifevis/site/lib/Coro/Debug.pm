@@ -97,7 +97,7 @@ None of the functions are being exported.
 
 package Coro::Debug;
 
-use strict;
+use strict qw(subs vars);
 no warnings;
 
 use overload ();
@@ -114,6 +114,8 @@ use Coro ();
 use Coro::Handle ();
 use Coro::State ();
 use Coro::AnyEvent ();
+
+our $VERSION = 4.749;
 
 our %log;
 our $SESLOGLEVEL = exists $ENV{PERL_CORO_DEFAULT_LOGLEVEL} ? $ENV{PERL_CORO_DEFAULT_LOGLEVEL} : -1;

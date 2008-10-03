@@ -65,6 +65,8 @@ use AnyEvent::AIO ();
 
 use base Exporter::;
 
+our $VERSION = 4.749;
+
 our @EXPORT    = @IO::AIO::EXPORT;
 our @EXPORT_OK = @IO::AIO::EXPORT_OK;
 our $AUTOLOAD;

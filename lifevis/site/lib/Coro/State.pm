@@ -76,6 +76,8 @@ no warnings "uninitialized";
 
 use Carp;
 
+use Time::HiRes (); # currently only used for PerlIO::cede
+
 our $DIEHOOK;
 our $WARNHOOK;
 
@@ -90,7 +92,7 @@ sub warnhook { &$WARNHOOK }
 use XSLoader;
 
 BEGIN {
-   our $VERSION = 4.747;
+   our $VERSION = 4.749;
 
    # must be done here because the xs part expects it to exist
    # it might exist already because Coro::Specific created it.
