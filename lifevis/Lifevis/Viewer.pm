@@ -280,12 +280,6 @@ sub run {
         { mask => 0b1_0000_0000, func => 'N' },
     );
 
-    unless ( my $return = do 'models.pl' ) {
-        warn "couldn't parse models.pl: $@" if $@;
-        warn "couldn't do models.pl: $!" unless defined $return;
-        warn "couldn't run models.pl" unless $return;
-    }
-
     # ------
     # The main() function.  Inits OpenGL.  Calls our own init function,
     # then passes control onto OpenGL.

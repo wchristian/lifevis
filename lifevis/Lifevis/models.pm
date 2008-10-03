@@ -1,20 +1,19 @@
 package Lifevis::models;
-use strict;
-
-use base 'Exporter';
-
-use lib '.';
-use lib '..';
-use Lifevis::constants;
-#use OpenGL qw/ :all /;
-
-our @EXPORT = ( qw( get_model_subs set_zcount_for_models ) );
-
-my $ZCOUNT;
-
-my %DRAW_MODEL;
-
-
+    use strict;
+    
+    use base 'Exporter';
+    
+    use lib '.';
+    use lib '..';
+    use Lifevis::constants;
+    
+    our @EXPORT = ( qw( get_model_subs set_zcount_for_models ) );
+    
+    my $ZCOUNT;
+    
+    my %DRAW_MODEL;
+    
+    
 
 
 
@@ -9114,14 +9113,15 @@ if ( $north != WALL ) {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 }
 };
-
-
-sub get_model_subs {
-    return %DRAW_MODEL;
-}
-
-sub set_zcount_for_models {
-    ($ZCOUNT) = @_;
-}
-
-1;
+    
+    
+    sub get_model_subs {
+        return %DRAW_MODEL;
+    }
+    
+    sub set_zcount_for_models {
+        ($ZCOUNT) = @_;
+    }
+    
+    1;
+    
