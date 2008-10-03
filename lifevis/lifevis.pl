@@ -136,45 +136,15 @@ use Win32::GuiTest qw(:FUNC :VK);
 ### Translated from C to Perl by J-L Morel <jl_morel@bribes.org>
 ### ( http://www.bribes.org/perl/wopengl.html )
 
-use constant TYPE        => 0;
-use constant DESIGNATION => 1;
-use constant OCCUPATION  => 2;
-
-use constant PROGRAM_TITLE =>
-  'Lifevis - A real-time Dwarf Fortress world viewer';
-use constant PI => 4 * atan2 1, 1;
-use constant PIOVER180 => PI / 180;
-
 # Some global variables.
 
 # Window and texture IDs, window width and height.
 my $window_ID;
 
-my @texture_ID;
+use lib '.';
+use Lifevis::constants;
 
-use constant grass                      => 0;
-use constant stone                      => 1;
-use constant cursor                     => 2;
-use constant obsidian                   => 3;
-use constant unknown                    => 4;
-use constant minstone                   => 5;
-use constant pool                       => 6;
-use constant water                      => 7;
-use constant soil                       => 8;
-use constant tree                       => 9;
-use constant shrub                      => 10;
-use constant sapling                    => 11;
-use constant creature                   => 12;
-use constant grassb                     => 13;
-use constant boulder                    => 14;
-use constant shrub_dead                 => 15;
-use constant tree_dead                  => 16;
-use constant sapling_dead               => 17;
-use constant constructed_floor_detailed => 18;
-use constant constructed_wall           => 19;
-use constant grass_dry                  => 20;
-use constant lava                       => 21;
-use constant test                       => 22;
+my @texture_ID;
 
 # Object and scene global variables.
 
@@ -240,33 +210,18 @@ my $slice_follows = 0;
 my $map_base;    # offset of the address where the map blocks start
 
 my @cells;
-use constant changed       => 0;
-use constant z             => 1;
-use constant offset        => 2;
-use constant creature_list => 3;
-use constant cache_ptr     => 4;
 
 # slice constants
 #use constant changed => 0;
 
 my @tiles;
-use constant type  => 0;
-use constant desig => 1;
 
 my @cache;
-use constant cell_ptr => 0;
 
 my @cache_bucket;
 my @protected_caches;
 
 my %creatures;
-use constant race   => 0;
-use constant c_x    => 1;
-use constant c_y    => 2;
-use constant c_z    => 3;
-use constant name   => 4;
-use constant cell_x => 5;
-use constant cell_y => 6;
 
 my %creatures_present;
 
@@ -278,23 +233,6 @@ unless ( my $return = do 'df_internals.pl' ) {
     warn "couldn't do df_internals.pl: $!" unless defined $return;
     warn "couldn't run df_internals.pl" unless $return;
 }
-use constant base_visual    => 0;
-use constant base_texture   => 1;
-use constant brightness_mod => 2;
-use constant EMPTY          => 0;
-use constant FLOOR          => 1;
-use constant WALL           => 2;
-use constant RAMP           => 3;
-use constant STAIR          => 4;
-use constant FORTIF         => 5;
-use constant PILLAR         => 6;
-use constant RAMP_TOP       => 7;
-use constant TREE           => 8;
-use constant SHRUB          => 9;
-use constant SAPLING        => 10;
-use constant BOULDER        => 11;
-use constant STAIR_UP => 12;
-use constant STAIR_DOWN => 13;
 
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
 my @ramps = (
@@ -1104,9 +1042,9 @@ sub new_process_block {
       $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{designation_off},
         256 );
 
-#my @ocupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
+    my @occupation_data   = $proc->get_packs('L', 4, $block_offset+$OFFSETS[$ver]{occupancy_off},   256);
 
-    my ( $rx, $ry, $tile, $desig, $desig_below );
+    my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
 
     my $bx_scaled  = $bx * 16;
     my $by_scaled  = $by * 16;
@@ -1120,6 +1058,7 @@ sub new_process_block {
         $tile        = $tiles[$bz][type][$rx] ||= [];
         $desig       = $tiles[$bz][desig][$rx] ||= [];
         $desig_below = $tiles[ $bz - 1 ][desig][$rx] ||= [];
+        $occup       = $tiles[$bz][occup][$rx] ||= [];
 
         # cycle through 16 x and 16 y values,
         # which generate a total of 256 tile indexes
@@ -1152,8 +1091,12 @@ sub new_process_block {
                 $desig->[$ry] = $designation_data[$tile_index];
             }
 
-#$cells[$real_x][$real_y][z][$bz][DESIGNATION] = $designation_data[$tile_index];
-#$cells[$real_x][$real_y][z][$bz][OCCUPATION] = $ocupation_data[$tile_index];
+            if ( !defined $occup->[$ry]
+                || $occup->[$ry] != $occupation_data[$tile_index] )
+            {
+                $changed = 1;
+                $occup->[$ry] = $occupation_data[$tile_index];
+            }
             ++$tile_index;
         }
     }

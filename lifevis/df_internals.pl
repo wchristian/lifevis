@@ -7,48 +7,8 @@ use warnings;
 
 our @TILE_TYPES;
 
-BEGIN {
-eval "use constant base_visual => 0"    unless(defined &base_visual);
-eval "use constant base_texture => 1"    unless(defined &base_texture);
-eval "use constant brightness_mod => 2"    unless(defined &base_texture);
-eval "use constant EMPTY => 0"          unless(defined &EMPTY);
-eval "use constant FLOOR => 1"          unless(defined &FLOOR);
-eval "use constant WALL => 2"           unless(defined &WALL);
-eval "use constant RAMP => 3"           unless(defined &RAMP);
-eval "use constant STAIR => 4"          unless(defined &STAIR);
-eval "use constant FORTIF => 5"         unless(defined &FORTIF);
-eval "use constant PILLAR => 6"         unless(defined &PILLAR);
-eval "use constant RAMP_TOP => 7"           unless(defined &RAMP_TOP);
-eval "use constant TREE => 8"           unless(defined &TREE);
-eval "use constant SHRUB => 9"           unless(defined &SHRUB);
-eval "use constant SAPLING => 10"           unless(defined &SAPLING);
-eval "use constant BOULDER => 11"           unless(defined &BOULDER);
-eval "use constant STAIR_UP => 12"          unless(defined &STAIR_UP);
-eval "use constant STAIR_DOWN => 13"          unless(defined &STAIR_DOWN);
-    
-eval "use constant grass => 0"           unless(defined &grass);
-eval "use constant stone => 1"           unless(defined &stone);
-eval "use constant cursor => 2"           unless(defined &cursor);
-eval "use constant obsidian => 3"           unless(defined &obsidian);
-eval "use constant unknown => 4"           unless(defined &unknown);
-eval "use constant minstone => 5"           unless(defined &minstone);
-eval "use constant pool => 6"           unless(defined &pool);
-eval "use constant water => 7"           unless(defined &water);
-eval "use constant soil => 8"           unless(defined &soil);
-eval "use constant tree => 9"           unless(defined &tree);
-eval "use constant shrub => 10"           unless(defined &shrub);
-eval "use constant sapling => 11"           unless(defined &sapling);
-eval "use constant creature => 12"           unless(defined &creature);
-eval "use constant grassb => 13"           unless(defined &grassb);
-eval "use constant boulder => 14"           unless(defined &boulder);
-eval "use constant shrub_dead => 15"           unless(defined &shrub_dead);
-eval "use constant tree_dead => 16"           unless(defined &tree_dead);
-eval "use constant sapling_dead => 17"           unless(defined &sapling_dead);
-eval "use constant constructed_floor_detailed => 18"           unless(defined &constructed_floor_detailed);
-eval "use constant constructed_wall => 19"           unless(defined &constructed_wall);
-eval "use constant grass_dry => 20"           unless(defined &grass_dry);
-eval "use constant lava => 21"           unless(defined &lava);
-}
+use lib '.';
+use Lifevis::constants;
 
 my @light_variance = ( 0.9, 0.85, 0.82, 0.8 );
 
