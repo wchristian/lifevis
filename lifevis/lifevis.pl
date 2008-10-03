@@ -293,6 +293,8 @@ use constant TREE           => 8;
 use constant SHRUB          => 9;
 use constant SAPLING        => 10;
 use constant BOULDER        => 11;
+use constant STAIR_UP => 12;
+use constant STAIR_DOWN => 13;
 
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
 my @ramps = (
@@ -406,6 +408,11 @@ Q or [Esc] to quit; OpenGL window must have focus for input.
 TXT
 
 my $main_loop = $Coro::main;
+
+my $min_x_range;
+my $max_x_range;
+my $min_y_range;
+my $max_y_range;
 
 my $loc_loop = new Coro \&location_update_loop;
 my $success2 = $loc_loop->ready;
@@ -588,6 +595,15 @@ sub location_update_loop {
           if $xcell >= $xcount - $c{view_range};
         $ycell = $ycount - $c{view_range} - 1
           if $ycell >= $ycount - $c{view_range};
+          
+        $min_x_range = $xcell - $c{view_range};
+        $min_x_range = 0 if $min_x_range < 0;
+        $max_x_range = $xcell + $c{view_range};
+        $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
+        $min_y_range = $ycell - $c{view_range};
+        $min_y_range = 0 if $min_y_range < 0;
+        $max_y_range = $ycell + $c{view_range};
+        $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
 
         for ( 0 .. $c{cursor_update_slow_rate} ) {
             cede();
@@ -597,14 +613,6 @@ sub location_update_loop {
 
 sub landscape_update_loop {
     while (1) {
-        my $min_x_range = $xcell - $c{view_range};
-        $min_x_range = 0 if $min_x_range < 0;
-        my $max_x_range = $xcell + $c{view_range};
-        $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
-        my $min_y_range = $ycell - $c{view_range};
-        $min_y_range = 0 if $min_y_range < 0;
-        my $max_y_range = $ycell + $c{view_range};
-        $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
 
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
@@ -944,6 +952,72 @@ sub generate_display_list {
                         && $TILE_TYPES[$type_above][base_visual] != EMPTY );
 
                     $DRAW_MODEL{Sapling}->(
+                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                        $east, $below, EMPTY
+                    );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == STAIR ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+
+                    $DRAW_MODEL{Stairs}->(
+                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                        $east, $below, EMPTY
+                    );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == STAIR_UP ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+
+                    $DRAW_MODEL{Stair_Up}->(
+                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                        $east, $below, EMPTY
+                    );
+                    next;
+                }
+
+                elsif ( $TILE_TYPES[$type][base_visual] == STAIR_DOWN ) {
+                    my $type_above = $tile_above->[$rx][$ry];
+                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+
+                    $brightness_mod *= 0.75
+                      if ( defined $type_above
+                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+
+                    $DRAW_MODEL{Stair_Down}->(
                         $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
                         $east, $below, EMPTY
                     );
@@ -1459,15 +1533,6 @@ sub render_scene {
     glColor3f( 1, 1, 1 );    # Basic polygon color
 
     # cycle through cells in range around cursor to render
-    my $min_x_range = $xcell - $c{view_range};
-    $min_x_range = 0 if $min_x_range < 0;
-    my $max_x_range = $xcell + $c{view_range};
-    $max_x_range = $xcount if $max_x_range > $xcount;
-    my $min_y_range = $ycell - $c{view_range};
-    $min_y_range = 0 if $min_y_range < 0;
-    my $max_y_range = $ycell + $c{view_range};
-    $max_y_range = $ycount if $max_y_range > $ycount;
-
     for my $bx ( $min_x_range .. $max_x_range ) {
         for my $by ( $min_y_range .. $max_y_range ) {
 
