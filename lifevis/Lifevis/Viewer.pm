@@ -1,12 +1,10 @@
-#!/usr/bin/perl
-
 # $Id$
 # $Revision$
 # $HeadURL$
 # $Date$
 # $Source$
 
-package Lifevis;
+package Lifevis::Viewer;
 
 use 5.010;
 use strict;

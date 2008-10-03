@@ -1,10 +1,8 @@
-#!/usr/bin/perl
+package Lifevis::ModelGen;
 use 5.010;
 use strict;
 
-use Math::Vec qw(:terse);
-use Math::Trig ':pi';
-
+    
 my %side = (
                 "0,0,1" => "south",
                 "0,-1,0" => "bottom",
@@ -18,6 +16,93 @@ my %side = (
                 "0,0.707106781186547,-0.707106781186547" => "top north",
 
             );
+
+__PACKAGE__->run(@ARGV) unless caller();
+
+sub run {
+    use Math::Vec qw(:terse);
+    use Math::Trig ':pi';
+    
+    
+    my (@filelist,$code);
+    
+    my @files = <models/*.obj>;
+    foreach my $file (@files) {
+        push @filelist, $file;
+    }
+    
+    foreach my $file (@filelist) {
+        $file =~ m/^models\/(.+?)\.obj$/i or die("Bad data in first argument");
+        my $input = "$1";
+        say $input;
+        my $model = generateModel($input);
+        $code .= "\n\n$model";
+    }
+    
+    open my $OUT, ">", 'Lifevis\models.pm' or die( "horribly: ".$! );
+    print $OUT "package Lifevis::models;
+    use strict;
+    
+    use base 'Exporter';
+    
+    use lib '.';
+    use lib '..';
+    use Lifevis::constants;
+    
+    our \@EXPORT = ( qw( get_model_subs set_zcount_for_models ) );
+    
+    my \$ZCOUNT;
+    
+    my \%DRAW_MODEL;
+    
+    $code
+    
+    
+    sub get_model_subs {
+        return \%DRAW_MODEL;
+    }
+    
+    sub set_zcount_for_models {
+        (\$ZCOUNT) = \@_;
+    }
+    
+    1;
+    ";
+    close $OUT;
+}    
+
+
+
+
+
+sub calcFaceNormal {
+    my $v1 = V($_[0]->[0], $_[0]->[1], $_[0]->[2]);
+    my $v2 = V($_[1]->[0], $_[1]->[1], $_[1]->[2]);
+    my $v3 = V($_[2]->[0], $_[2]->[1], $_[2]->[2]);
+    
+    my $edge1 = $v1-$v2;
+    my $edge2 = $v2-$v3;
+    my $cross = V($edge1->Cross($edge2));
+    my $length = $cross->Length();
+    
+    my $normal = $cross/$length;
+    
+    for my $val (@{$normal}) {
+        $val = 0 if( $val < 0.0001 && $val > -0.0001);
+        $val = 0.707106781186547 if ( $val > 0.707106 && $val < 0.707107 );
+        $val = -0.707106781186547 if ( $val < -0.707106 && $val > -0.707107 );
+    }
+    
+    return $normal;
+}
+
+
+sub rotate_vector {
+    my ($x,$z) = @_;
+    my $xnew = cos(-1*pip2)*($x) - sin(-1*pip2)*$z;
+    my $znew = sin(-1*pip2)*($x) + cos(-1*pip2)*$z;
+    return ($xnew,$znew);
+}
 
 
 sub generateModel {
@@ -158,84 +243,4 @@ sub generateModel {
     }
     
     return $model;
-}
-
-
-my (@filelist,$code);
-
-my @files = <models/*.obj>;
-foreach my $file (@files) {
-    push @filelist, $file;
-}
-
-foreach my $file (@filelist) {
-    $file =~ m/^models\/(.+?)\.obj$/i or die("Bad data in first argument");
-    my $input = "$1";
-    say $input;
-    my $model = generateModel($input);
-    $code .= "\n\n$model";
-}
-
-open my $OUT, ">", 'Lifevis\models.pm' or die( "horribly: ".$! );
-print $OUT "package Lifevis::models;
-use strict;
-
-use base 'Exporter';
-
-use lib '.';
-use lib '..';
-use Lifevis::constants;
-
-our \@EXPORT = ( qw( get_model_subs set_zcount_for_models ) );
-
-my \$ZCOUNT;
-
-my \%DRAW_MODEL;
-
-$code
-
-
-sub get_model_subs {
-    return \%DRAW_MODEL;
-}
-
-sub set_zcount_for_models {
-    (\$ZCOUNT) = \@_;
-}
-
-1;
-";
-close $OUT;    
-
-
-
-
-
-sub calcFaceNormal {
-    my $v1 = V($_[0]->[0], $_[0]->[1], $_[0]->[2]);
-    my $v2 = V($_[1]->[0], $_[1]->[1], $_[1]->[2]);
-    my $v3 = V($_[2]->[0], $_[2]->[1], $_[2]->[2]);
-    
-    my $edge1 = $v1-$v2;
-    my $edge2 = $v2-$v3;
-    my $cross = V($edge1->Cross($edge2));
-    my $length = $cross->Length();
-    
-    my $normal = $cross/$length;
-    
-    for my $val (@{$normal}) {
-        $val = 0 if( $val < 0.0001 && $val > -0.0001);
-        $val = 0.707106781186547 if ( $val > 0.707106 && $val < 0.707107 );
-        $val = -0.707106781186547 if ( $val < -0.707106 && $val > -0.707107 );
-    }
-    
-    return $normal;
-}
-
-
-sub rotate_vector {
-    my ($x,$z) = @_;
-    my $xnew = cos(-1*pip2)*($x) - sin(-1*pip2)*$z;
-    my $znew = sin(-1*pip2)*($x) + cos(-1*pip2)*$z;
-    return ($xnew,$znew);
 }

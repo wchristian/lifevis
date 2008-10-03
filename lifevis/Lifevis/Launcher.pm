@@ -1,13 +1,28 @@
-#!/usr/bin/perl
+package Lifevis::Launcher;
 use 5.010;
 use strict;
 use warnings;
-use Win32::Detached;
-
 use lib '.';
-use Lifevis;
+use lib '..';
 
-open STDERR, '>>error.txt';
-open STDOUT, '>>log.txt';
 
-Lifevis->run();
+if ( !grep(m/-console/, @ARGV) and !grep(m/-modelgen/, @ARGV) ) {
+    require Win32::Detached;
+    open STDERR, '>>error.txt';
+    open STDOUT, '>>log.txt';
+}
+
+if ( grep(m/-viewer/, @ARGV) ) {
+    use Lifevis::Viewer;
+    Lifevis::Viewer->run();
+}
+
+if ( grep(m/-modelgen/, @ARGV) ) {
+    use Lifevis::ModelGen;
+    Lifevis::ModelGen->run();
+    say "Press Enter to close.";
+    my $in = <STDIN>;
+}
+
+
+
