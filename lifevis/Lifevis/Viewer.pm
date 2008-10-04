@@ -132,6 +132,10 @@ my $mouse_dist = 40;
 
 my ( %sin_cache, %cos_cache );
 
+my $rotating = 0;
+my $changing_ceiling = 0;
+my $ceiling_slice;
+
 __PACKAGE__->run(@ARGV) unless caller();
 
 BEGIN {
@@ -179,7 +183,7 @@ sub run {
     use LWP::Simple;
     use Image::Magick;
     use Win32::GUI::Constants qw ( :window :accelerator );
-    use Win32::GuiTest qw(:FUNC :VK);
+    use Win32::GuiTest qw( :FUNC );
 
     # %DB::packages = ( 'main' => 1 );
 
@@ -224,9 +228,6 @@ sub run {
 # hashes containing the functions called on certain key presses
 #my ( %special_inputs, %normal_inputs ); # disabled until we actually pipe stuff to lifevis again
 
-    ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
-
-    my $slice         = 0;
     my $slice_follows = 0;
 
 # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
@@ -293,7 +294,18 @@ sub run {
     print 'setting up OpenGL environment...   ';
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( $c{window_width}, $c{window_height} );
-    glutInitWindowPosition( 390, 250 );
+    
+    # clamp viewer window to bottom of df window, right side
+    ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
+    my (undef,undef,$right,$bottom) = GetWindowRect($DF_window);
+    ($right,$bottom) = ClientToScreen($DF_window,$right,$bottom);
+    
+    # reset to 0,0 if outside of screen
+    my ($screen_width,$screen_height) = GetScreenRes();
+    ($right, $bottom) = ($c{window_width},0)
+        if ( $right > $screen_width
+            or $bottom+$c{window_height} > $screen_height);
+    glutInitWindowPosition( $right-$c{window_width}, $bottom );
 
     $window_ID = glutCreateWindow(PROGRAM_TITLE);    # Open a window
 
@@ -332,6 +344,7 @@ sub run {
 
     my $loc_loop = new Coro \&location_update_loop;
     my $success2 = $loc_loop->ready;
+    cede();
 
     my $land_loop = new Coro \&landscape_update_loop;
     my $success3  = $land_loop->ready;
@@ -341,11 +354,13 @@ sub run {
 
     my $creat_loop = new Coro \&creature_update_loop;
     my $success    = $creat_loop->ready;
-
+    
+    
+    
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.
     print "switching to main loop...\n";
-
+    $ceiling_slice = $zcount;
     glutMainLoop();
 
     print "moo";
@@ -1465,6 +1480,7 @@ sub render_scene {
 
             my $slices = $cache[$cache_ptr];
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
+                next if $slice > $ceiling_slice+2;
                 glCallList( $slices->[$slice] ) if $slices->[$slice];
             }
 
@@ -1475,6 +1491,7 @@ sub render_scene {
                 next unless $creatures_present{$entry};
                 my $x = $creatures{$entry}[c_x];
                 my $z = $creatures{$entry}[c_z];
+                next if $z > $ceiling_slice;
                 my $y = $creatures{$entry}[c_y];
                 glTranslatef( $x, $z, $y );
                 glCallList( $creature_display_lists[0] );
@@ -1594,6 +1611,10 @@ sub render_scene {
     glRasterPos2i( 2, 186 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
+    $buf = "Ceiling: $ceiling_slice";
+    glRasterPos2i( 2, 198 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
     #$buf = "X";
     #glRasterPos2i(146,144); print_opengl_string(GLUT_BITMAP_HELVETICA_12,$buf);
 
@@ -1625,6 +1646,23 @@ sub render_scene {
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
     glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
+    
+    my $height_mod = ($c{window_height}-22) / ($zcount+2);
+    
+    for my $slice ( 0..$zcount ) {
+        
+        my $part = (0.6/$zcount);
+        my $bright = ($part*$slice)+0.2;
+        
+        glColor4f( $bright, $bright, $bright, 1 );
+        
+        glBegin(GL_QUADS);
+        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*($slice+1) ,   0.0 );
+        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*$slice,        0.0 );
+        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*$slice,        0.0 );
+        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*($slice+1) , 0.0 );
+        glEnd();
+    }
 
     #
     #    glColor4f(0.9,0.2,0.2,.75);
@@ -1809,8 +1847,7 @@ sub process_mouse_click {
             --$c{view_range} if $c{view_range} > 0;
             glutPostRedisplay();
         }
-
-        if (   $x > $c{window_width} - 20
+        elsif (   $x > $c{window_width} - 20
             && $x < $c{window_width}
             && $y > $c{window_height} - 20
             && $y < $c{window_height} )
@@ -1819,14 +1856,34 @@ sub process_mouse_click {
             ++$c{view_range} if ( $c{view_range} < $size / 2 );
             glutPostRedisplay();
         }
+        elsif (
+                $x > $c{window_width} - 20
+                && $x < $c{window_width}
+                && $y > 0
+                && $y < $c{window_height} - 22 ) {
+            $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
+            $changing_ceiling = 1;
+            glutPostRedisplay();
+        }
+        else {
+            $rotating = 1;
+        }
     }
 
-    $middle_mouse = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
+    $changing_ceiling = 0   if $button == GLUT_LEFT_BUTTON && $state == GLUT_UP;
+    $rotating = 0           if $button == GLUT_LEFT_BUTTON && $state == GLUT_UP;
+    $middle_mouse = 0       if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
     return;
 }
 
 sub process_active_mouse_motion {
     my ( $x, $y ) = @_;
+
+    if ( $changing_ceiling ) {
+        $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
+        glutPostRedisplay();
+        return;
+    }
 
     if (   $x > $c{window_width} - 42
         && $x < $c{window_width} - 22
