@@ -1,3 +1,6 @@
 - fix up ground texture on boulders
 - stop too big range values from crashing lifevis
 - disable cursor when not active ingame
+- find a way to yell at user when DF isn't running when no console is up
+- make sure that user is running 40d
+- rename executables so viewer is on top

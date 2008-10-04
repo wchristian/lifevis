@@ -6,14 +6,18 @@ use warnings;
 use lib '.';
 use lib '..';
 
+my $detached = 0;
+
 if ( !grep(m/-console/, @ARGV) and !grep(m/-modelgen/, @ARGV) ) {
     require Win32::Detached;
     open STDERR, '>>error.txt';
     open STDOUT, '>>log.txt';
+    $detached = 1;
 }
 
 if ( grep(m/-viewer/, @ARGV) ) {
     require Lifevis::Viewer;
+    Lifevis::Viewer->set_detached($detached);
     Lifevis::Viewer->run();
 }
 

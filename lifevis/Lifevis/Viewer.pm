@@ -10,6 +10,9 @@ use 5.010;
 use strict;
 use warnings;
 
+our ($VERSION) = '$Revision$' =~ m{ \$Revision: \s+ (\S+) }x; # define minor version
+$VERSION = 0 + $VERSION/1000; # define major version
+
 #use warnings::unused;
 #use warnings::method;
 #use diagnostics;
@@ -21,7 +24,6 @@ use criticism (
         'ProhibitConstantPragma',
         'RequireExtendedFormatting',
         'ProhibitComplexRegexes',
-        'RequireVersionVar',
         'ProhibitLongLines',
         'ProhibitMagicNumbers',        # TODO : Reconsider this.
         'ProhibitCommentedOutCode',    # TODO : Comment out in clean-up
@@ -45,6 +47,8 @@ use utf8;
 use English qw(-no_match_vars);
 $OUTPUT_AUTOFLUSH = 1;
 
+my $detached;
+
 use lib '.';
 use lib '..';
 use Lifevis::constants;
@@ -56,15 +60,34 @@ use threads;
 use threads::shared;
 
 use Config::Simple;
+use LWP::Simple;
+use Win32;
 
 use Win32::OLE('in');
 
+use Benchmark ':hireswallclock';
+
+use Time::HiRes qw ( time );
+use Coro qw[ cede ];
+
+use OpenGL::Image;
+use Math::Trig;
+use Win32;
+use Win32::Process::List;
+use Win32::Process;
+use Win32::Process::Memory;
+use Image::Magick;
+use Win32::GUI::Constants qw ( :window :accelerator );
+use Win32::GuiTest qw( :FUNC );
+
 my $memory_use;
 $memory_use = 0;
+
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
+$c{redraw_delay} = 1 / $c{fps_limit};
 
 my @OFFSETS = get_df_offsets();
 my $ver;
@@ -140,7 +163,9 @@ __PACKAGE__->run(@ARGV) unless caller();
 
 BEGIN {
     share($memory_use);
-
+    my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
+    $thr->detach();
+    
     sub update_memory_use {
         my @state_array;
         my $pid        = $PROCESS_ID;
@@ -148,7 +173,7 @@ BEGIN {
         my $WMI_service_object =
              Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
           or croak "WMI connection failed.\n";
-
+    
         while (1) {
             @state_array = in $WMI_service_object->ExecQuery(
                 'SELECT PrivatePageCount FROM Win32_Process'
@@ -161,29 +186,24 @@ BEGIN {
         }
         return 1;
     }
-    my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
-    $thr->detach();
+}
+    
+sub check_for_new_version {
+    my $source = 'http://dwarvis.googlecode.com/files/version.info';
 
+    my $new_version = get($source);
+    return if !defined $new_version;
+    
+    notify_user ( "New version $new_version available, please check the download section on [ http://dwarvis.googlecode.com ]." )
+        if ($new_version + 0) > $VERSION;
+    
+    return;
 }
 
 sub run {
-    use Benchmark ':hireswallclock';
-
-    use Time::HiRes qw ( time );
-    use Coro qw[ cede ];
-    $c{redraw_delay} = 1 / $c{fps_limit};
+    check_for_new_version() if $c{update_checks};
 
     use OpenGL qw/ :all /;
-    use OpenGL::Image;
-    use Math::Trig;
-    use Win32;
-    use Win32::Process::List;
-    use Win32::Process;
-    use Win32::Process::Memory;
-    use LWP::Simple;
-    use Image::Magick;
-    use Win32::GUI::Constants qw ( :window :accelerator );
-    use Win32::GuiTest qw( :FUNC );
 
     # %DB::packages = ( 'main' => 1 );
 
@@ -1116,8 +1136,8 @@ sub init_process_connection {
     for my $key ( keys %list ) {
         $dwarf_pid = $key if ( $list{$key} =~ /dwarfort.exe/ );
     }
-    croak 'Could not find process ID, make sure DF is running and'
-      . ' a savegame is loaded.'
+    fatal_error ( 'Could not find process ID, make sure DF is running and'
+      . ' a savegame is loaded.' )
       unless ($dwarf_pid);
 
     ### lower priority of dwarf fortress ###########################################
@@ -1325,7 +1345,7 @@ sub process_xml {
         push @new_data_store, $line;
     }
 
-    open $HANDLE, '>', 'df_offsets.pl' or croak("horribly: $OS_ERROR");
+    open $HANDLE, '>', 'Lifevis/df_offsets.pm' or croak("horribly: $OS_ERROR");
     for my $line (@new_data_store) {
         print {$HANDLE} $line;
     }
@@ -1963,6 +1983,31 @@ sub print_opengl_string {
         glutBitmapCharacter( $font, ord $_ );
     }
     return;
+}
+
+sub set_detached {
+    ($detached) = $_[1];
+}
+
+sub fatal_error {
+    my ($error) = @_;
+    if ($detached) {
+        Win32::MsgBox($error, MB_ICONSTOP, "Lifevis - $VERSION");
+        exit;
+    }
+    else {
+        croak $error;
+    }
+}
+
+sub notify_user {
+    my ($message) = @_;
+    if ($detached) {
+        Win32::MsgBox($message, MB_ICONINFORMATION, "Lifevis - $VERSION");
+    }
+    else {
+        say $message;
+    }
 }
 
 __END__
