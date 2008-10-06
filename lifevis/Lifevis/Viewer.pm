@@ -161,6 +161,7 @@ my ( %sin_cache, %cos_cache );
 my $rotating = 0;
 my $changing_ceiling = 0;
 my $ceiling_slice;
+my $ceiling_locked = 0;
 
 my $memory_needs_clears;
 my $memory_full_checks = 0;
@@ -525,6 +526,8 @@ sub creature_update_loop {
 sub location_update_loop {
 
     while (1) {
+        my $old_ceiling_slice = $ceiling_slice;
+        
         $xmouse_old = $xmouse;
         $ymouse_old = $ymouse;
         $zmouse_old = $zmouse;
@@ -550,11 +553,14 @@ sub location_update_loop {
               int( $proc->get_u32( $OFFSETS[$ver]{window_grid_y} ) / 3 );
             $zmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
         }
+        
+        $ceiling_slice = $zmouse if $ceiling_locked;
 
         glutPostRedisplay()
           if ( $xmouse != $xmouse_old
             || $ymouse != $ymouse_old
-            || $zmouse != $zmouse_old );
+            || $zmouse != $zmouse_old
+            || $ceiling_slice != $old_ceiling_slice );
 
         # update camera system with mouse data
         ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
@@ -1619,18 +1625,9 @@ sub render_scene {
     $buf = "Mem-Act: $memory_clears / $memory_full_checks";
     glRasterPos2i( 2, 210 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    #$buf = "X";
-    #glRasterPos2i(146,144); print_opengl_string(GLUT_BITMAP_HELVETICA_12,$buf);
-
-# Now we want to render the calulated FPS at the top. To ease, simply translate up.  Note we're working in screen pixels in this projection.
-
-    #    glTranslatef(6.0,$c{window_height} - 14,0.0);
-    #
-    glColor4f( 0.2, 0.2, 0.2, 0.75 )
-      ; # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
-
-    #
+    
+    glColor4f( 0.2, 0.2, 0.2, 0.75 );
+    
     glBegin(GL_QUADS);
     glVertex3f( $c{window_width} - 42, $c{window_height} - 20,   0.0 );
     glVertex3f( $c{window_width} - 42, $c{window_height},        0.0 );
@@ -1645,8 +1642,8 @@ sub render_scene {
     glVertex3f( $c{window_width},      $c{window_height} - 20.0, 0.0 );
     glEnd();
 
-    glColor4f( 1, 1, 0.2, 0.75 )
-      ; # Make sure we can read the FPS section by first placing a dark, mostly opaque backdrop rectangle.
+    glColor4f( 1, 1, 0.2, 0.75 );
+    
     glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
     glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
@@ -1662,18 +1659,45 @@ sub render_scene {
         glColor4f( $bright, $bright, $bright, 1 );
         
         glBegin(GL_QUADS);
-        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*($slice+1) ,   0.0 );
-        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*$slice,        0.0 );
-        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*$slice,        0.0 );
+        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*($slice+1) , 0.0 );
+        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*$slice,      0.0 );
+        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*$slice,      0.0 );
         glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*($slice+1) , 0.0 );
         glEnd();
     }
+    
+    for my $slice ( 0..$zcount ) {
+        if ( $slice == $ceiling_slice ) {
+            my $part = (0.6/$zcount);
+            my $bright = ($part*$slice)+0.2;
+            
+            glColor4f( 1, 1, 0, 1 );
+            
+            glRasterPos2i( $c{window_width} - 17, $c{window_height}-22 - (0.95*$height_mod*($slice+1)) );
+            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $slice );
+        }
+    }
 
-    #
-    #    glColor4f(0.9,0.2,0.2,.75);
-    #    $buf = sprintf 'FPS: %f F: %2d", $FrameRate, $FrameCount;
-    #    glRasterPos2i(6,0);
-    #    print_opengl_string(GLUT_BITMAP_HELVETICA_12,$buf);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
+    glColor4f( 1, 1, 1, 1 );
+    
+    if ( $ceiling_locked ) {
+        glBegin(GL_QUADS);
+        OpenGL::glTexCoord2f(0,1); glVertex3f( $c{window_width} - 42, 0,   0.0 );
+        OpenGL::glTexCoord2f(0,0.84375); glVertex3f( $c{window_width} - 42, 20, 0.0 );
+        OpenGL::glTexCoord2f(0.15625,0.84375); glVertex3f( $c{window_width} - 22, 20, 0.0 );
+        OpenGL::glTexCoord2f(0.15625,1); glVertex3f( $c{window_width} - 22, 0, 0.0 );
+        glEnd();
+    }
+    else {
+        glBegin(GL_QUADS);
+        OpenGL::glTexCoord2f(0.15625,1); glVertex3f( $c{window_width} - 42, 0,   0.0 );
+        OpenGL::glTexCoord2f(0.15625,0.84375); glVertex3f( $c{window_width} - 42, 20, 0.0 );
+        OpenGL::glTexCoord2f(0.3125,0.84375); glVertex3f( $c{window_width} - 22, 20, 0.0 );
+        OpenGL::glTexCoord2f(0.3125,1); glVertex3f( $c{window_width} - 22, 0, 0.0 );
+        glEnd();
+    }
 
     glPopMatrix();   # Done with this special projection matrix.  Throw it away.
 
@@ -1726,7 +1750,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(26);
+    @texture_ID = glGenTextures_p(27);
 
     create_texture( 'grass',                      grass );
     create_texture( 'stone',                      stone );
@@ -1754,6 +1778,7 @@ sub build_textures {
     create_texture( 'metal',            metal );
     create_texture( 'stone_detailed',            stone_detailed );
     create_texture( 'minstone_detailed',            minstone_detailed );
+    create_texture( 'ui',            ui );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -1855,6 +1880,20 @@ sub process_mouse_click {
             --$c{view_range} if $c{view_range} > 0;
             glutPostRedisplay();
         }
+        elsif ($x > $c{window_width} - 42
+            && $x < $c{window_width} - 20
+            && $y > 0
+            && $y < 20 )
+        {
+            if ( $ceiling_locked == 1 ) {
+                $ceiling_locked = 0;
+                glutPostRedisplay();
+            }
+            else {
+                $ceiling_locked = 1;
+                glutPostRedisplay();
+            }
+        }
         elsif (   $x > $c{window_width} - 20
             && $x < $c{window_width}
             && $y > $c{window_height} - 20
@@ -1870,6 +1909,8 @@ sub process_mouse_click {
                 && $y > 0
                 && $y < $c{window_height} - 22 ) {
             $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
+            $ceiling_slice = 0 if $ceiling_slice < 0;
+            $ceiling_slice = $zcount if $ceiling_slice > $zcount;
             $changing_ceiling = 1;
             glutPostRedisplay();
         }
@@ -1889,6 +1930,8 @@ sub process_active_mouse_motion {
 
     if ( $changing_ceiling ) {
         $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
+        $ceiling_slice = 0 if $ceiling_slice < 0;
+        $ceiling_slice = $zcount if $ceiling_slice > $zcount;
         glutPostRedisplay();
         return;
     }
@@ -1926,7 +1969,7 @@ sub process_active_mouse_motion {
     else {
 
         $mouse_dist += $new_y * 0.2;
-        $mouse_dist = 1 if $mouse_dist < 1;
+        $mouse_dist = 0.2 if $mouse_dist < 0.2;
 
     }
 
