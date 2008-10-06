@@ -67,7 +67,7 @@ use Win32::OLE('in');
 
 use Benchmark ':hireswallclock';
 
-use Time::HiRes qw ( time );
+use Time::HiRes qw ( time sleep );
 use Coro qw[ cede ];
 
 use OpenGL::Image;
@@ -85,9 +85,13 @@ $memory_use = 0;
 
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
+my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
 $c{redraw_delay} = 1 / $c{fps_limit};
+my $memory_limit;
+$memory_limit = $c{memory_limit};
+$config_loaded = 1;
 
 my @OFFSETS = get_df_offsets();
 my $ver;
@@ -126,7 +130,6 @@ my $current_data_proc_task = 0;
 my $max_data_proc_tasks    = 0;
 my @cache;
 my @cache_bucket;
-my @protected_caches;
 
 my @texture_ID;
 my @creature_display_lists;
@@ -159,10 +162,18 @@ my $rotating = 0;
 my $changing_ceiling = 0;
 my $ceiling_slice;
 
+my $memory_needs_clears;
+my $memory_full_checks = 0;
+my $memory_clears = 0;
+
 __PACKAGE__->run(@ARGV) unless caller();
 
 BEGIN {
+    share(%c);
+    share($config_loaded);
     share($memory_use);
+    share($memory_needs_clears);
+    share($memory_limit);
     my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
     $thr->detach();
     
@@ -170,9 +181,12 @@ BEGIN {
         my @state_array;
         my $pid        = $PROCESS_ID;
         my $sleep_time = 2;
+        my $small_sleep_time = 0.1;
         my $WMI_service_object =
              Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
           or croak "WMI connection failed.\n";
+          
+        sleep $small_sleep_time while ( !$config_loaded );
     
         while (1) {
             @state_array = in $WMI_service_object->ExecQuery(
@@ -182,7 +196,14 @@ BEGIN {
                 0x10 | 0x20
             );
             $memory_use = $state_array[0]->{PrivatePageCount};
-            sleep $sleep_time;
+            
+            if ( $memory_use > $memory_limit ){
+                $memory_needs_clears = 1;
+                sleep $small_sleep_time;
+            }
+            else {
+                sleep $sleep_time;
+            }
         }
         return 1;
     }
@@ -374,6 +395,10 @@ sub run {
 
     my $creat_loop = new Coro \&creature_update_loop;
     my $success    = $creat_loop->ready;
+    cede();
+
+    my $memory_loop = new Coro \&memory_control_loop;
+    my $success4  = $memory_loop->ready;
     
     
     
@@ -644,7 +669,7 @@ sub landscape_update_loop {
 
                     # cell is not in cache
 
-                  # get fresh cache id either from end of cache or out of bucket
+                    # get fresh cache id either from end of cache or out of bucket
                     $cache_id = $#cache + 1;
                     $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
 
@@ -670,58 +695,74 @@ sub landscape_update_loop {
                     }
                     $cells[$bx][$by][changed] = 0;
                 }
-
-                $protected_caches[$cache_id] = 1;
             }
         }
-
-        my $deletions = 0;
-
-# TODO: Limit cache deletions so $c{view_range} is never undercut
-# check that we're not using too much memory and destroy cache entries if necessary
-
-        while ($memory_use > $c{memory_limit}
-            && $deletions < ( 2 * $c{view_range} ) )
-        {
-            my $delete;
-            my $use;
-
-            for my $id ( 0 .. $#cache ) {
-
-                # skip empty caches
-                next if !defined $cache[$id][1];
-
-                # skip caches we're currently looking at
-                next if $protected_caches[$id];
-
-                if ( !defined $use || $cache[$id][1] < $use ) {
-                    $delete = $id;
-                    $use    = $cache[$id][1];
-                }
-            }
-
-            last if !defined $delete;
-
-            my $slices = $cache[$delete];
-            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-                glDeleteLists( $cache[$delete][$slice], 1 )
-                  if ( $cache[$delete][$slice] );
-            }
-
-            undef ${ $cache[$delete][cell_ptr] };
-
-            undef $cache[$delete];
-            push @cache_bucket, $delete;
-
-            $deletions++;
-        }
-
-        @protected_caches = [];
 
         $max_data_proc_tasks    = $current_data_proc_task;
         $current_data_proc_task = 0;
     }
     return;
+}
+
+sub memory_control_loop {
+    
+    while (1) {
+        cede() while ( !$memory_needs_clears );
+        
+        $memory_full_checks++;
+        
+        my @protected_caches;
+        
+        # cycle through cells in range around cursor to generate display lists
+        for my $bx ( $min_x_range .. $max_x_range ) {
+            for my $by ( $min_y_range .. $max_y_range ) {
+                if ( defined $cells[$bx][$by] && defined $cells[$bx][$by][cache_ptr] ) {
+                    $protected_caches[$cells[$bx][$by][cache_ptr]] = 1;
+                }
+            }
+        }
+
+        # TODO: Limit cache deletions so $c{view_range} is never undercut
+        # check that we're not using too much memory and destroy cache entries if necessary
+        
+        my $delete;
+        my $use;
+
+        for my $id ( 0 .. $#cache ) {
+
+            # skip empty caches
+            next if !defined $cache[$id][1];
+
+            # skip caches we're currently looking at
+            next if $protected_caches[$id];
+
+            if ( !defined $use || $cache[$id][1] < $use ) {
+                $delete = $id;
+                $use    = $cache[$id][1];
+            }
+        }
+
+        if (!defined $delete) {
+            $memory_needs_clears = 0;
+            next;
+        }
+
+        $memory_clears++;
+        
+        my $slices = $cache[$delete];
+        for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
+            glDeleteLists( $cache[$delete][$slice], 1 )
+              if ( $cache[$delete][$slice] );
+        }
+
+        undef ${ $cache[$delete][cell_ptr] };
+
+        undef $cache[$delete];
+        push @cache_bucket, $delete;
+        
+        
+        $memory_needs_clears = 0;
+    }
 }
 
 sub generate_creature_display_lists {
@@ -1633,6 +1674,10 @@ sub render_scene {
 
     $buf = "Ceiling: $ceiling_slice";
     glRasterPos2i( 2, 198 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Mem-Act: $memory_clears / $memory_full_checks";
+    glRasterPos2i( 2, 210 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "X";
