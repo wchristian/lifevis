@@ -21,7 +21,7 @@ our @EXPORT = ( qw(
  
  type desig occup
  
- race c_x c_y c_z name cell_x cell_y
+ flags race c_x c_y c_z name cell_x cell_y
  
  cell_ptr
  
@@ -70,13 +70,9 @@ use constant type  => 0;
 use constant desig => 1;
 use constant occup => 2;
 
-use constant race   => 0;
-use constant c_x    => 1;
-use constant c_y    => 2;
-use constant c_z    => 3;
-use constant name   => 4;
-use constant cell_x => 5;
-use constant cell_y => 6;
+use enum qw(
+ flags race c_x c_y c_z name cell_x cell_y
+);
 
 use constant cell_ptr => 0;
 

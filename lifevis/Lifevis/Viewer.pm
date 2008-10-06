@@ -467,8 +467,17 @@ sub creature_update_loop {
 
         for my $creature (@creature_offsets) {
 
+            for ( 0 .. $c{creature_update_slow_rate} ) {
+                cede();
+            }
+
             #say $proc->hexdump( $creature, 0x688 );
 
+
+            my $flags = $proc->get_u32( $creature + 228 );
+            $creatures{$creature}[flags] = $flags;
+            next if $flags & 2;
+            
             # extract data of current creature
             my $rx = $proc->get_u16( $creature + 148 );
             next if ( $rx > $xcount * 16 );
@@ -514,10 +523,7 @@ sub creature_update_loop {
                 $creatures{$creature}[cell_x] = $bx;
                 $creatures{$creature}[cell_y] = $by;
             }
-
-            for ( 0 .. $c{creature_update_slow_rate} ) {
-                cede();
-            }
+            
             $current_creat_proc_task++;
         }
     }
@@ -778,6 +784,14 @@ sub generate_creature_display_lists {
     glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
     glBegin(GL_TRIANGLES);
     $DRAW_MODEL{Creature}->( 0, 0, 0, 1, 1 );
+    glEnd();
+    glEndList();
+    $dl = glGenLists(1);
+    push @creature_display_lists, $dl;
+    glNewList( $dl, GL_COMPILE );
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+    glBegin(GL_TRIANGLES);
+    $DRAW_MODEL{Creature2}->( 0, 0, 0, 1, 1 );
     glEnd();
     glEndList();
 }
@@ -1486,12 +1500,22 @@ sub render_scene {
             for my $entry (@creature_list) {
                 last if !defined $entry;
                 next unless $creatures_present{$entry};
+                
+                next if $creatures{$entry}[flags] & 2;
                 my $x = $creatures{$entry}[c_x];
                 my $z = $creatures{$entry}[c_z];
                 next if $z > $ceiling_slice;
                 my $y = $creatures{$entry}[c_y];
                 glTranslatef( $x, $z, $y );
-                glCallList( $creature_display_lists[0] );
+                given ( $creatures{$entry}[race] ) {
+                    when (166) {
+                        glCallList( $creature_display_lists[0] );
+                    }
+                    default {
+                        glCallList( $creature_display_lists[1] );
+                        
+                    }
+                }
                 glTranslatef( -$x, -$z, -$y );
             }
         }
@@ -1887,6 +1911,7 @@ sub process_mouse_click {
         {
             if ( $ceiling_locked == 1 ) {
                 $ceiling_locked = 0;
+                $ceiling_slice = $zcount;
                 glutPostRedisplay();
             }
             else {

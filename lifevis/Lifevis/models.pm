@@ -7198,6 +7198,1750 @@ $DRAW_MODEL{'Creature'} = sub {
 
 
 
+$DRAW_MODEL{'Creature1'} = sub {
+        my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
+        my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
+        OpenGL::glColor3f($brightness, $brightness, $brightness);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.89030509,0.48011936); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89030509,0.48011936); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.95928665,0.47925122); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.716410322161292,0,0.697679188668226 );
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.572651530029604,0.819798893116326,0 );
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.59463229); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.40247864866746,0.281689042543231,0.871012181704649 );
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34494369,0.4178146); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.365867985148688,0.523770833609908,-0.769288457799037 );
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.92842321,0.61637587); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61412793); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.40247864866746,0.281689042543231,-0.871012181704649 );
+    OpenGL::glTexCoord2f(0.34788573,0.41658572); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.367949055508282,0.927080101354493,-0.071665739535054 );
+    OpenGL::glTexCoord2f(0.74988285,0.49690379); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.73181984,0.51368823); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.51266068); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.716410322161292,0,-0.697679188668226 );
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(1,0.43073914); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.326774389547311,-0.0894931614290562,-0.940855712845182 );
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34881957,0.30725159); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.8251302437767,-0.564942546463801,0 );
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.88427371,0.00086813244); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.95325527,0); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.88427371,0.00086813244); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.349330600275182,-0.239176445616503,0.905959579436984 );
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.372922575128007,-0.0734071363897106,0.924954131450289 );
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.326774389547311,-0.0894931614290562,0.940855712845182 );
+    OpenGL::glTexCoord2f(0.3453436,0.30921244); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.32707166156451,-0.179149102930618,0.927862989412006 );
+    OpenGL::glTexCoord2f(0.3453436,0.30921244); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,-1,0 );# bottom face
+    OpenGL::glTexCoord2f(0.54079378,0.52564527); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.54079378,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.54079378,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.15338659,0.63789435); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.017060514,0.70603421); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.8251302437767,-0.564942546463801,0 );
+    OpenGL::glTexCoord2f(0.81142009,0.00086813244); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.74243853,0); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.74243853,0); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.74056791,0.14863894); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.349330600275182,-0.239176445616503,0.905959579436984 );
+    OpenGL::glTexCoord2f(0.089698763,0); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,-0.255257805641673,0.966873028199152 );
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.089698763,0); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.349330600275182,-0.239176445616503,-0.905959579436984 );
+    OpenGL::glTexCoord2f(0.43701067,0); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,-0.255257805641673,-0.966873028199152 );
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43701067,0); OpenGL::glVertex3f(0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,1,0 );# top face
+    OpenGL::glTexCoord2f(0.27039689,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.48577887,0.69914328); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.63182366,0.63349163); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.365867985148688,0.523770833609908,0.769288457799037 );
+    OpenGL::glTexCoord2f(0.2540093,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,0.562790954121234,0.826599263222095 );
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2540093,0.52564527); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.572651530029604,0.819798893116326,0 );
+    OpenGL::glTexCoord2f(0.10243867,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0,0.59463229); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.52564527); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0,0.59463229); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.365867985148688,0.523770833609908,-0.769288457799037 );
+    OpenGL::glTexCoord2f(0.60356305,0.52489295); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,0.562790954121234,-0.826599263222095 );
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60356305,0.52489295); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(0.032098748+$x,-0.030562991+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.74056791,0.14863894); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.80538872,0.48011936); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.73640716,0.47925122); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.80538872,0.48011936); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.326774389547311,-0.0894931614290562,0.940855712845182 );
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.00018585565,0.30701992); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.349330600275182,-0.239176445616503,-0.905959579436984 );
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.032098748+$x,-0.22624448+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.65109882,0.65737863); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61469732); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.326774389547311,-0.0894931614290562,-0.940855712845182 );
+    OpenGL::glTexCoord2f(0.69377904,0.30812346); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.32707166156451,-0.179149102930618,-0.927862989412006 );
+    OpenGL::glTexCoord2f(0.69377904,0.30812346); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.716410322161292,0,-0.697679188668226 );
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+    OpenGL::glTexCoord2f(0.69623068,0.38807949); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.40247864866746,0.281689042543231,-0.871012181704649 );
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69419007,0.41675282); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.386575347136748,0.304378328206141,0.870582181246858 );
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.365867985148688,0.523770833609908,0.769288457799037 );
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(-0.032098748+$x,-0.030562991+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.40247864866746,0.281689042543231,0.871012181704649 );
+    OpenGL::glTexCoord2f(0,0.41606378); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.716410322161292,0,0.697679188668226 );
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.84731003,0.43264723); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.32707166156451,-0.179149102930618,0.927862989412006 );
+    OpenGL::glTexCoord2f(0.00018585565,0.30701992); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.44526557,0.34918238); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.44526557,0.34918238); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67331711,0.41286241); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67331711,0.41286241); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63945216,0.36881236); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63945216,0.36881236); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.372922575128007,-0.0734071363897106,-0.924954131450289 );
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.372922575128007,-0.0734071363897106,-0.924954131450289 );
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(0.064197496+$x,-0.17936246+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.32707166156451,-0.179149102930618,-0.927862989412006 );
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34881957,0.30725159); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.400479581876428,0.900931803051576,0.167146614534421 );
+    OpenGL::glTexCoord2f(0.51097376,0.73308674); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.55596696,0.73905289); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.246163965288377,0.969112382950262,0.0149830372744522 );
+    OpenGL::glTexCoord2f(0.46823589,0.73522152); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51097376,0.73308674); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.20128255554478,-0.792420486779732,0.575808218910719 );
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.16485257,0.74979504); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.386575347136748,0.304378328206141,-0.870582181246858 );
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.386575347136748,0.304378328206141,-0.870582181246858 );
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.064197496+$x,-0.052984828+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.367949055508282,0.927080101354493,-0.071665739535054 );
+    OpenGL::glTexCoord2f(0.8040719,0.49587624); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.76794587,0.49690379); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.74988285,0.48011936); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.0554018069672339,-0.872435372034189,0.485579201993178 );
+    OpenGL::glTexCoord2f(0.041875043,0.74415712); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.081790966,0.7537692); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.223277649632757,-0.879012010405748,0.421289658948469 );
+    OpenGL::glTexCoord2f(0,0.74996296); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.041875043,0.74415712); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.777722675662478,0.612356513418972,-0.142010352558384 );
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.238572519317649,0.939225944104057,0.246855785729793 );
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.64418248,0.73834623); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.716410322161292,0,0.697679188668226 );
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.84731003,0.43264723); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(-0.064197496+$x,-0.1100586+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.096516756,0.34925126); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.096516756,0.34925126); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.32441961,0.41382051); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.32441961,0.41382051); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2906835,0.36968789); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2906835,0.36968789); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.367949055508282,0.927080101354493,0.071665739535054 );
+    OpenGL::glTexCoord2f(0.71375682,0.48011936); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.74988285,0.4811469); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.49690379); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.0633446702992413,-0.997514955271879,0.0308442337175191 );
+    OpenGL::glTexCoord2f(0.082973083,0.59958422); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.075838026,0.63633587); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.899079209964913,0,0.437785991334656 );
+    OpenGL::glTexCoord2f(0.17471681,0.61935305); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.17207324,0.66193409); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.17471681,0.61935305); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.733817469461467,0.577786724176991,0.357315578834721 );
+    OpenGL::glTexCoord2f(0.56224282,0.59463229); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.57187762,0.63128138); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.372922575128007,-0.0734071363897106,0.924954131450289 );
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(-0.032098748+$x,-0.17630493+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(-0.044938247+$x,-0.11107777+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(-0.064197496+$x,-0.17936246+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.400479581876428,0.900931803051576,-0.167146614534421 );
+    OpenGL::glTexCoord2f(0.60752567,0.59770592); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.56224282,0.59463229); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(-0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(-0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.246163965288377,0.969112382950262,-0.0149830372744522 );
+    OpenGL::glTexCoord2f(0.65031641,0.59789088); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60752567,0.59770592); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.777722680792212,-0.612356517457977,-0.142010307048867 );
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.20128255554478,-0.792420486779732,-0.575808218910719 );
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(1.3877788e-017,0.59463229); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.695347654393668,-0.547496700631993,-0.46555236260415 );
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.075838026,0.63633587); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.386575347136748,0.304378328206141,0.870582181246858 );
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.032098748+$x,-0.049927305+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.064197496+$x,-0.052984828+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.367949055508282,0.927080101354493,0.071665739535054 );
+    OpenGL::glTexCoord2f(0.74988285,0.49793134); OpenGL::glVertex3f(0.044938247+$x,-0.066234096+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.78600888,0.49690379); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.8040719,0.51368823); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.0554018069672339,-0.872435372034189,-0.485579201993178 );
+    OpenGL::glTexCoord2f(0.12994453,0.59815351); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.088959659,0.5957218); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.223277649632757,-0.879012010405748,-0.421289658948469 );
+    OpenGL::glTexCoord2f(0.17207324,0.59463229); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12994453,0.59815351); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.777722680792212,-0.612356517457977,-0.142010307048867 );
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82313018,0.69157811); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.777722675662478,0.612356513418972,0.142010352558384 );
+    OpenGL::glTexCoord2f(0.78937866,0.61412793); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.238572519317649,0.939225944104057,-0.246855785729793 );
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.59463229); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.716410322161292,0,-0.697679188668226 );
+    OpenGL::glTexCoord2f(0.69569381,0.43073914); OpenGL::glVertex3f(-0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.69623068,0.38807949); OpenGL::glVertex3f(-0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.064197496+$x,-0.073368317+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( 0.398474580287668,0.89642128671509,-0.194028053612435 );
+    OpenGL::glTexCoord2f(0.55636779,0.73834623); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.56840947,0.70241597); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.899079209964913,0,-0.437785991334656 );
+    OpenGL::glTexCoord2f(0.317511,0.67096334); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.32015457,0.62838229); OpenGL::glVertex3f(-0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.317511,0.67096334); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.716410322161292,0,-0.697679188668226 );
+    OpenGL::glTexCoord2f(0.99946313,0.38807949); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(1,0.43073914); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(0.064197496+$x,-0.1100586+$y,-0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.0633446702992413,-0.997514955271879,-0.0308442337175191 );
+    OpenGL::glTexCoord2f(0.082973083,0.74979504); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.09268261,0.71363819); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.899079209964913,0,-0.437785991334656 );
+    OpenGL::glTexCoord2f(0.32279814,0.61935305); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.32015457,0.66193409); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.32279814,0.61935305); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.733817469461467,0.577786724176991,-0.357315578834721 );
+    OpenGL::glTexCoord2f(0.55596696,0.73905289); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.54550439,0.70263147); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.716410322161292,0,0.697679188668226 );
+    OpenGL::glTexCoord2f(0.84838377,0.43264723); OpenGL::glVertex3f(0.057777746+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(0.057777746+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.064197496+$x,-0.073368317+$y,0.019776321+$z);
+
+    OpenGL::glNormal3f( -0.398474580287668,0.89642128671509,0.194028053612435 );
+    OpenGL::glTexCoord2f(0.55636779,0.59521947); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.54514316,0.6314133); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.899079209964913,0,0.437785991334656 );
+    OpenGL::glTexCoord2f(0.46559232,0.67096334); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.62838229); OpenGL::glVertex3f(0.044938247+$x,-0.087636758+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.46559232,0.67096334); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.733817469461467,-0.577786724176991,0.357315578834721 );
+    OpenGL::glTexCoord2f(0.088959659,0.5957218); OpenGL::glVertex3f(0.044938247+$x,-0.071329968+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.094378572,0.6327654); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.785685509113714,0.618626123574429,0 );
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.36277212,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.43162658,0.598907); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.36277212,0.59463229); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.785685509113714,-0.618626123574429,0 );
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42561834,0.69568409); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.35676388,0.69140938); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.42561834,0.69568409); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.695347654393668,-0.547496700631993,0.46555236260415 );
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.09268261,0.71363819); OpenGL::glVertex3f(0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,-0.879493806671,0.475910331919106 );
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(0.028888873+$x,-0.070310793+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.777722680792212,-0.612356517457977,0.142010307048867 );
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.785685462276915,-0.618626183059454,0 );
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82313018,0.69157811); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,-0.76181561235235,-0.647793927708661 );
+    OpenGL::glTexCoord2f(0.15338659,0.63789435); OpenGL::glVertex3f(0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.17207324,0.59463229); OpenGL::glVertex3f(0.012839499+$x,-0.074387491+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.777722675662478,0.612356513418972,-0.142010352558384 );
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89367376,0.59571711); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.92842321,0.61637587); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.785685462276915,0.618626183059454,0 );
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89367376,0.59571711); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,0.932751235996508,0.36052063983493 );
+    OpenGL::glTexCoord2f(0.48577887,0.69914328); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.73522152); OpenGL::glVertex3f(0.012839499+$x,-0.090694282+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.764145153595207,0.60166586851021,-0.23255185853227 );
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+    OpenGL::glTexCoord2f(0.54514316,0.6314133); OpenGL::glVertex3f(0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,0.997025472378551,-0.0770727411496932 );
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.028888873+$x,-0.094770979+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.785685462276915,0.618626183059454,0 );
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75435723,0.59463229); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.777722680792212,-0.612356517457977,0.142010307048867 );
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68534913,0.69158777); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.65109882,0.65737863); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( -0.785685462276915,-0.618626183059454,0 );
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68534913,0.69158777); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.012839499+$x,-0.071329968+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( -0.777722675662478,0.612356513418972,0.142010352558384 );
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(-0.012839499+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.75435723,0.59463229); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61469732); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,-0.76181561235235,0.647793927708661 );
+    OpenGL::glTexCoord2f(0.017060514,0.70603421); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0,0.74996296); OpenGL::glVertex3f(-0.012839499+$x,-0.074387491+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.785685509113714,-0.618626123574429,0 );
+    OpenGL::glTexCoord2f(0.27753701,0.69568409); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.20868256,0.69140938); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.27753701,0.69568409); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,-0.879493806671,-0.475910331919106 );
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(-0.019259249+$x,-0.063176572+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(-0.028888873+$x,-0.070310793+$y,0.026368427+$z);
+
+    OpenGL::glNormal3f( 0.733817469461467,-0.577786724176991,-0.357315578834721 );
+    OpenGL::glTexCoord2f(0.073772716,0.71720008); OpenGL::glVertex3f(-0.038518497+$x,-0.071329968+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.081790966,0.7537692); OpenGL::glVertex3f(-0.044938247+$x,-0.071329968+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.032098748+$x,-0.063176572+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.785685509113714,0.618626123574429,0 );
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21469079,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28354525,0.598907); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.21469079,0.59463229); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0.764145153595207,0.60166586851021,0.23255185853227 );
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+    OpenGL::glTexCoord2f(0.56840947,0.70241597); OpenGL::glVertex3f(-0.038518497+$x,-0.087636758+$y,-0.013184214+$z);
+
+    OpenGL::glNormal3f( 0,0.997025472378551,0.0770727411496932 );
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,-0.013184214+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.028888873+$x,-0.094770979+$y,-0.026368427+$z);
+
+    OpenGL::glNormal3f( 0,0.932751235996508,-0.36052063983493 );
+    OpenGL::glTexCoord2f(0.63182366,0.63349163); OpenGL::glVertex3f(-0.019259249+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(-0.032098748+$x,-0.095790154+$y,0.013184214+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.59789088); OpenGL::glVertex3f(-0.012839499+$x,-0.090694282+$y,0.026368427+$z);
+};
+
+$DRAW_MODEL{'Creature2'} = sub {
+        my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
+        my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
+        OpenGL::glColor3f($brightness, $brightness, $brightness);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.89030509,0.48011936); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.89030509,0.48011936); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.95928665,0.47925122); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.697679188668226,0,-0.716410322161292 );
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0,0.819798893116326,-0.572651530029604 );
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.871012181704649,0.281689042543231,-0.40247864866746 );
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.34494369,0.4178146); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0,0.819798893116326,-0.572651530029604 );
+    OpenGL::glTexCoord2f(0.37283556,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.769288457799037,0.523770833609908,-0.365867985148688 );
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.87118065,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.92842321,0.61637587); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61412793); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.871012181704649,0.281689042543231,-0.40247864866746 );
+    OpenGL::glTexCoord2f(0.34788573,0.41658572); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.071665739535054,0.927080101354493,-0.367949055508282 );
+    OpenGL::glTexCoord2f(0.74988285,0.49690379); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.73181984,0.51368823); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.51266068); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.697679188668226,0,-0.716410322161292 );
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(1,0.43073914); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.97586095,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.940855712845182,-0.0894931614290562,-0.326774389547311 );
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.34881957,0.30725159); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0,-0.564942546463801,-0.8251302437767 );
+    OpenGL::glTexCoord2f(0.88614433,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.88427371,0.00086813244); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.95325527,0); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.95512589,0.14863894); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.88427371,0.00086813244); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.905959579436984,-0.239176445616503,-0.349330600275182 );
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.924954131450289,-0.0734071363897106,-0.372922575128007 );
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.940855712845182,-0.0894931614290562,-0.326774389547311 );
+    OpenGL::glTexCoord2f(0.3453436,0.30921244); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.1245845); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.927862989412006,-0.179149102930618,-0.32707166156451 );
+    OpenGL::glTexCoord2f(0.3453436,0.30921244); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( 0,-1,0 );# bottom face
+    OpenGL::glTexCoord2f(0.54079378,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.54079378,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.54079378,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.37283556,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.15338659,0.63789435); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.017060514,0.70603421); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,-0.564942546463801,0.8251302437767 );
+    OpenGL::glTexCoord2f(0.81142009,0.00086813244); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.74243853,0); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.905959579436984,-0.239176445616503,0.349330600275182 );
+    OpenGL::glTexCoord2f(0.089698763,0); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.966873028199152,-0.255257805641673,0 );
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.089698763,0); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( -0.905959579436984,-0.239176445616503,-0.349330600275182 );
+    OpenGL::glTexCoord2f(0.43701067,0); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0,-0.564942546463801,0.8251302437767 );
+    OpenGL::glTexCoord2f(0.74243853,0); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.74056791,0.14863894); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.966873028199152,-0.255257805641673,0 );
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43701067,0); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,1,0 );# top face
+    OpenGL::glTexCoord2f(0.27039689,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.27039689,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48577887,0.69914328); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.63182366,0.63349163); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+
+    OpenGL::glNormal3f( 0.769288457799037,0.523770833609908,-0.365867985148688 );
+    OpenGL::glTexCoord2f(0.2540093,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.826599263222095,0.562790954121234,0 );
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.2540093,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,0.819798893116326,0.572651530029604 );
+    OpenGL::glTexCoord2f(0.10243867,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.10243867,0.52564527); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.769288457799037,0.523770833609908,0.365867985148688 );
+    OpenGL::glTexCoord2f(0.60356305,0.52489295); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.826599263222095,0.562790954121234,0 );
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60356305,0.52489295); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.74056791,0.14863894); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.80538872,0.48011936); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.73640716,0.47925122); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.80538872,0.48011936); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.80954947,0.14950708); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.940855712845182,-0.0894931614290562,0.326774389547311 );
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.00018585565,0.30701992); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.905959579436984,-0.239176445616503,0.349330600275182 );
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.65109882,0.65737863); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61469732); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.940855712845182,-0.0894931614290562,0.326774389547311 );
+    OpenGL::glTexCoord2f(0.69377904,0.30812346); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.927862989412006,-0.179149102930618,0.32707166156451 );
+    OpenGL::glTexCoord2f(0.69377904,0.30812346); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.697679188668226,0,0.716410322161292 );
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.69623068,0.38807949); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.72104082,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.871012181704649,0.281689042543231,0.40247864866746 );
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.69419007,0.41675282); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.870582181246858,0.304378328206141,0.386575347136748 );
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.769288457799037,0.523770833609908,0.365867985148688 );
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.871012181704649,0.281689042543231,0.40247864866746 );
+    OpenGL::glTexCoord2f(0,0.41606378); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.0017842702,0.4718655); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.697679188668226,0,0.716410322161292 );
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.84731003,0.43264723); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.8233052,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.927862989412006,-0.179149102930618,0.32707166156451 );
+    OpenGL::glTexCoord2f(0.00018585565,0.30701992); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.44526557,0.34918238); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.44526557,0.34918238); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.67331711,0.41286241); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.59601599,0.4129949); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.67331711,0.41286241); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.63891938,0.41248581); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.63945216,0.36881236); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.63945216,0.36881236); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.5971526,0.34953222); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.67352087,0.36908194); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.3686819,0.4125169); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.40299309,0.36832345); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.40320964,0.41229108); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.924954131450289,-0.0734071363897106,0.372922575128007 );
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.12370022); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+    OpenGL::glTexCoord2f(0.63976826,0.30663925); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.966873028199152,-0.255257805641673,0 );
+    OpenGL::glTexCoord2f(0.60522221,0.13591175); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60709694,0.00037757081); OpenGL::glVertex3f(-0.013184214+$x,-0.22624448+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( -0.924954131450289,-0.0734071363897106,-0.372922575128007 );
+    OpenGL::glTexCoord2f(0.43826049,0.13549932); OpenGL::glVertex3f(-0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.34788573,0.12282778); OpenGL::glVertex3f(-0.013184214+$x,-0.17936246+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.927862989412006,-0.179149102930618,-0.32707166156451 );
+    OpenGL::glTexCoord2f(0.40288024,0.30607894); OpenGL::glVertex3f(-0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.36867076,0.36843903); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.34881957,0.30725159); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.167146614534421,0.900931803051576,0.400479581876428 );
+    OpenGL::glTexCoord2f(0.51097376,0.73308674); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.55596696,0.73905289); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.48794565,0.4022057); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.44615624,0.41293798); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.55422109,0.40219613); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.48751821,0.35993333); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.55480914,0.36004339); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.0149830372744522,0.969112382950262,-0.246163965288377 );
+    OpenGL::glTexCoord2f(0.46823589,0.73522152); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.51097376,0.73308674); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( 0.575808218910719,-0.792420486779732,-0.20128255554478 );
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.16485257,0.74979504); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.870582181246858,0.304378328206141,-0.386575347136748 );
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.35094673,0.4726057); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+    OpenGL::glTexCoord2f(0.40361209,0.42603121); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.826599263222095,0.562790954121234,0 );
+    OpenGL::glTexCoord2f(0.43959992,0.46506232); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.43848894,0.52493002); OpenGL::glVertex3f(-0.013184214+$x,-0.030562991+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( -0.870582181246858,0.304378328206141,0.386575347136748 );
+    OpenGL::glTexCoord2f(0.60252672,0.46509224); OpenGL::glVertex3f(-0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.63846346,0.42622023); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.69112471,0.47283539); OpenGL::glVertex3f(-0.013184214+$x,-0.052984828+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.071665739535054,0.927080101354493,0.367949055508282 );
+    OpenGL::glTexCoord2f(0.8040719,0.49587624); OpenGL::glVertex3f(-0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.76794587,0.49690379); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.74988285,0.48011936); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.485579201993178,-0.872435372034189,-0.0554018069672339 );
+    OpenGL::glTexCoord2f(0.041875043,0.74415712); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.081790966,0.7537692); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( 0.421289658948469,-0.879012010405748,0.223277649632757 );
+    OpenGL::glTexCoord2f(0,0.74996296); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.041875043,0.74415712); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.142010352558384,0.612356513418972,0.777722675662478 );
+    OpenGL::glTexCoord2f(0.65031641,0.61472564); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.246855785729793,0.939225944104057,0.238572519317649 );
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.64418248,0.73834623); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.697679188668226,0,0.716410322161292 );
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.84731003,0.43264723); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.82451316,0.33102762); OpenGL::glVertex3f(0.019776321+$x,-0.1100586+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.01986794,0.36819549); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.019580871,0.41236425); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.054195132,0.368228); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.096516756,0.34925126); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.096516756,0.34925126); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.054223585,0.41235226); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.32441961,0.41382051); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.24702217,0.4136633); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.29126052,0.30745978); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.32441961,0.41382051); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.29003924,0.41332387); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.2906835,0.36968789); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.2906835,0.36968789); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.24846221,0.35018337); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.3247573,0.37011618); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+
+    OpenGL::glNormal3f( 0.071665739535054,0.927080101354493,0.367949055508282 );
+    OpenGL::glTexCoord2f(0.71375682,0.48011936); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.74988285,0.4811469); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.69569381,0.49690379); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.0308442337175191,-0.997514955271879,-0.0633446702992413 );
+    OpenGL::glTexCoord2f(0.082973083,0.59958422); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.075838026,0.63633587); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( 0.437785991334656,0,-0.899079209964913 );
+    OpenGL::glTexCoord2f(0.17471681,0.61935305); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.17207324,0.66193409); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.17471681,0.61935305); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( 0.357315578834721,0.577786724176991,-0.733817469461467 );
+    OpenGL::glTexCoord2f(0.56224282,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.57187762,0.63128138); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.966873028199152,-0.255257805641673,0 );
+    OpenGL::glTexCoord2f(0.25735572,0.13651423); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.25974553,0.00095735221); OpenGL::glVertex3f(0.013184214+$x,-0.22624448+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.924954131450289,-0.0734071363897106,0.372922575128007 );
+    OpenGL::glTexCoord2f(0.090362857,0.13550796); OpenGL::glVertex3f(0.026368427+$x,-0.17630493+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.054261789,0.30602025); OpenGL::glVertex3f(0.026368427+$x,-0.11107777+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(2.7755576e-017,0.1224487); OpenGL::glVertex3f(0.013184214+$x,-0.17936246+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.167146614534421,0.900931803051576,-0.400479581876428 );
+    OpenGL::glTexCoord2f(0.60752567,0.59770592); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.56224282,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.13912591,0.40236063); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.097238327,0.41295212); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.054604358,0.42611694); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.20533539,0.40269866); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.13879965,0.36014833); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.20610286,0.36053816); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.0149830372744522,0.969112382950262,0.246163965288377 );
+    OpenGL::glTexCoord2f(0.65031641,0.59789088); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60752567,0.59770592); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.142010307048867,-0.612356517457977,0.777722680792212 );
+    OpenGL::glTexCoord2f(0.78869107,0.65735388); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.575808218910719,-0.792420486779732,0.20128255554478 );
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(1.3877788e-017,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.46555236260415,-0.547496700631993,-0.695347654393668 );
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.075838026,0.63633587); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.826599263222095,0.562790954121234,0 );
+    OpenGL::glTexCoord2f(0.090568186,0.46505998); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.089101427,0.524854); OpenGL::glVertex3f(0.013184214+$x,-0.030562991+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0.870582181246858,0.304378328206141,-0.386575347136748 );
+    OpenGL::glTexCoord2f(0.2532405,0.46583907); OpenGL::glVertex3f(0.026368427+$x,-0.049927305+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.28946838,0.42707494); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.34180297,0.47373665); OpenGL::glVertex3f(0.013184214+$x,-0.052984828+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.071665739535054,0.927080101354493,-0.367949055508282 );
+    OpenGL::glTexCoord2f(0.74988285,0.49793134); OpenGL::glVertex3f(0.026368427+$x,-0.066234096+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.78600888,0.49690379); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.8040719,0.51368823); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.485579201993178,-0.872435372034189,0.0554018069672339 );
+    OpenGL::glTexCoord2f(0.12994453,0.59815351); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.088959659,0.5957218); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.421289658948469,-0.879012010405748,-0.223277649632757 );
+    OpenGL::glTexCoord2f(0.17207324,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.12994453,0.59815351); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.142010307048867,-0.612356517457977,-0.777722680792212 );
+    OpenGL::glTexCoord2f(0.78937866,0.65678958); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82313018,0.69157811); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+
+    OpenGL::glNormal3f( 0.142010352558384,0.612356513418972,-0.777722675662478 );
+    OpenGL::glTexCoord2f(0.78937866,0.61412793); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.246855785729793,0.939225944104057,-0.238572519317649 );
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.697679188668226,0,0.716410322161292 );
+    OpenGL::glTexCoord2f(0.69569381,0.43073914); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.69623068,0.38807949); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.057777746+$z);
+    OpenGL::glTexCoord2f(0.71983286,0.42570963); OpenGL::glVertex3f(-0.019776321+$x,-0.073368317+$y,0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.194028053612435,0.89642128671509,-0.398474580287668 );
+    OpenGL::glTexCoord2f(0.55636779,0.73834623); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.56840947,0.70241597); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.437785991334656,0,-0.899079209964913 );
+    OpenGL::glTexCoord2f(0.317511,0.67096334); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.32015457,0.62838229); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.317511,0.67096334); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.697679188668226,0,-0.716410322161292 );
+    OpenGL::glTexCoord2f(0.99946313,0.38807949); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(1,0.43073914); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.97465299,0.32972542); OpenGL::glVertex3f(-0.019776321+$x,-0.1100586+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( -0.0308442337175191,-0.997514955271879,0.0633446702992413 );
+    OpenGL::glTexCoord2f(0.082973083,0.74979504); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.09268261,0.71363819); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.437785991334656,0,0.899079209964913 );
+    OpenGL::glTexCoord2f(0.32279814,0.61935305); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.32015457,0.66193409); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.32279814,0.61935305); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( -0.357315578834721,0.577786724176991,0.733817469461467 );
+    OpenGL::glTexCoord2f(0.55596696,0.73905289); OpenGL::glVertex3f(-0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.54550439,0.70263147); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.697679188668226,0,-0.716410322161292 );
+    OpenGL::glTexCoord2f(0.84838377,0.43264723); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.8478469,0.38998758); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.057777746+$z);
+    OpenGL::glTexCoord2f(0.87238861,0.42701183); OpenGL::glVertex3f(0.019776321+$x,-0.073368317+$y,-0.064197496+$z);
+
+    OpenGL::glNormal3f( 0.194028053612435,0.89642128671509,0.398474580287668 );
+    OpenGL::glTexCoord2f(0.55636779,0.59521947); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.54514316,0.6314133); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( 0.437785991334656,0,0.899079209964913 );
+    OpenGL::glTexCoord2f(0.46559232,0.67096334); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.62838229); OpenGL::glVertex3f(0.026368427+$x,-0.087636758+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.46559232,0.67096334); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+
+    OpenGL::glNormal3f( 0.357315578834721,-0.577786724176991,0.733817469461467 );
+    OpenGL::glTexCoord2f(0.088959659,0.5957218); OpenGL::glVertex3f(0.026368427+$x,-0.071329968+$y,-0.044938247+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.094378572,0.6327654); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+
+    OpenGL::glNormal3f( 0,0.618626123574429,0.785685509113714 );
+    OpenGL::glTexCoord2f(0.36108979,0.62173031); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.36277212,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.43162658,0.598907); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.42994424,0.62600502); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.36277212,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626123574429,0.785685509113714 );
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42561834,0.69568409); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.35676388,0.69140938); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.42730067,0.66858607); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+    OpenGL::glTexCoord2f(0.42561834,0.69568409); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.35844622,0.66431136); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.465552362604151,-0.547496700631993,0.695347654393668 );
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.09268261,0.71363819); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.475910331919106,-0.879493806671,0 );
+    OpenGL::glTexCoord2f(0.11711823,0.7033999); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.14985256,0.70512071); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.12329268,0.74204888); OpenGL::glVertex3f(-0.026368427+$x,-0.070310793+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( 0.142010307048867,-0.612356517457977,-0.777722680792212 );
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.92695263,0.65901128); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626183059454,-0.785685462276915 );
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89237509,0.66560913); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.647793927708661,-0.76181561235235,0 );
+    OpenGL::glTexCoord2f(0.15338659,0.63789435); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.12065226,0.63617353); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.17207324,0.59463229); OpenGL::glVertex3f(0.026368427+$x,-0.074387491+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626183059454,-0.785685462276916 );
+    OpenGL::glTexCoord2f(0.82313018,0.69157811); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.82378115,0.66451696); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89215881,0.6926608); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,-0.019259249+$z);
+
+    OpenGL::glNormal3f( -0.142010352558384,0.612356513418971,-0.777722675662478 );
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.89367376,0.59571711); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.92842321,0.61637587); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( 0,0.618626183059454,-0.785685462276915 );
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.89367376,0.59571711); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+
+    OpenGL::glNormal3f( 0,0.618626183059454,-0.785685462276915 );
+    OpenGL::glTexCoord2f(0.82407731,0.62185886); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+    OpenGL::glTexCoord2f(0.82471608,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.89343249,0.62296515); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.36052063983493,0.932751235996508,0 );
+    OpenGL::glTexCoord2f(0.48577887,0.69914328); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.51895676,0.69884085); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.46823589,0.73522152); OpenGL::glVertex3f(-0.026368427+$x,-0.090694282+$y,-0.012839499+$z);
+
+    OpenGL::glNormal3f( -0.23255185853227,0.60166586851021,0.764145153595207 );
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+    OpenGL::glTexCoord2f(0.54514316,0.6314133); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,-0.038518497+$z);
+
+    OpenGL::glNormal3f( -0.0770727411496932,0.997025472378551,0 );
+    OpenGL::glTexCoord2f(0.51833566,0.63070355); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.032098748+$z);
+    OpenGL::glTexCoord2f(0.48515777,0.63100598); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,-0.019259249+$z);
+    OpenGL::glTexCoord2f(0.51099396,0.59631447); OpenGL::glVertex3f(0.026368427+$x,-0.094770979+$y,-0.028888873+$z);
+
+    OpenGL::glNormal3f( 0,0.618626183059454,0.785685462276915 );
+    OpenGL::glTexCoord2f(0.68519504,0.62187645); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75435723,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68539108,0.59463229); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+
+    OpenGL::glNormal3f( 0.142010307048867,-0.612356517457977,0.777722680792212 );
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.68534913,0.69158777); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.65109882,0.65737863); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626183059454,0.785685462276915 );
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.68534913,0.69158777); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626183059454,0.785685462276916 );
+    OpenGL::glTexCoord2f(0.75416969,0.66452706); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75438635,0.69159116); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.68556703,0.66453196); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.142010352558384,0.612356513418971,0.777722675662478 );
+    OpenGL::glTexCoord2f(0.75455906,0.62186971); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.012839499+$z);
+    OpenGL::glTexCoord2f(0.75435723,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.78937866,0.61469732); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0.647793927708661,-0.76181561235235,0 );
+    OpenGL::glTexCoord2f(0.017060514,0.70603421); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0,0.74996296); OpenGL::glVertex3f(-0.026368427+$x,-0.074387491+$y,0.012839499+$z);
+
+    OpenGL::glNormal3f( 0,-0.618626123574429,-0.785685509113714 );
+    OpenGL::glTexCoord2f(0.27753701,0.69568409); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.27921935,0.66858607); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.20868256,0.69140938); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.21036489,0.66431136); OpenGL::glVertex3f(0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.27753701,0.69568409); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( -0.475910331919106,-0.879493806671,0 );
+    OpenGL::glTexCoord2f(0.049434312,0.63851897); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.016655373,0.63871624); OpenGL::glVertex3f(0.013184214+$x,-0.063176572+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.041919478,0.60010809); OpenGL::glVertex3f(0.026368427+$x,-0.070310793+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.357315578834721,-0.577786724176991,-0.733817469461467 );
+    OpenGL::glTexCoord2f(0.073772716,0.71720008); OpenGL::glVertex3f(-0.013184214+$x,-0.071329968+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.081790966,0.7537692); OpenGL::glVertex3f(-0.026368427+$x,-0.071329968+$y,0.044938247+$z);
+    OpenGL::glTexCoord2f(0.049839452,0.70583694); OpenGL::glVertex3f(-0.013184214+$x,-0.063176572+$y,0.032098748+$z);
+
+    OpenGL::glNormal3f( 0,0.618626123574429,-0.785685509113714 );
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21469079,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.28354525,0.598907); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.21300846,0.62173031); OpenGL::glVertex3f(0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+    OpenGL::glTexCoord2f(0.21469079,0.59463229); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.28186292,0.62600502); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.23255185853227,0.60166586851021,-0.764145153595207 );
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+    OpenGL::glTexCoord2f(0.56840947,0.70241597); OpenGL::glVertex3f(-0.013184214+$x,-0.087636758+$y,0.038518497+$z);
+
+    OpenGL::glNormal3f( 0.0770727411496932,0.997025472378551,0 );
+    OpenGL::glTexCoord2f(0.59509721,0.69978725); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.62823031,0.70153694); OpenGL::glVertex3f(-0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.60157846,0.73434883); OpenGL::glVertex3f(-0.026368427+$x,-0.094770979+$y,0.028888873+$z);
+
+    OpenGL::glNormal3f( -0.36052063983493,0.932751235996508,0 );
+    OpenGL::glTexCoord2f(0.63182366,0.63349163); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.019259249+$z);
+    OpenGL::glTexCoord2f(0.59869056,0.63174193); OpenGL::glVertex3f(0.013184214+$x,-0.095790154+$y,0.032098748+$z);
+    OpenGL::glTexCoord2f(0.65031641,0.59789088); OpenGL::glVertex3f(0.026368427+$x,-0.090694282+$y,0.012839499+$z);
+};
+
+
+
 $DRAW_MODEL{'Cursor'} = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
