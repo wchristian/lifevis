@@ -349,7 +349,7 @@ sub run {
             or $bottom+$c{window_height} > $screen_height);
     glutInitWindowPosition( $right-$c{window_width}, $bottom );
 
-    $window_ID = glutCreateWindow(PROGRAM_TITLE);    # Open a window
+    $window_ID = glutCreateWindow(PROGRAM_TITLE." v$VERSION");    # Open a window
 
     create_menu();
 
