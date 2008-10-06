@@ -793,22 +793,56 @@ sub generate_display_list {
 
     glNewList( $dl, GL_COMPILE );
 
-    for my $texture ( 0 .. $#texture_ID ) {
+    for my $texture ( 0 .. $#texture_ID ) { # cycle through textures
 
-        glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] ); # set texture
         glBegin(GL_TRIANGLES);
-        my $tile       = $tiles[$z][type];
-        my $tile_below = $tiles[ $z - 1 ][type];
+        my $tile       = $tiles[$z][type];          # get pointers to current layer
+        my $tile_below = $tiles[ $z - 1 ][type];    # as well as to layer above and below
         my $tile_above = $tiles[ $z + 1 ][type];
-        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) {
+        my $occup       = $tiles[$z][occup];          # get pointers to current layer
+        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) { # cycle through tiles in current slice on layer
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
-
-                next if !defined $tile->[$rx][$ry];
-                $type = $tile->[$rx][$ry];
-                next if !defined $type;
-                next if $type == 32;
-                next if !defined $TILE_TYPES[$type][base_texture];
-                next if $TILE_TYPES[$type][base_texture] != $texture;
+                
+                my $occupation =  $occup->[$rx][$ry];
+                if ( defined $occupation && $texture == metal ) {
+                    my $building = $occupation & 7;
+                    
+                    given ($building) {
+                        when (BUILDING_OCCUPANCY_SPECIAL) {
+                        }
+                        when (BUILDING_OCCUPANCY_TOTAL) {
+                        }
+                        when (BUILDING_OCCUPANCY_FLOOR) {
+                            $DRAW_MODEL{Floor}->(
+                                $rx, $z+0.1, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
+                                EMPTY, EMPTY, EMPTY
+                            );
+                        }
+                        when (BUILDING_OCCUPANCY_BLOCK) {
+                        }
+                        when (BUILDING_OCCUPANCY_BLOCK_FLOOR) {
+                            $DRAW_MODEL{Wall}->(
+                                $rx, $z, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
+                                EMPTY, EMPTY, EMPTY
+                            );
+                        }
+                        when (BUILDING_OCCUPANCY_NO_BLOCK) {
+                            $DRAW_MODEL{Floor}->(
+                                $rx, $z+0.1, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
+                                EMPTY, EMPTY, EMPTY
+                            );
+                        }
+                        when (BUILDING_OCCUPANCY_CONST) {
+                        }
+                    }
+                }
+                
+                next if !defined $tile->[$rx][$ry]; # skip tile if undefined
+                $type = $tile->[$rx][$ry];          # store type of current tile
+                next if $type == 32;                # skip if tile is air
+                next if !defined $TILE_TYPES[$type][base_texture];  # skip if tile type doesn't have associated texture
+                next if $TILE_TYPES[$type][base_texture] != $texture;   # skip if tile type texture doesn't match current texture
                 $type_below     = $tile_below->[$rx][$ry];
                 $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
@@ -820,256 +854,259 @@ sub generate_display_list {
                 my $y_mod = $ry % 16;
 
                 $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
-
-                if ( $TILE_TYPES[$type][base_visual] == WALL ) {
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-                    die 'horribly' if !defined $DRAW_MODEL{Wall};
-                    $DRAW_MODEL{Wall}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == FLOOR ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Floor}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == TREE ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Tree}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == SHRUB ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Shrub}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == BOULDER ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Boulder}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == SAPLING ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Sapling}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == STAIR ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Stairs}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == STAIR_UP ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Stair_Up}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == STAIR_DOWN ) {
-                    my $type_above = $tile_above->[$rx][$ry];
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-
-                    $brightness_mod *= 0.75
-                      if ( defined $type_above
-                        && $TILE_TYPES[$type_above][base_visual] != EMPTY );
-
-                    $DRAW_MODEL{Stair_Down}->(
-                        $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                        $east, $below, EMPTY
-                    );
-                    next;
-                }
-
-                elsif ( $TILE_TYPES[$type][base_visual] == RAMP ) {
-                    next
-                      if ( defined $type_below
-                        && $TILE_TYPES[$type_below][base_visual] == RAMP );
-                    $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry - 1 ] && $ry != 0;
-                    $northeast =
-                      $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
-                      if $tile->[ $rx + 1 ][ $ry - 1 ]
-                          && ( $ry != 0 || $rx != $x_max );
-                    $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx + 1 ][$ry] && $rx != $x_max;
-                    $southeast =
-                      $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
-                      if $tile->[ $rx + 1 ][ $ry + 1 ]
-                          && ( $ry != $y_max || $rx != $x_max );
-                    $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                      if $tile->[$rx][ $ry + 1 ] && $ry != $y_max;
-                    $southwest =
-                      $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
-                      if $tile->[ $rx - 1 ][ $ry + 1 ]
-                          && ( $ry != $y_max || $ry != 0 );
-                    $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                      if $tile->[ $rx - 1 ][$ry] && $rx != 0;
-                    $northwest =
-                      $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
-                      if $tile->[ $rx - 1 ][ $ry - 1 ]
-                          && ( $ry != 0 || $ry != 0 );
-
-                    my $surroundings = 0;
-                    $surroundings += ( $north == WALL )     ? 0b1000_0000 : 0;
-                    $surroundings += ( $west == WALL )      ? 0b0100_0000 : 0;
-                    $surroundings += ( $south == WALL )     ? 0b0010_0000 : 0;
-                    $surroundings += ( $east == WALL )      ? 0b0001_0000 : 0;
-                    $surroundings += ( $northwest == WALL ) ? 0b0000_1000 : 0;
-                    $surroundings += ( $southwest == WALL ) ? 0b0000_0100 : 0;
-                    $surroundings += ( $southeast == WALL ) ? 0b0000_0010 : 0;
-                    $surroundings += ( $northeast == WALL ) ? 0b0000_0001 : 0;
-
-                    $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
-
-                    for my $ramp_type ( 0 .. $#ramps ) {
-                        my $mask           = $ramps[$ramp_type]{mask};
-                        my $bit_comparison = $mask & $surroundings;
-                        if ( $bit_comparison == $mask ) {
-                            my $func = $ramps[$ramp_type]{func};
-                            croak "Need following ramp model: $func"
-                              if !defined $DRAW_MODEL{$func};
-                            $DRAW_MODEL{$func}
-                              ->( $rx, $z, $ry, 1, $brightness_mod );
-                            last;
-                        }
+                
+                given ($TILE_TYPES[$type][base_visual]) {
+                    when (WALL) {
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+                        die 'horribly' if !defined $DRAW_MODEL{Wall};
+                        $DRAW_MODEL{Wall}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
                     }
-                    next;
+                    
+                    when (FLOOR) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Floor}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        
+                        
+                        next;
+                    }
+                    
+                    when (TREE) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Tree}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (SHRUB) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Shrub}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (BOULDER) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Boulder}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (SAPLING) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Sapling}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (STAIR) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Stairs}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (STAIR_UP) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Stair_Up}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (STAIR_DOWN) {
+                        my $type_above = $tile_above->[$rx][$ry];
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+    
+                        $brightness_mod *= 0.75
+                          if ( defined $type_above
+                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+    
+                        $DRAW_MODEL{Stair_Down}->(
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
+                            $east, $below, EMPTY
+                        );
+                        next;
+                    }
+                    
+                    when (RAMP) {
+                        next
+                          if ( defined $type_below
+                            && $TILE_TYPES[$type_below][base_visual] == RAMP );
+                        $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry - 1 ] && $ry != 0;
+                        $northeast =
+                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
+                          if $tile->[ $rx + 1 ][ $ry - 1 ]
+                              && ( $ry != 0 || $rx != $x_max );
+                        $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx + 1 ][$ry] && $rx != $x_max;
+                        $southeast =
+                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
+                          if $tile->[ $rx + 1 ][ $ry + 1 ]
+                              && ( $ry != $y_max || $rx != $x_max );
+                        $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                          if $tile->[$rx][ $ry + 1 ] && $ry != $y_max;
+                        $southwest =
+                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
+                          if $tile->[ $rx - 1 ][ $ry + 1 ]
+                              && ( $ry != $y_max || $ry != 0 );
+                        $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                          if $tile->[ $rx - 1 ][$ry] && $rx != 0;
+                        $northwest =
+                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
+                          if $tile->[ $rx - 1 ][ $ry - 1 ]
+                              && ( $ry != 0 || $ry != 0 );
+    
+                        my $surroundings = 0;
+                        $surroundings += ( $north == WALL )     ? 0b1000_0000 : 0;
+                        $surroundings += ( $west == WALL )      ? 0b0100_0000 : 0;
+                        $surroundings += ( $south == WALL )     ? 0b0010_0000 : 0;
+                        $surroundings += ( $east == WALL )      ? 0b0001_0000 : 0;
+                        $surroundings += ( $northwest == WALL ) ? 0b0000_1000 : 0;
+                        $surroundings += ( $southwest == WALL ) ? 0b0000_0100 : 0;
+                        $surroundings += ( $southeast == WALL ) ? 0b0000_0010 : 0;
+                        $surroundings += ( $northeast == WALL ) ? 0b0000_0001 : 0;
+    
+                        $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
+    
+                        for my $ramp_type ( 0 .. $#ramps ) {
+                            my $mask           = $ramps[$ramp_type]{mask};
+                            my $bit_comparison = $mask & $surroundings;
+                            if ( $bit_comparison == $mask ) {
+                                my $func = $ramps[$ramp_type]{func};
+                                croak "Need following ramp model: $func"
+                                  if !defined $DRAW_MODEL{$func};
+                                $DRAW_MODEL{$func}
+                                  ->( $rx, $z, $ry, 1, $brightness_mod );
+                                last;
+                            }
+                        }
+                        next;
+                    }
                 }
-
             }
         }
         glEnd();
@@ -1652,9 +1689,19 @@ sub render_scene {
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     }
 
-    $buf = sprintf 'Desigs: 0b%059b', 512;
-    glRasterPos2i( 2, $c{window_height} - 2 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+        $buf = sprintf 'Occup: 0b%059b',
+          ($tiles[$zmouse][occup][$xmouse][$ymouse] & 7);
+        glRasterPos2i( 2, $c{window_height} - 26 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    }
+
+    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+        $buf = sprintf 'Occup: 0b%059b',
+          $tiles[$zmouse][occup][$xmouse][$ymouse];
+        glRasterPos2i( 2, $c{window_height} - 2 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    }
 
     $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
     glRasterPos2i( 2, 158 );
@@ -1786,7 +1833,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(23);
+    @texture_ID = glGenTextures_p(25);
 
     create_texture( 'grass',                      grass );
     create_texture( 'stone',                      stone );
@@ -1811,6 +1858,8 @@ sub build_textures {
     create_texture( 'grass_dry',                  grass_dry );
     create_texture( 'lava',                       lava );
     create_texture( 'curses3_960x300',            test );
+    create_texture( 'metal',            metal );
+    create_texture( 'stone_detailed',            stone_detailed );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
