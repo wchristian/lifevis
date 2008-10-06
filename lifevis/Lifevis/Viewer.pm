@@ -211,10 +211,13 @@ BEGIN {
 }
     
 sub check_for_new_version {
-    my $source = 'http://dwarvis.googlecode.com/files/version.info';
+    my $source = 'http://code.google.com/p/dwarvis/wiki/LifevisVersionInfo';
 
     my $new_version = get($source);
     return if !defined $new_version;
+    
+    $new_version =~ m/-----(\d+?.\d+?)-----/;
+    $new_version = $1;
     
     notify_user ( "New version $new_version available, please check the download section on [ http://dwarvis.googlecode.com ]." )
         if ($new_version + 0) > $VERSION;
