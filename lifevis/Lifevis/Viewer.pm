@@ -136,6 +136,7 @@ my @creature_display_lists;
 my @tiles;
 my @ramps;
 
+my $hProcess;
 my $dwarf_pid;
 my $pe_timestamp;
 
@@ -229,8 +230,6 @@ sub run {
     check_for_new_version() if $c{update_checks};
 
     use OpenGL qw/ :all /;
-
-    # %DB::packages = ( 'main' => 1 );
 
   # Dwarf Fortress 3D Map Viewer
   #
@@ -394,9 +393,7 @@ sub run {
     my $land_loop = new Coro \&landscape_update_loop;
     my $success3  = $land_loop->ready;
 
-    #refresh_map_data();
     generate_creature_display_lists();
-
     my $creat_loop = new Coro \&creature_update_loop;
     my $success    = $creat_loop->ready;
     cede();
@@ -410,6 +407,7 @@ sub run {
     # Above functions are called as appropriate.
     print "switching to main loop...\n";
     $ceiling_slice = $zcount;
+    
     glutMainLoop();
 
     print "moo";
@@ -449,13 +447,16 @@ sub extract_base_memory_data {
 
 sub creature_update_loop {
     while (1) {
-        my @creature_vector_offsets =
-          $proc->get_packs( 'L', 4, $OFFSETS[$ver]{creature_vector} + 4, 2 );
+        my $buf = "";
+        
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{creature_vector} + 4, 4*2, $buf );
+        my @creature_vector_offsets = unpack( 'L' x 2, $buf );
+
         my $creature_list_length =
           ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
-        my @creature_offsets =
-          $proc->get_packs( 'L', 4, $creature_vector_offsets[0],
-            $creature_list_length );
+          
+        _ReadMemory( $hProcess, $creature_vector_offsets[0], 4*$creature_list_length, $buf );
+        my @creature_offsets = unpack( 'L' x $creature_list_length, $buf );
 
         while ( my ( $key, $value ) = each %creatures_present ) {
             $value = 0;
@@ -469,28 +470,36 @@ sub creature_update_loop {
         $max_creat_proc_tasks    = $#creature_offsets;
 
         for my $creature (@creature_offsets) {
-
+            my $buf = "";
+        
+            $current_creat_proc_task++;
             for ( 0 .. $c{creature_update_slow_rate} ) {
                 cede();
             }
 
             #say $proc->hexdump( $creature, 0x688 );
 
-
-            my $flags = $proc->get_u32( $creature + 228 );
+            _ReadMemory( $hProcess, $creature + 228, 4, $buf );
+            my $flags = unpack( "L", $buf );
             $creatures{$creature}[flags] = $flags;
             next if $flags & 2;
             
             # extract data of current creature
-            my $rx = $proc->get_u16( $creature + 148 );
+            _ReadMemory( $hProcess, $creature + 148, 2, $buf );
+            my $rx = unpack( "S", $buf );
             next if ( $rx > $xcount * 16 );
-            my $rz = $proc->get_u16( $creature + 152 );
+            _ReadMemory( $hProcess, $creature + 152, 2, $buf );
+            my $rz = unpack( "S", $buf );
             next if ( $rz > $zcount + 1 );
             
-            my $race        = $proc->get_u32( $creature + 140 );
-            my $ry          = $proc->get_u16( $creature + 150 );
-            my $name_length = $proc->get_u32( $creature + 20 );
-            $proc->get_buf( $creature + 4, $name_length, my $name );
+            _ReadMemory( $hProcess, $creature + 140, 4, $buf );
+            my $race = unpack( "L", $buf );
+            _ReadMemory( $hProcess, $creature + 150, 2, $buf );
+            my $ry = unpack( "S", $buf );
+            _ReadMemory( $hProcess, $creature + 20, 4, $buf );
+            my $name_length = unpack( "L", $buf );
+            my $name = "";
+            _ReadMemory( $hProcess, $creature + 4, $name_length, $name );
 
             # update record of current creature
             $creatures{$creature}[race] = $race;
@@ -507,8 +516,7 @@ sub creature_update_loop {
             if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
 
                 # creature moved to other cell or is new
-
-  # get creature list of old cell then cycle through it and remove the old entry
+                # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
                     glutPostRedisplay();
                     my $creature_list = $cells[$old_x][$old_y][creature_list];
@@ -526,8 +534,6 @@ sub creature_update_loop {
                 $creatures{$creature}[cell_x] = $bx;
                 $creatures{$creature}[cell_y] = $by;
             }
-            
-            $current_creat_proc_task++;
         }
     }
 }
@@ -536,15 +542,19 @@ sub location_update_loop {
 
     while (1) {
         my $old_ceiling_slice = $ceiling_slice;
+        my $buf = "";
         
         $xmouse_old = $xmouse;
         $ymouse_old = $ymouse;
         $zmouse_old = $zmouse;
 
         # get mouse data
-        $xmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_x} );
-        $ymouse = $proc->get_u32( $OFFSETS[$ver]{mouse_y} );
-        $zmouse = $proc->get_u32( $OFFSETS[$ver]{mouse_z} );
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{mouse_x}, 4, $buf );
+        $xmouse = unpack( "L", $buf );
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{mouse_y}, 4, $buf );
+        $ymouse = unpack( "L", $buf );
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{mouse_z}, 4, $buf );
+        $zmouse = unpack( "L", $buf );
 
         #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
         #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
@@ -554,13 +564,20 @@ sub location_update_loop {
             || $ymouse > $ycount * 16
             || $zmouse > $zcount )
         {
-            $xmouse =
-              $proc->get_u32( $OFFSETS[$ver]{viewport_x} ) +
-              int( $proc->get_u32( $OFFSETS[$ver]{window_grid_x} ) / 6 );
-            $ymouse =
-              $proc->get_u32( $OFFSETS[$ver]{viewport_y} ) +
-              int( $proc->get_u32( $OFFSETS[$ver]{window_grid_y} ) / 3 );
-            $zmouse = $proc->get_u32( $OFFSETS[$ver]{viewport_z} );
+            _ReadMemory( $hProcess, $OFFSETS[$ver]{viewport_x}, 4, $buf );
+            my $viewport_x = unpack( "L", $buf );
+            _ReadMemory( $hProcess, $OFFSETS[$ver]{window_grid_x}, 4, $buf );
+            my $window_grid_x = unpack( "L", $buf );
+            _ReadMemory( $hProcess, $OFFSETS[$ver]{viewport_y}, 4, $buf );
+            my $viewport_y = unpack( "L", $buf );
+            _ReadMemory( $hProcess, $OFFSETS[$ver]{window_grid_y}, 4, $buf );
+            my $window_grid_y = unpack( "L", $buf );
+            _ReadMemory( $hProcess, $OFFSETS[$ver]{viewport_z}, 4, $buf );
+            my $viewport_z = unpack( "L", $buf );
+            
+            $xmouse = $viewport_x + int( $window_grid_x / 6 );
+            $ymouse = $viewport_y + int( $window_grid_y / 3 );
+            $zmouse = $viewport_z;
         }
         
         $ceiling_slice = $zmouse if $ceiling_locked;
@@ -602,6 +619,7 @@ sub location_update_loop {
 
 sub landscape_update_loop {
     while (1) {
+        my $buf = "";
 
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
@@ -611,8 +629,8 @@ sub landscape_update_loop {
                 next if ( $by < 0 || $by > $ycount - 1 );
 
                 # cycle through slices in cell
-                my @zoffsets =
-                  $proc->get_packs( 'L', 4, $cells[$bx][$by][offset], $zcount );
+                _ReadMemory( $hProcess, $cells[$bx][$by][offset], 4*$zcount, $buf );
+                my @zoffsets = unpack( 'L' x $zcount, $buf );
                 $cells[$bx][$by][changed] = 0
                   if !defined $cells[$bx][$by][changed];
                 for my $bz ( 0 .. $#zoffsets ) {
@@ -1035,21 +1053,16 @@ sub generate_display_list {
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
     my $changed = 0;
+    my $buf = "";
 
-    my @type_data =
-      $proc
-      ->get_packs(   # extract type/designation/occupation arrays for this block
-        'S', 2,      # format and size in bytes of each data unit
-        $block_offset + $OFFSETS[$ver]{type_off},    # starting offset
-        256
-      );                                             # number of units
-    my @designation_data =
-      $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{designation_off},
-        256 );
-
-    my @occupation_data =
-      $proc->get_packs( 'L', 4, $block_offset + $OFFSETS[$ver]{occupancy_off},
-        256 );
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{type_off}, 2*256, $buf );
+    my @type_data = unpack( 'S' x 256, $buf );
+      
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{designation_off}, 4*256, $buf );
+    my @designation_data = unpack( 'L' x 256, $buf );
+      
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{occupancy_off}, 4*256, $buf );
+    my @occupation_data = unpack( 'L' x 256, $buf );
 
     my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
 
@@ -1155,6 +1168,7 @@ sub init_process_connection {
       . ' and should not happen, try running as'
       . ' administrator or poke Mithaldu/Xenofur.'
       unless ($proc);
+    $hProcess = $proc->{hProcess};
 
     ### Let's Pla... erm, figure out what version this is ##########################
 
@@ -1652,6 +1666,10 @@ sub render_scene {
     $buf = "Mem-Act: $memory_clears / $memory_full_checks";
     glRasterPos2i( 2, 210 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    #$buf = "Crea: $creature_length";
+    #glRasterPos2i( 2, 222 );
+    #print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     
     glColor4f( 0.2, 0.2, 0.2, 0.75 );
     

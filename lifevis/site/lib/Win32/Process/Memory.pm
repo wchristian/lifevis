@@ -5,7 +5,7 @@ use warnings;
 use base qw(Exporter);
 use vars qw($VERSION @EXPORT @EXPORT_OK);
 $VERSION   = "0.20";
-@EXPORT    = qw();
+@EXPORT    = qw( _ReadMemory );
 @EXPORT_OK = qw();
 
 require XSLoader;
