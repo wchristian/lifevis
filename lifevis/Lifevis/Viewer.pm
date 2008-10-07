@@ -484,29 +484,34 @@ sub creature_update_loop {
             $creatures{$creature}[flags] = $flags;
             next if $flags & 2;
             
-            # extract data of current creature
+            # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $hProcess, $creature + 148, 2, $buf );
             my $rx = unpack( "S", $buf );
             next if ( $rx > $xcount * 16 );
             _ReadMemory( $hProcess, $creature + 152, 2, $buf );
             my $rz = unpack( "S", $buf );
             next if ( $rz > $zcount + 1 );
-            
-            _ReadMemory( $hProcess, $creature + 140, 4, $buf );
-            my $race = unpack( "L", $buf );
             _ReadMemory( $hProcess, $creature + 150, 2, $buf );
             my $ry = unpack( "S", $buf );
-            _ReadMemory( $hProcess, $creature + 20, 4, $buf );
-            my $name_length = unpack( "L", $buf );
-            my $name = "";
-            _ReadMemory( $hProcess, $creature + 4, $name_length, $name );
+            
+            # get name and race, but only if we don't have them yet, since they're unlikely to change
+            if ( !defined $creatures{$creature}[name] ) {
+                _ReadMemory( $hProcess, $creature + 20, 4, $buf );
+                my $name_length = unpack( "L", $buf );
+                my $name = "";
+                _ReadMemory( $hProcess, $creature + 4, $name_length, $name );
+                $creatures{$creature}[name] = $name;
+            }
+            if ( !defined $creatures{$creature}[race] ) {
+                _ReadMemory( $hProcess, $creature + 140, 4, $buf );
+                my $race = unpack( "L", $buf );
+                $creatures{$creature}[race] = $race;
+            }
 
             # update record of current creature
-            $creatures{$creature}[race] = $race;
             $creatures{$creature}[c_x]  = $rx;
             $creatures{$creature}[c_y]  = $ry;
             $creatures{$creature}[c_z]  = $rz;
-            $creatures{$creature}[name] = $name;
 
             # get old and new cell location and compare
             my $old_x = $creatures{$creature}[cell_x];
