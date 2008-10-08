@@ -11,13 +11,13 @@ use strict;
 use warnings;
 
 our ($VERSION) = '$Revision$' =~ m{ \$Revision: \s+ (\S+) }x; # define minor version
-$VERSION = 0 + $VERSION/1000; # define major version
+$VERSION = 0 + $VERSION / 1000;    # define major version
 
 #use warnings::unused;
 #use warnings::method;
 #use diagnostics;
 
-=cut
+#=cut
 use criticism (
     -exclude => [
         'ProhibitCallsToUndeclaredSubs',
@@ -41,7 +41,8 @@ use criticism (
     -severity => 1
 );
 
-=cut
+#=cut
+
 use Carp;
 use utf8;
 use English qw(-no_match_vars);
@@ -90,7 +91,7 @@ my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
 $c{redraw_delay} = 1 / $c{fps_limit};
 my $memory_limit;
-$memory_limit = $c{memory_limit};
+$memory_limit  = $c{memory_limit};
 $config_loaded = 1;
 
 my @OFFSETS = get_df_offsets();
@@ -159,14 +160,14 @@ my $mouse_dist = 40;
 
 my ( %sin_cache, %cos_cache );
 
-my $rotating = 0;
+my $rotating         = 0;
 my $changing_ceiling = 0;
 my $ceiling_slice;
 my $ceiling_locked = 0;
 
 my $memory_needs_clears;
 my $memory_full_checks = 0;
-my $memory_clears = 0;
+my $memory_clears      = 0;
 
 __PACKAGE__->run(@ARGV) unless caller();
 
@@ -178,18 +179,18 @@ BEGIN {
     share($memory_limit);
     my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
     $thr->detach();
-    
+
     sub update_memory_use {
         my @state_array;
-        my $pid        = $PROCESS_ID;
-        my $sleep_time = 2;
+        my $pid              = $PROCESS_ID;
+        my $sleep_time       = 2;
         my $small_sleep_time = 0.1;
         my $WMI_service_object =
              Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
           or croak "WMI connection failed.\n";
-          
+
         sleep $small_sleep_time while ( !$config_loaded );
-    
+
         while (1) {
             @state_array = in $WMI_service_object->ExecQuery(
                 'SELECT PrivatePageCount FROM Win32_Process'
@@ -198,8 +199,8 @@ BEGIN {
                 0x10 | 0x20
             );
             $memory_use = $state_array[0]->{PrivatePageCount};
-            
-            if ( $memory_use > $memory_limit ){
+
+            if ( $memory_use > $memory_limit ) {
                 $memory_needs_clears = 1;
                 sleep $small_sleep_time;
             }
@@ -210,19 +211,20 @@ BEGIN {
         return 1;
     }
 }
-    
+
 sub check_for_new_version {
     my $source = 'http://code.google.com/p/dwarvis/wiki/LifevisVersionInfo';
 
     my $new_version = get($source);
     return if !defined $new_version;
-    
+
     $new_version =~ m/-----(\d+?.\d+?)-----/;
     $new_version = $1;
-    
-    notify_user ( "New version $new_version available, please check the download section on [ http://dwarvis.googlecode.com ]." )
-        if ($new_version + 0) > $VERSION;
-    
+
+    notify_user(
+"New version $new_version available, please check the download section on [ http://dwarvis.googlecode.com ]."
+    ) if ( $new_version + 0 ) > $VERSION;
+
     return;
 }
 
@@ -338,20 +340,21 @@ sub run {
     print 'setting up OpenGL environment...   ';
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( $c{window_width}, $c{window_height} );
-    
+
     # clamp viewer window to bottom of df window, right side
     ($DF_window) = FindWindowLike( 0, '^Dwarf Fortress$' );
-    my (undef,undef,$right,$bottom) = GetWindowRect($DF_window);
-    ($right,$bottom) = ClientToScreen($DF_window,$right,$bottom);
-    
-    # reset to 0,0 if outside of screen
-    my ($screen_width,$screen_height) = GetScreenRes();
-    ($right, $bottom) = ($c{window_width},0)
-        if ( $right > $screen_width
-            or $bottom+$c{window_height} > $screen_height);
-    glutInitWindowPosition( $right-$c{window_width}, $bottom );
+    my ( undef, undef, $right, $bottom ) = GetWindowRect($DF_window);
+    ( $right, $bottom ) = ClientToScreen( $DF_window, $right, $bottom );
 
-    $window_ID = glutCreateWindow(PROGRAM_TITLE." v$VERSION");    # Open a window
+    # reset to 0,0 if outside of screen
+    my ( $screen_width, $screen_height ) = GetScreenRes();
+    ( $right, $bottom ) = ( $c{window_width}, 0 )
+      if ( $right > $screen_width
+        or $bottom + $c{window_height} > $screen_height );
+    glutInitWindowPosition( $right - $c{window_width}, $bottom );
+
+    $window_ID =
+      glutCreateWindow( PROGRAM_TITLE . " v$VERSION" );    # Open a window
 
     create_menu();
 
@@ -399,15 +402,13 @@ sub run {
     cede();
 
     my $memory_loop = new Coro \&memory_control_loop;
-    my $success4  = $memory_loop->ready;
-    
-    
-    
+    my $success4    = $memory_loop->ready;
+
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.
     print "switching to main loop...\n";
     $ceiling_slice = $zcount;
-    
+
     glutMainLoop();
 
     print "moo";
@@ -448,14 +449,19 @@ sub extract_base_memory_data {
 sub creature_update_loop {
     while (1) {
         my $buf = "";
-        
-        _ReadMemory( $hProcess, $OFFSETS[$ver]{creature_vector} + 4, 4*2, $buf );
+
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{creature_vector} + 4,
+            4 * 2, $buf );
         my @creature_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $creature_list_length =
           ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
-          
-        _ReadMemory( $hProcess, $creature_vector_offsets[0], 4*$creature_list_length, $buf );
+
+        _ReadMemory(
+            $hProcess,
+            $creature_vector_offsets[0],
+            4 * $creature_list_length, $buf
+        );
         my @creature_offsets = unpack( 'L' x $creature_list_length, $buf );
 
         while ( my ( $key, $value ) = each %creatures_present ) {
@@ -471,7 +477,7 @@ sub creature_update_loop {
 
         for my $creature (@creature_offsets) {
             my $buf = "";
-        
+
             $current_creat_proc_task++;
             for ( 0 .. $c{creature_update_slow_rate} ) {
                 cede();
@@ -483,7 +489,7 @@ sub creature_update_loop {
             my $flags = unpack( "L", $buf );
             $creatures{$creature}[flags] = $flags;
             next if $flags & 2;
-            
+
             # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $hProcess, $creature + 148, 2, $buf );
             my $rx = unpack( "S", $buf );
@@ -493,8 +499,8 @@ sub creature_update_loop {
             next if ( $rz > $zcount + 1 );
             _ReadMemory( $hProcess, $creature + 150, 2, $buf );
             my $ry = unpack( "S", $buf );
-            
-            # get name and race, but only if we don't have them yet, since they're unlikely to change
+
+# get name and race, but only if we don't have them yet, since they're unlikely to change
             if ( !defined $creatures{$creature}[name] ) {
                 _ReadMemory( $hProcess, $creature + 20, 4, $buf );
                 my $name_length = unpack( "L", $buf );
@@ -509,9 +515,9 @@ sub creature_update_loop {
             }
 
             # update record of current creature
-            $creatures{$creature}[c_x]  = $rx;
-            $creatures{$creature}[c_y]  = $ry;
-            $creatures{$creature}[c_z]  = $rz;
+            $creatures{$creature}[c_x] = $rx;
+            $creatures{$creature}[c_y] = $ry;
+            $creatures{$creature}[c_z] = $rz;
 
             # get old and new cell location and compare
             my $old_x = $creatures{$creature}[cell_x];
@@ -520,8 +526,8 @@ sub creature_update_loop {
             my $by    = int $ry / 16;
             if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
 
-                # creature moved to other cell or is new
-                # get creature list of old cell then cycle through it and remove the old entry
+  # creature moved to other cell or is new
+  # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
                     glutPostRedisplay();
                     my $creature_list = $cells[$old_x][$old_y][creature_list];
@@ -547,8 +553,8 @@ sub location_update_loop {
 
     while (1) {
         my $old_ceiling_slice = $ceiling_slice;
-        my $buf = "";
-        
+        my $buf               = "";
+
         $xmouse_old = $xmouse;
         $ymouse_old = $ymouse;
         $zmouse_old = $zmouse;
@@ -579,12 +585,12 @@ sub location_update_loop {
             my $window_grid_y = unpack( "L", $buf );
             _ReadMemory( $hProcess, $OFFSETS[$ver]{viewport_z}, 4, $buf );
             my $viewport_z = unpack( "L", $buf );
-            
+
             $xmouse = $viewport_x + int( $window_grid_x / 6 );
             $ymouse = $viewport_y + int( $window_grid_y / 3 );
             $zmouse = $viewport_z;
         }
-        
+
         $ceiling_slice = $zmouse if $ceiling_locked;
 
         glutPostRedisplay()
@@ -634,7 +640,11 @@ sub landscape_update_loop {
                 next if ( $by < 0 || $by > $ycount - 1 );
 
                 # cycle through slices in cell
-                _ReadMemory( $hProcess, $cells[$bx][$by][offset], 4*$zcount, $buf );
+                _ReadMemory(
+                    $hProcess,
+                    $cells[$bx][$by][offset],
+                    4 * $zcount, $buf
+                );
                 my @zoffsets = unpack( 'L' x $zcount, $buf );
                 $cells[$bx][$by][changed] = 0
                   if !defined $cells[$bx][$by][changed];
@@ -707,7 +717,7 @@ sub landscape_update_loop {
 
                     # cell is not in cache
 
-                    # get fresh cache id either from end of cache or out of bucket
+                  # get fresh cache id either from end of cache or out of bucket
                     $cache_id = $#cache + 1;
                     $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
 
@@ -743,26 +753,28 @@ sub landscape_update_loop {
 }
 
 sub memory_control_loop {
-    
+
     while (1) {
         cede() while ( !$memory_needs_clears );
-        
+
         $memory_full_checks++;
-        
+
         my @protected_caches;
-        
+
         # cycle through cells in range around cursor to generate display lists
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
-                if ( defined $cells[$bx][$by] && defined $cells[$bx][$by][cache_ptr] ) {
-                    $protected_caches[$cells[$bx][$by][cache_ptr]] = 1;
+                if (   defined $cells[$bx][$by]
+                    && defined $cells[$bx][$by][cache_ptr] )
+                {
+                    $protected_caches[ $cells[$bx][$by][cache_ptr] ] = 1;
                 }
             }
         }
 
-        # TODO: Limit cache deletions so $c{view_range} is never undercut
-        # check that we're not using too much memory and destroy cache entries if necessary
-        
+# TODO: Limit cache deletions so $c{view_range} is never undercut
+# check that we're not using too much memory and destroy cache entries if necessary
+
         my $delete;
         my $use;
 
@@ -780,13 +792,13 @@ sub memory_control_loop {
             }
         }
 
-        if (!defined $delete) {
+        if ( !defined $delete ) {
             $memory_needs_clears = 0;
             next;
         }
 
         $memory_clears++;
-        
+
         my $slices = $cache[$delete];
         for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
             glDeleteLists( $cache[$delete][$slice], 1 )
@@ -797,8 +809,7 @@ sub memory_control_loop {
 
         undef $cache[$delete];
         push @cache_bucket, $delete;
-        
-        
+
         $memory_needs_clears = 0;
     }
 }
@@ -839,21 +850,23 @@ sub generate_display_list {
 
     glNewList( $dl, GL_COMPILE );
 
-    for my $texture ( 0 .. $#texture_ID ) { # cycle through textures
+    for my $texture ( 0 .. $#texture_ID ) {    # cycle through textures
 
-        glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] ); # set texture
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );    # set texture
         glBegin(GL_TRIANGLES);
-        my $tile       = $tiles[$z][type];          # get pointers to current layer
-        my $tile_below = $tiles[ $z - 1 ][type];    # as well as to layer above and below
+        my $tile = $tiles[$z][type];    # get pointers to current layer
+        my $tile_below =
+          $tiles[ $z - 1 ][type];       # as well as to layer above and below
         my $tile_above = $tiles[ $z + 1 ][type];
-        my $occup       = $tiles[$z][occup];          # get pointers to current layer
-        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) { # cycle through tiles in current slice on layer
+        my $occup      = $tiles[$z][occup];      # get pointers to current layer
+        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 )
+        {    # cycle through tiles in current slice on layer
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
-                
-                my $occupation =  $occup->[$rx][$ry];
+
+                my $occupation = $occup->[$rx][$ry];
                 if ( defined $occupation && $texture == metal ) {
                     my $building = $occupation & 7;
-                    
+
                     given ($building) {
                         when (BUILDING_OCCUPANCY_SPECIAL) {
                         }
@@ -861,34 +874,40 @@ sub generate_display_list {
                         }
                         when (BUILDING_OCCUPANCY_FLOOR) {
                             $DRAW_MODEL{Floor}->(
-                                $rx, $z+0.1, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
-                                EMPTY, EMPTY, EMPTY
+                                $rx,   $z + 0.1, $ry,   1,
+                                1,     EMPTY,    EMPTY, EMPTY,
+                                EMPTY, EMPTY,    EMPTY
                             );
                         }
                         when (BUILDING_OCCUPANCY_BLOCK) {
                         }
                         when (BUILDING_OCCUPANCY_BLOCK_FLOOR) {
                             $DRAW_MODEL{Wall}->(
-                                $rx, $z, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
-                                EMPTY, EMPTY, EMPTY
+                                $rx,   $z,    $ry,   1,     1, EMPTY,
+                                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY
                             );
                         }
                         when (BUILDING_OCCUPANCY_NO_BLOCK) {
                             $DRAW_MODEL{Floor}->(
-                                $rx, $z+0.1, $ry, 1, 1, EMPTY, EMPTY, EMPTY,
-                                EMPTY, EMPTY, EMPTY
+                                $rx,   $z + 0.1, $ry,   1,
+                                1,     EMPTY,    EMPTY, EMPTY,
+                                EMPTY, EMPTY,    EMPTY
                             );
                         }
                         when (BUILDING_OCCUPANCY_CONST) {
                         }
                     }
                 }
-                
-                next if !defined $tile->[$rx][$ry]; # skip tile if undefined
-                $type = $tile->[$rx][$ry];          # store type of current tile
-                next if $type == 32;                # skip if tile is air
-                next if !defined $TILE_TYPES[$type][base_texture];  # skip if tile type doesn't have associated texture
-                next if $TILE_TYPES[$type][base_texture] != $texture;   # skip if tile type texture doesn't match current texture
+
+                next if !defined $tile->[$rx][$ry];    # skip tile if undefined
+                $type = $tile->[$rx][$ry];    # store type of current tile
+                next if $type == 32;          # skip if tile is air
+                next
+                  if !defined $TILE_TYPES[$type][base_texture]
+                ;    # skip if tile type doesn't have associated texture
+                next
+                  if $TILE_TYPES[$type][base_texture] != $texture
+                ;    # skip if tile type texture doesn't match current texture
                 $type_below     = $tile_below->[$rx][$ry];
                 $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
@@ -900,7 +919,7 @@ sub generate_display_list {
                 my $y_mod = $ry % 16;
 
                 $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
-                
+
                 $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
                   if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
                 $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
@@ -909,129 +928,143 @@ sub generate_display_list {
                   if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
                 $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                   if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
-                  
+
                 given ( $TILE_TYPES[$type][base_visual] ) {
-                    when ([FLOOR,TREE,SHRUB,BOULDER,SAPLING,STAIR,STAIR_UP,STAIR_DOWN,PILLAR,FORTIF]) {
+                    when (
+                        [
+                            FLOOR,   TREE,  SHRUB,    BOULDER,
+                            SAPLING, STAIR, STAIR_UP, STAIR_DOWN,
+                            PILLAR,  FORTIF
+                        ]
+                      )
+                    {
                         my $type_above = $tile_above->[$rx][$ry];
-                        
+
                         $brightness_mod *= 0.75
                           if ( defined $type_above
                             && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     }
                 }
-                
-                
-                given ($TILE_TYPES[$type][base_visual]) {
+
+                given ( $TILE_TYPES[$type][base_visual] ) {
                     when (WALL) {
                         $DRAW_MODEL{Wall}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (PILLAR) {
                         $DRAW_MODEL{Pillar}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (FORTIF) {
                         $DRAW_MODEL{Fortif}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (FLOOR) {
                         $DRAW_MODEL{Floor}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (TREE) {
                         $DRAW_MODEL{Tree}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (SHRUB) {
                         $DRAW_MODEL{Shrub}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (BOULDER) {
                         $DRAW_MODEL{Boulder}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (SAPLING) {
                         $DRAW_MODEL{Sapling}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (STAIR) {
                         $DRAW_MODEL{Stairs}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (STAIR_UP) {
                         $DRAW_MODEL{Stair_Up}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (STAIR_DOWN) {
                         $DRAW_MODEL{Stair_Down}->(
-                            $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south,
-                            $east, $below, EMPTY
+                            $rx, $z, $ry, 1, $brightness_mod, $north, $west,
+                            $south, $east, $below, EMPTY
                         );
                     }
-                    
+
                     when (RAMP) {
                         next
                           if ( defined $type_below
                             && $TILE_TYPES[$type_below][base_visual] == RAMP );
                         $northeast =
-                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
+                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ]
+                          [base_visual]
                           if $tile->[ $rx + 1 ][ $ry - 1 ]
                               && ( $ry != 0 || $rx != $x_max );
                         $southeast =
-                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
+                          $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ]
+                          [base_visual]
                           if $tile->[ $rx + 1 ][ $ry + 1 ]
                               && ( $ry != $y_max || $rx != $x_max );
                         $southwest =
-                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
+                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ]
+                          [base_visual]
                           if $tile->[ $rx - 1 ][ $ry + 1 ]
                               && ( $ry != $y_max || $ry != 0 );
                         $northwest =
-                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
+                          $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ]
+                          [base_visual]
                           if $tile->[ $rx - 1 ][ $ry - 1 ]
                               && ( $ry != 0 || $ry != 0 );
-    
+
                         my $surroundings = 0;
-                        $surroundings += ( $north == WALL )     ? 0b1000_0000 : 0;
-                        $surroundings += ( $west == WALL )      ? 0b0100_0000 : 0;
-                        $surroundings += ( $south == WALL )     ? 0b0010_0000 : 0;
-                        $surroundings += ( $east == WALL )      ? 0b0001_0000 : 0;
-                        $surroundings += ( $northwest == WALL ) ? 0b0000_1000 : 0;
-                        $surroundings += ( $southwest == WALL ) ? 0b0000_0100 : 0;
-                        $surroundings += ( $southeast == WALL ) ? 0b0000_0010 : 0;
-                        $surroundings += ( $northeast == WALL ) ? 0b0000_0001 : 0;
-    
+                        $surroundings += ( $north == WALL ) ? 0b1000_0000 : 0;
+                        $surroundings += ( $west == WALL )  ? 0b0100_0000 : 0;
+                        $surroundings += ( $south == WALL ) ? 0b0010_0000 : 0;
+                        $surroundings += ( $east == WALL )  ? 0b0001_0000 : 0;
+                        $surroundings +=
+                          ( $northwest == WALL ) ? 0b0000_1000 : 0;
+                        $surroundings +=
+                          ( $southwest == WALL ) ? 0b0000_0100 : 0;
+                        $surroundings +=
+                          ( $southeast == WALL ) ? 0b0000_0010 : 0;
+                        $surroundings +=
+                          ( $northeast == WALL ) ? 0b0000_0001 : 0;
+
                         $surroundings = 0b1_0000_0000 if ( $surroundings == 0 );
-    
+
                         for my $ramp_type ( 0 .. $#ramps ) {
                             my $mask           = $ramps[$ramp_type]{mask};
                             my $bit_comparison = $mask & $surroundings;
@@ -1058,15 +1091,18 @@ sub generate_display_list {
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
     my $changed = 0;
-    my $buf = "";
+    my $buf     = "";
 
-    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{type_off}, 2*256, $buf );
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{type_off},
+        2 * 256, $buf );
     my @type_data = unpack( 'S' x 256, $buf );
-      
-    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{designation_off}, 4*256, $buf );
+
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{designation_off},
+        4 * 256, $buf );
     my @designation_data = unpack( 'L' x 256, $buf );
-      
-    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{occupancy_off}, 4*256, $buf );
+
+    _ReadMemory( $hProcess, $block_offset + $OFFSETS[$ver]{occupancy_off},
+        4 * 256, $buf );
     my @occupation_data = unpack( 'L' x 256, $buf );
 
     my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
@@ -1148,8 +1184,8 @@ sub init_process_connection {
     for my $key ( keys %list ) {
         $dwarf_pid = $key if ( $list{$key} =~ /dwarfort.exe/ );
     }
-    fatal_error ( 'Could not find process ID, make sure DF is running and'
-      . ' a savegame is loaded.' )
+    fatal_error( 'Could not find process ID, make sure DF is running and'
+          . ' a savegame is loaded.' )
       unless ($dwarf_pid);
 
     ### lower priority of dwarf fortress ###########################################
@@ -1513,7 +1549,7 @@ sub render_scene {
 
             my $slices = $cache[$cache_ptr];
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-                next if $slice > $ceiling_slice+2;
+                next if $slice > $ceiling_slice + 2;
                 glCallList( $slices->[$slice] ) if $slices->[$slice];
             }
 
@@ -1522,7 +1558,7 @@ sub render_scene {
             for my $entry (@creature_list) {
                 last if !defined $entry;
                 next unless $creatures_present{$entry};
-                
+
                 next if $creatures{$entry}[flags] & 2;
                 my $x = $creatures{$entry}[c_x];
                 my $z = $creatures{$entry}[c_z];
@@ -1535,7 +1571,7 @@ sub render_scene {
                     }
                     default {
                         glCallList( $creature_display_lists[1] );
-                        
+
                     }
                 }
                 glTranslatef( -$x, -$z, -$y );
@@ -1636,7 +1672,7 @@ sub render_scene {
 
     if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
         $buf = sprintf 'Occup: 0b%059b',
-          ($tiles[$zmouse][occup][$xmouse][$ymouse] & 7);
+          ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
         glRasterPos2i( 2, $c{window_height} - 26 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
     }
@@ -1675,9 +1711,9 @@ sub render_scene {
     #$buf = "Crea: $creature_length";
     #glRasterPos2i( 2, 222 );
     #print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-    
+
     glColor4f( 0.2, 0.2, 0.2, 0.75 );
-    
+
     glBegin(GL_QUADS);
     glVertex3f( $c{window_width} - 42, $c{window_height} - 20,   0.0 );
     glVertex3f( $c{window_width} - 42, $c{window_height},        0.0 );
@@ -1693,37 +1729,44 @@ sub render_scene {
     glEnd();
 
     glColor4f( 1, 1, 0.2, 0.75 );
-    
+
     glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
     glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
-    
-    my $height_mod = ($c{window_height}-22) / ($zcount+2);
-    
-    for my $slice ( 0..$zcount ) {
-        
-        my $part = (0.6/$zcount);
-        my $bright = ($part*$slice)+0.2;
-        
+
+    my $height_mod = ( $c{window_height} - 22 ) / ( $zcount + 2 );
+
+    for my $slice ( 0 .. $zcount ) {
+
+        my $part   = ( 0.6 / $zcount );
+        my $bright = ( $part * $slice ) + 0.2;
+
         glColor4f( $bright, $bright, $bright, 1 );
-        
+
         glBegin(GL_QUADS);
-        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*($slice+1) , 0.0 );
-        glVertex3f( $c{window_width} - 20, $c{window_height}-22 - $height_mod*$slice,      0.0 );
-        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*$slice,      0.0 );
-        glVertex3f( $c{window_width} - 0 , $c{window_height}-22 - $height_mod*($slice+1) , 0.0 );
+        glVertex3f( $c{window_width} - 20,
+            $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
+        glVertex3f( $c{window_width} - 20,
+            $c{window_height} - 22 - $height_mod * $slice, 0.0 );
+        glVertex3f( $c{window_width} - 0,
+            $c{window_height} - 22 - $height_mod * $slice, 0.0 );
+        glVertex3f( $c{window_width} - 0,
+            $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
         glEnd();
     }
-    
-    for my $slice ( 0..$zcount ) {
+
+    for my $slice ( 0 .. $zcount ) {
         if ( $slice == $ceiling_slice ) {
-            my $part = (0.6/$zcount);
-            my $bright = ($part*$slice)+0.2;
-            
+            my $part   = ( 0.6 / $zcount );
+            my $bright = ( $part * $slice ) + 0.2;
+
             glColor4f( 1, 1, 0, 1 );
-            
-            glRasterPos2i( $c{window_width} - 17, $c{window_height}-22 - (0.95*$height_mod*($slice+1)) );
+
+            glRasterPos2i(
+                $c{window_width} - 17,
+                $c{window_height} - 22 - ( 0.95 * $height_mod * ( $slice + 1 ) )
+            );
             print_opengl_string( GLUT_BITMAP_HELVETICA_12, $slice );
         }
     }
@@ -1731,21 +1774,29 @@ sub render_scene {
     glEnable(GL_TEXTURE_2D);
     glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
     glColor4f( 1, 1, 1, 1 );
-    
-    if ( $ceiling_locked ) {
+
+    if ($ceiling_locked) {
         glBegin(GL_QUADS);
-        OpenGL::glTexCoord2f(0,1); glVertex3f( $c{window_width} - 42, 0,   0.0 );
-        OpenGL::glTexCoord2f(0,0.84375); glVertex3f( $c{window_width} - 42, 20, 0.0 );
-        OpenGL::glTexCoord2f(0.15625,0.84375); glVertex3f( $c{window_width} - 22, 20, 0.0 );
-        OpenGL::glTexCoord2f(0.15625,1); glVertex3f( $c{window_width} - 22, 0, 0.0 );
+        OpenGL::glTexCoord2f( 0, 1 );
+        glVertex3f( $c{window_width} - 42, 0, 0.0 );
+        OpenGL::glTexCoord2f( 0, 0.84375 );
+        glVertex3f( $c{window_width} - 42, 20, 0.0 );
+        OpenGL::glTexCoord2f( 0.15625, 0.84375 );
+        glVertex3f( $c{window_width} - 22, 20, 0.0 );
+        OpenGL::glTexCoord2f( 0.15625, 1 );
+        glVertex3f( $c{window_width} - 22, 0, 0.0 );
         glEnd();
     }
     else {
         glBegin(GL_QUADS);
-        OpenGL::glTexCoord2f(0.15625,1); glVertex3f( $c{window_width} - 42, 0,   0.0 );
-        OpenGL::glTexCoord2f(0.15625,0.84375); glVertex3f( $c{window_width} - 42, 20, 0.0 );
-        OpenGL::glTexCoord2f(0.3125,0.84375); glVertex3f( $c{window_width} - 22, 20, 0.0 );
-        OpenGL::glTexCoord2f(0.3125,1); glVertex3f( $c{window_width} - 22, 0, 0.0 );
+        OpenGL::glTexCoord2f( 0.15625, 1 );
+        glVertex3f( $c{window_width} - 42, 0, 0.0 );
+        OpenGL::glTexCoord2f( 0.15625, 0.84375 );
+        glVertex3f( $c{window_width} - 42, 20, 0.0 );
+        OpenGL::glTexCoord2f( 0.3125, 0.84375 );
+        glVertex3f( $c{window_width} - 22, 20, 0.0 );
+        OpenGL::glTexCoord2f( 0.3125, 1 );
+        glVertex3f( $c{window_width} - 22, 0, 0.0 );
         glEnd();
     }
 
@@ -1825,10 +1876,10 @@ sub build_textures {
     create_texture( 'grass_dry',                  grass_dry );
     create_texture( 'lava',                       lava );
     create_texture( 'curses3_960x300',            test );
-    create_texture( 'metal',            metal );
-    create_texture( 'stone_detailed',            stone_detailed );
-    create_texture( 'minstone_detailed',            minstone_detailed );
-    create_texture( 'ui',            ui );
+    create_texture( 'metal',                      metal );
+    create_texture( 'stone_detailed',             stone_detailed );
+    create_texture( 'minstone_detailed',          minstone_detailed );
+    create_texture( 'ui',                         ui );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -1872,7 +1923,7 @@ sub process_key_press {
           ;    # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
         print "moo";
     }
-    
+
     PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
     glutPostRedisplay();
@@ -1937,7 +1988,7 @@ sub process_mouse_click {
         {
             if ( $ceiling_locked == 1 ) {
                 $ceiling_locked = 0;
-                $ceiling_slice = $zcount;
+                $ceiling_slice  = $zcount;
                 glutPostRedisplay();
             }
             else {
@@ -1945,7 +1996,7 @@ sub process_mouse_click {
                 glutPostRedisplay();
             }
         }
-        elsif (   $x > $c{window_width} - 20
+        elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}
             && $y > $c{window_height} - 20
             && $y < $c{window_height} )
@@ -1954,13 +2005,18 @@ sub process_mouse_click {
             ++$c{view_range} if ( $c{view_range} < $size / 2 );
             glutPostRedisplay();
         }
-        elsif (
-                $x > $c{window_width} - 20
-                && $x < $c{window_width}
-                && $y > 0
-                && $y < $c{window_height} - 22 ) {
-            $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
-            $ceiling_slice = 0 if $ceiling_slice < 0;
+        elsif ($x > $c{window_width} - 20
+            && $x < $c{window_width}
+            && $y > 0
+            && $y < $c{window_height} - 22 )
+        {
+            $ceiling_slice = int(
+                (
+                    ( $y / ( ( $c{window_height} - 22 ) / ( $zcount + 2 ) ) ) -
+                      ($zcount)
+                ) * -1
+            ) + 2;
+            $ceiling_slice = 0       if $ceiling_slice < 0;
             $ceiling_slice = $zcount if $ceiling_slice > $zcount;
             $changing_ceiling = 1;
             glutPostRedisplay();
@@ -1970,18 +2026,23 @@ sub process_mouse_click {
         }
     }
 
-    $changing_ceiling = 0   if $button == GLUT_LEFT_BUTTON && $state == GLUT_UP;
-    $rotating = 0           if $button == GLUT_LEFT_BUTTON && $state == GLUT_UP;
-    $middle_mouse = 0       if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
+    $changing_ceiling = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
+    $rotating         = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
+    $middle_mouse     = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
     return;
 }
 
 sub process_active_mouse_motion {
     my ( $x, $y ) = @_;
 
-    if ( $changing_ceiling ) {
-        $ceiling_slice = int ((($y/(($c{window_height}-22)/($zcount+2)))-($zcount))*-1)+2;
-        $ceiling_slice = 0 if $ceiling_slice < 0;
+    if ($changing_ceiling) {
+        $ceiling_slice = int(
+            (
+                ( $y / ( ( $c{window_height} - 22 ) / ( $zcount + 2 ) ) ) -
+                  ($zcount)
+            ) * -1
+        ) + 2;
+        $ceiling_slice = 0       if $ceiling_slice < 0;
         $ceiling_slice = $zcount if $ceiling_slice > $zcount;
         glutPostRedisplay();
         return;
@@ -2074,7 +2135,7 @@ sub set_detached {
 sub fatal_error {
     my ($error) = @_;
     if ($detached) {
-        Win32::MsgBox($error, MB_ICONSTOP, "Lifevis - $VERSION");
+        Win32::MsgBox( $error, MB_ICONSTOP, "Lifevis - $VERSION" );
         exit;
     }
     else {
@@ -2085,11 +2146,12 @@ sub fatal_error {
 sub notify_user {
     my ($message) = @_;
     if ($detached) {
-        Win32::MsgBox($message, MB_ICONINFORMATION, "Lifevis - $VERSION");
+        Win32::MsgBox( $message, MB_ICONINFORMATION, "Lifevis - $VERSION" );
     }
     else {
         say $message;
     }
 }
 
+1;
 __END__
