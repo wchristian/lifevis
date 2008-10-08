@@ -589,6 +589,11 @@ sub building_update_loop {
         $current_buil_proc_task = 0;
         $max_buil_proc_tasks    = $#building_offsets;
 
+        $current_buil_proc_task++;
+        for ( 0 .. $c{building_update_slow_rate} ) {
+            cede();
+        }
+
         for my $building (@building_offsets) {
             my $buf = "";
 
@@ -597,7 +602,7 @@ sub building_update_loop {
                 cede();
             }
 
-            #say $proc->hexdump( $creature, 0x688 );
+            #say $proc->hexdump( $building, 0x688 );
 
             # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $hProcess, $building + 4, 2, $buf );
@@ -1661,45 +1666,47 @@ sub render_scene {
             }
             
             # draw creatures
-            next if !defined $cells[$bx][$by][creature_list];
-            my @creature_list = @{ $cells[$bx][$by][creature_list] };
-            for my $entry (@creature_list) {
-                last if !defined $entry;
-                next unless $creatures_present{$entry};
-
-                next if $creatures{$entry}[flags] & 2;
-                my $x = $creatures{$entry}[c_x];
-                my $z = $creatures{$entry}[c_z];
-                next if $z > $ceiling_slice;
-                my $y = $creatures{$entry}[c_y];
-                glTranslatef( $x, $z, $y );
-                given ( $creatures{$entry}[race] ) {
-                    when (166) {
-                        glCallList( $creature_display_lists[0] );
+            if (defined $cells[$bx][$by][creature_list] ) {
+                my @creature_list = @{ $cells[$bx][$by][creature_list] };
+                for my $entry (@creature_list) {
+                    last if !defined $entry;
+                    next unless $creatures_present{$entry};
+    
+                    next if $creatures{$entry}[flags] & 2;
+                    my $x = $creatures{$entry}[c_x];
+                    my $z = $creatures{$entry}[c_z];
+                    next if $z > $ceiling_slice;
+                    my $y = $creatures{$entry}[c_y];
+                    glTranslatef( $x, $z, $y );
+                    given ( $creatures{$entry}[race] ) {
+                        when (166) {
+                            glCallList( $creature_display_lists[0] );
+                        }
+                        default {
+                            glCallList( $creature_display_lists[1] );
+    
+                        }
                     }
-                    default {
-                        glCallList( $creature_display_lists[1] );
-
-                    }
+                    glTranslatef( -$x, -$z, -$y );
                 }
-                glTranslatef( -$x, -$z, -$y );
             }
             
             # draw buildings
-            next if !defined $cells[$bx][$by][building_list];
-            my @building_list = @{ $cells[$bx][$by][building_list] };
-            for my $entry (@building_list) {
-                last if !defined $entry;
-                next unless $building_present{$entry};
-
-                my $x = $buildings{$entry}[c_x];
-                my $z = $buildings{$entry}[c_z];
-                next if $z > $ceiling_slice;
-                my $y = $buildings{$entry}[c_y];
-                glTranslatef( $x, $z, $y );
-
-                        glCallList( $building_display_lists[0] );
-                glTranslatef( -$x, -$z, -$y );
+            if ( defined $cells[$bx][$by][building_list] ) {
+                my @building_list = @{ $cells[$bx][$by][building_list] };
+                for my $entry (@building_list) {
+                    last if !defined $entry;
+                    next unless $building_present{$entry};
+    
+                    my $x = $buildings{$entry}[c_x];
+                    my $z = $buildings{$entry}[c_z];
+                    next if $z > $ceiling_slice;
+                    my $y = $buildings{$entry}[c_y];
+                    glTranslatef( $x, $z, $y );
+    
+                            glCallList( $building_display_lists[0] );
+                    glTranslatef( -$x, -$z, -$y );
+                }
             }
             
         }
