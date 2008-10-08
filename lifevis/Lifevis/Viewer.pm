@@ -17,7 +17,7 @@ $VERSION = 0 + $VERSION / 1000;    # define major version
 #use warnings::method;
 #use diagnostics;
 
-#=cut
+=cut
 use criticism (
     -exclude => [
         'ProhibitCallsToUndeclaredSubs',
@@ -41,7 +41,7 @@ use criticism (
     -severity => 1
 );
 
-#=cut
+=cut
 
 use Carp;
 use utf8;
