@@ -25,7 +25,7 @@ our @EXPORT = ( qw(
  
  cell_ptr
  
- changed z offset creature_list cache_ptr
+ changed z offset creature_list cache_ptr building_list
  
  ) );
 
@@ -76,10 +76,8 @@ use enum qw(
 
 use constant cell_ptr => 0;
 
-use constant changed       => 0;
-use constant z             => 1;
-use constant offset        => 2;
-use constant creature_list => 3;
-use constant cache_ptr     => 4;
+use enum qw(
+ changed z offset creature_list cache_ptr building_list
+);
 
 1;

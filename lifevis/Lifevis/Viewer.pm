@@ -110,6 +110,11 @@ my $current_creat_proc_task = 0;
 my $max_creat_proc_tasks    = 0;
 my %creatures;
 
+my %building_present;
+my %buildings;
+my $current_buil_proc_task = 0;
+my $max_buil_proc_tasks    = 0;
+
 # cursor coordinates  in tiles at last refresh
 my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
 
@@ -134,6 +139,7 @@ my @cache_bucket;
 
 my @texture_ID;
 my @creature_display_lists;
+my @building_display_lists;
 my @tiles;
 my @ramps;
 
@@ -400,6 +406,11 @@ sub run {
     my $creat_loop = new Coro \&creature_update_loop;
     my $success    = $creat_loop->ready;
     cede();
+    
+    generate_building_display_lists();
+    my $buil_loop = new Coro \&building_update_loop;
+    my $successbuil    = $buil_loop->ready;
+    cede();
 
     my $memory_loop = new Coro \&memory_control_loop;
     my $success4    = $memory_loop->ready;
@@ -544,6 +555,90 @@ sub creature_update_loop {
                 push @{ $cells[$bx][$by][creature_list] }, $creature;
                 $creatures{$creature}[cell_x] = $bx;
                 $creatures{$creature}[cell_y] = $by;
+            }
+        }
+    }
+}
+
+sub building_update_loop {
+    while (1) {
+        my $buf = "";
+
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{building_vector} + 4,
+            4 * 2, $buf );
+        my @building_vector_offsets = unpack( 'L' x 2, $buf );
+
+        my $building_list_length =
+          ( $building_vector_offsets[1] - $building_vector_offsets[0] ) / 4;
+
+        _ReadMemory(
+            $hProcess,
+            $building_vector_offsets[0],
+            4 * $building_list_length, $buf
+        );
+        my @building_offsets = unpack( 'L' x $building_list_length, $buf );
+
+        while ( my ( $key, $value ) = each %building_present ) {
+            $value = 0;
+        }
+
+        for my $building (@building_offsets) {
+            $building_present{$building} = 1;
+        }
+
+        $current_buil_proc_task = 0;
+        $max_buil_proc_tasks    = $#building_offsets;
+
+        for my $building (@building_offsets) {
+            my $buf = "";
+
+            $current_buil_proc_task++;
+            for ( 0 .. $c{building_update_slow_rate} ) {
+                cede();
+            }
+
+            #say $proc->hexdump( $creature, 0x688 );
+
+            # extract coordinates of current creature and skip if out of bounds
+            _ReadMemory( $hProcess, $building + 4, 2, $buf );
+            my $rx = unpack( "S", $buf );
+            next if ( $rx > $xcount * 16 );
+            _ReadMemory( $hProcess, $building + 28, 2, $buf );
+            my $rz = unpack( "S", $buf );
+            next if ( $rz > $zcount + 1 );
+            _ReadMemory( $hProcess, $building + 8, 2, $buf );
+            my $ry = unpack( "S", $buf );
+
+            # update record of current creature
+            $buildings{$building}[c_x] = $rx;
+            $buildings{$building}[c_y] = $ry;
+            $buildings{$building}[c_z] = $rz;
+
+            # get old and new cell location and compare
+            my $old_x = $buildings{$building}[cell_x];
+            my $old_y = $buildings{$building}[cell_y];
+            my $bx    = int $rx / 16;
+            my $by    = int $ry / 16;
+            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+
+  # creature moved to other cell or is new
+  # get creature list of old cell then cycle through it and remove the old entry
+                if ( defined $old_x ) {
+                    glutPostRedisplay();
+                    my $building_list = $cells[$old_x][$old_y][building_list];
+                    for my $entry ( @{$building_list} ) {
+                        if ( $entry == $building ) {
+                            $entry = $building_list->[$#$building_list];
+                            pop @{$building_list};
+                            last;
+                        }
+                    }
+                }
+
+                # add entry to new cell and update cell coordinates
+                push @{ $cells[$bx][$by][building_list] }, $building;
+                $buildings{$building}[cell_x] = $bx;
+                $buildings{$building}[cell_y] = $by;
             }
         }
     }
@@ -833,6 +928,17 @@ sub generate_creature_display_lists {
     glEndList();
 }
 
+sub generate_building_display_lists {
+    my $dl = glGenLists(1);
+    push @building_display_lists, $dl;
+    glNewList( $dl, GL_COMPILE );
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[metal] );
+    glBegin(GL_TRIANGLES);
+    $DRAW_MODEL{Wall}->( 0, 0.1, 0, 1, 10000 );
+    glEnd();
+    glEndList();
+}
+
 sub generate_display_list {
     my ( $id, $z, $y, $x ) = @_;
     my $dl;
@@ -863,7 +969,7 @@ sub generate_display_list {
         {    # cycle through tiles in current slice on layer
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
 
-                my $occupation = $occup->[$rx][$ry];
+=cut                my $occupation = $occup->[$rx][$ry];
                 if ( defined $occupation && $texture == metal ) {
                     my $building = $occupation & 7;
 
@@ -898,7 +1004,7 @@ sub generate_display_list {
                         }
                     }
                 }
-
+=cut
                 next if !defined $tile->[$rx][$ry];    # skip tile if undefined
                 $type = $tile->[$rx][$ry];    # store type of current tile
                 next if $type == 32;          # skip if tile is air
@@ -1546,13 +1652,15 @@ sub render_scene {
             next if !defined $cache_ptr;
 
             next if !defined $cache[$cache_ptr];
-
+            
+            # draw landscape
             my $slices = $cache[$cache_ptr];
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
                 next if $slice > $ceiling_slice + 2;
                 glCallList( $slices->[$slice] ) if $slices->[$slice];
             }
-
+            
+            # draw creatures
             next if !defined $cells[$bx][$by][creature_list];
             my @creature_list = @{ $cells[$bx][$by][creature_list] };
             for my $entry (@creature_list) {
@@ -1576,6 +1684,24 @@ sub render_scene {
                 }
                 glTranslatef( -$x, -$z, -$y );
             }
+            
+            # draw buildings
+            next if !defined $cells[$bx][$by][building_list];
+            my @building_list = @{ $cells[$bx][$by][building_list] };
+            for my $entry (@building_list) {
+                last if !defined $entry;
+                next unless $building_present{$entry};
+
+                my $x = $buildings{$entry}[c_x];
+                my $z = $buildings{$entry}[c_z];
+                next if $z > $ceiling_slice;
+                my $y = $buildings{$entry}[c_y];
+                glTranslatef( $x, $z, $y );
+
+                        glCallList( $building_display_lists[0] );
+                glTranslatef( -$x, -$z, -$y );
+            }
+            
         }
     }
 
@@ -1706,6 +1832,10 @@ sub render_scene {
 
     $buf = "Mem-Act: $memory_clears / $memory_full_checks";
     glRasterPos2i( 2, 210 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks";
+    glRasterPos2i( 2, 224 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "Crea: $creature_length";
