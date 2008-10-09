@@ -167,6 +167,7 @@ my @OFFSETS = (
             menu_state => 0x01393260,
             view_state => 0x009FC368,
             building_vector => 0x015838A0,
+            item_vector => 0x015832C8,
         },
 ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT
 

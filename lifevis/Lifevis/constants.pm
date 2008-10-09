@@ -13,7 +13,7 @@ our @EXPORT = ( qw(
  grass stone cursor obsidian unknown minstone pool water soil tree shrub
  sapling creature grassb boulder shrub_dead tree_dead sapling_dead
  constructed_floor_detailed constructed_wall grass_dry lava test metal
- stone_detailed minstone_detailed ui
+ stone_detailed minstone_detailed ui items
  
  BUILDING_OCCUPANCY_NONE BUILDING_OCCUPANCY_CONST BUILDING_OCCUPANCY_NO_BLOCK
  BUILDING_OCCUPANCY_BLOCK_FLOOR BUILDING_OCCUPANCY_BLOCK
@@ -21,11 +21,11 @@ our @EXPORT = ( qw(
  
  type desig occup
  
- flags race c_x c_y c_z name cell_x cell_y
+ flags race c_x c_y c_z name cell_x cell_y id
  
  cell_ptr
  
- changed z offset creature_list cache_ptr building_list
+ changed z offset creature_list cache_ptr building_list item_list
  
  ) );
 
@@ -57,7 +57,7 @@ use enum qw(
  grass stone cursor obsidian unknown minstone pool water soil tree shrub
  sapling creature grassb boulder shrub_dead tree_dead sapling_dead 
  constructed_floor_detailed constructed_wall grass_dry lava test metal
- stone_detailed minstone_detailed ui
+ stone_detailed minstone_detailed ui items
 );
 
 use enum qw(
@@ -71,13 +71,13 @@ use constant desig => 1;
 use constant occup => 2;
 
 use enum qw(
- flags race c_x c_y c_z name cell_x cell_y
+ flags race c_x c_y c_z name cell_x cell_y id
 );
 
 use constant cell_ptr => 0;
 
 use enum qw(
- changed z offset creature_list cache_ptr building_list
+ changed z offset creature_list cache_ptr building_list item_list
 );
 
 1;

@@ -3,7 +3,7 @@ use strict;
 
 use base 'Exporter';
 
-our @EXPORT = ( qw( get_df_tile_type_data ) );
+our @EXPORT = ( qw( get_df_tile_type_data get_df_item_id_data ) );
 
 # TODO: Make auto-converter from ods to this file.
 
@@ -313,6 +313,20 @@ $TILE_TYPES[518] = [RAMP,constructed_wall,0.9];    #   MAPTILE_RAMP_CONSTRUCTED,
 
 sub get_df_tile_type_data {
     return @TILE_TYPES;
+}
+
+
+my @item_ids;
+    
+$item_ids[0] = "Barrel";
+$item_ids[2] = "Anvil";
+$item_ids[8] = "Maple logs";
+$item_ids[10] = "Tower-cap logs";
+$item_ids[12] = "Bag";
+$item_ids[16] = "Alder logs";
+
+sub get_df_item_id_data {
+    return @item_ids;
 }
 
 1;

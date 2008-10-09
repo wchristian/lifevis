@@ -84,6 +84,7 @@ use Win32::GuiTest qw( :FUNC );
 my $memory_use;
 $memory_use = 0;
 
+my @item_ids = get_df_item_id_data();
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
 my $config_loaded;
@@ -115,6 +116,11 @@ my %buildings;
 my $current_buil_proc_task = 0;
 my $max_buil_proc_tasks    = 0;
 
+my %item_present;
+my $current_item_proc_task = 0;
+my $max_item_proc_tasks    = 0;
+my %items;
+
 # cursor coordinates  in tiles at last refresh
 my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
 
@@ -140,6 +146,7 @@ my @cache_bucket;
 my @texture_ID;
 my @creature_display_lists;
 my @building_display_lists;
+my @item_display_lists;
 my @tiles;
 my @ramps;
 
@@ -411,6 +418,11 @@ sub run {
     my $buil_loop = new Coro \&building_update_loop;
     my $successbuil    = $buil_loop->ready;
     cede();
+    
+    generate_item_display_lists();
+    my $item_loop = new Coro \&item_update_loop;
+    my $successitem    = $item_loop->ready;
+    cede();
 
     my $memory_loop = new Coro \&memory_control_loop;
     my $success4    = $memory_loop->ready;
@@ -585,7 +597,7 @@ sub building_update_loop {
         for my $building (@building_offsets) {
             $building_present{$building} = 1;
         }
-
+        
         $current_buil_proc_task = 0;
         $max_buil_proc_tasks    = $#building_offsets;
 
@@ -602,7 +614,7 @@ sub building_update_loop {
                 cede();
             }
 
-            #say $proc->hexdump( $building, 0x688 );
+            #say $proc->hexdump( $building, 0xD8 );
 
             # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $hProcess, $building + 4, 2, $buf );
@@ -644,6 +656,101 @@ sub building_update_loop {
                 push @{ $cells[$bx][$by][building_list] }, $building;
                 $buildings{$building}[cell_x] = $bx;
                 $buildings{$building}[cell_y] = $by;
+            }
+        }
+    }
+}
+
+sub item_update_loop {
+    while (1) {
+        my $buf = "";
+
+        _ReadMemory( $hProcess, $OFFSETS[$ver]{item_vector} + 4,
+            4 * 2, $buf );
+        my @item_vector_offsets = unpack( 'L' x 2, $buf );
+
+        my $item_list_length =
+          ( $item_vector_offsets[1] - $item_vector_offsets[0] ) / 4;
+
+        _ReadMemory(
+            $hProcess,
+            $item_vector_offsets[0],
+            4 * $item_list_length, $buf
+        );
+        my @item_offsets = unpack( 'L' x $item_list_length, $buf );
+
+        while ( my ( $key, $value ) = each %item_present ) {
+            $value = 0;
+        }
+
+        for my $item (@item_offsets) {
+            $item_present{$item} = 1;
+        }
+
+        $current_item_proc_task = 0;
+        $max_item_proc_tasks    = $#item_offsets;
+
+        $current_item_proc_task++;
+        for ( 0 .. $c{item_update_slow_rate} ) {
+            cede();
+        }
+
+        for my $item (@item_offsets) {
+            my $buf = "";
+
+            $current_item_proc_task++;
+            for ( 0 .. $c{item_update_slow_rate} ) {
+                cede();
+            }
+
+            # extract coordinates of current creature and skip if out of bounds
+            _ReadMemory( $hProcess, $item + 4, 2, $buf );
+            my $rx = unpack( "S", $buf );
+            if ( $rx > $xcount * 16 ) {
+                $item_present{$item} = 0;
+                next;
+            }
+            _ReadMemory( $hProcess, $item + 8, 2, $buf );
+            my $rz = unpack( "S", $buf );
+            next if ( $rz > $zcount + 1 );
+            _ReadMemory( $hProcess, $item + 6, 2, $buf );
+            my $ry = unpack( "S", $buf );
+            _ReadMemory( $hProcess, $item + 88, 2, $buf );
+            my $type = unpack( "S", $buf );
+
+            #say $proc->hexdump( $item, 0x88 ),"\n ";
+
+            # update record of current creature
+            $items{$item}[c_x] = $rx;
+            $items{$item}[c_y] = $ry;
+            $items{$item}[c_z] = $rz;
+            $items{$item}[id] = $type;
+
+            # get old and new cell location and compare
+            my $old_x = $items{$item}[cell_x];
+            my $old_y = $items{$item}[cell_y];
+            my $bx    = int $rx / 16;
+            my $by    = int $ry / 16;
+            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+
+  # creature moved to other cell or is new
+  # get creature list of old cell then cycle through it and remove the old entry
+                if ( defined $old_x ) {
+                    glutPostRedisplay();
+                    my $item_list = $cells[$old_x][$old_y][item_list];
+                    for my $entry ( @{$item_list} ) {
+                        if ( $entry == $item ) {
+                            $entry = $item_list->[$#$item_list];
+                            pop @{$item_list};
+                            last;
+                        }
+                    }
+                }
+
+                # add entry to new cell and update cell coordinates
+                push @{ $cells[$bx][$by][item_list] }, $item;
+                $items{$item}[cell_x] = $bx;
+                $items{$item}[cell_y] = $by;
             }
         }
     }
@@ -940,6 +1047,17 @@ sub generate_building_display_lists {
     glBindTexture( GL_TEXTURE_2D, $texture_ID[metal] );
     glBegin(GL_TRIANGLES);
     $DRAW_MODEL{Wall}->( 0, 0.1, 0, 1, 10000 );
+    glEnd();
+    glEndList();
+}
+
+sub generate_item_display_lists {
+    my $dl = glGenLists(1);
+    push @item_display_lists, $dl;
+    glNewList( $dl, GL_COMPILE );
+    glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
+    glBegin(GL_TRIANGLES);
+    $DRAW_MODEL{Items}->( 0, 0.1, 0, 1, 10000 );
     glEnd();
     glEndList();
 }
@@ -1645,7 +1763,9 @@ sub render_scene {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     glColor3f( 1, 1, 1 );    # Basic polygon color
-
+    
+    my @item_drawn;
+    
     # cycle through cells in range around cursor to render
     for my $bx ( $min_x_range .. $max_x_range ) {
         for my $by ( $min_y_range .. $max_y_range ) {
@@ -1706,6 +1826,26 @@ sub render_scene {
     
                             glCallList( $building_display_lists[0] );
                     glTranslatef( -$x, -$z, -$y );
+                }
+            }
+            
+            # draw items
+            if ( defined $cells[$bx][$by][item_list] ) {
+                my @item_list = @{ $cells[$bx][$by][item_list] };
+                for my $entry (@item_list) {
+                    last if !defined $entry;
+                    next unless $item_present{$entry};
+    
+                    my $x = $items{$entry}[c_x];
+                    my $z = $items{$entry}[c_z];
+                    next if $z > $ceiling_slice;
+                    my $y = $items{$entry}[c_y];
+                    next if $item_drawn[$x][$z][$y];
+                    glTranslatef( $x, $z, $y );
+    
+                    glCallList( $item_display_lists[0] );
+                    glTranslatef( -$x, -$z, -$y );
+                    $item_drawn[$x][$z][$y] = 1;
                 }
             }
             
@@ -1843,6 +1983,10 @@ sub render_scene {
 
     $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks";
     glRasterPos2i( 2, 224 );
+    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks";
+    glRasterPos2i( 2, 236 );
     print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "Crea: $creature_length";
@@ -1988,7 +2132,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(27);
+    @texture_ID = glGenTextures_p(28);
 
     create_texture( 'grass',                      grass );
     create_texture( 'stone',                      stone );
@@ -2017,6 +2161,7 @@ sub build_textures {
     create_texture( 'stone_detailed',             stone_detailed );
     create_texture( 'minstone_detailed',          minstone_detailed );
     create_texture( 'ui',                         ui );
+    create_texture( 'items',                      items );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -2071,6 +2216,57 @@ sub process_key_press {
 
 sub process_special_key_press {
     my $key = shift;
+
+    
+    
+    
+    if ( $key == GLUT_KEY_F12 ) {
+        open my $OUT, ">>", 'export.txt' or die( "horribly: ".$! );
+        print $OUT "\n\n--------------------------------\n";
+        print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";
+        say "\n\n--------------------------------";
+        say "X: $xmouse Y: $ymouse Z: $zmouse\n";
+        for my $item ( keys %items ) {
+            next if !defined $items{$item}[c_x];
+            next if !defined $items{$item}[c_y];
+            next if !defined $items{$item}[c_z];
+            if ( $items{$item}[c_x] == $xmouse
+                && $items{$item}[c_y] == $ymouse
+                && $items{$item}[c_z] == $zmouse
+                ) {
+                my $hex_dump = $proc->hexdump( $item, 0x88 );
+                print $OUT "Item:\n$hex_dump\n\n";
+                say "Item:\n$hex_dump\n";
+            }
+        }
+        for my $building ( keys %buildings ) {
+            next if !defined $buildings{$building}[c_x];
+            next if !defined $buildings{$building}[c_y];
+            next if !defined $buildings{$building}[c_z];
+            if ( $buildings{$building}[c_x] == $xmouse
+                && $buildings{$building}[c_y] == $ymouse
+                && $buildings{$building}[c_z] == $zmouse
+                ) {
+                my $hex_dump = $proc->hexdump( $building, 0xD8 );
+                print $OUT "Building:\n$hex_dump\n\n";
+                say "Building:\n$hex_dump\n";
+            }
+        }
+        for my $creature ( keys %creatures ) {
+            next if !defined $creatures{$creature}[c_x];
+            next if !defined $creatures{$creature}[c_y];
+            next if !defined $creatures{$creature}[c_z];
+            if ( $creatures{$creature}[c_x] == $xmouse
+                && $creatures{$creature}[c_y] == $ymouse
+                && $creatures{$creature}[c_z] == $zmouse
+                ) {
+                my $hex_dump = $proc->hexdump( $creature, 0x688 );
+                print $OUT "Creature:\n$hex_dump\n\n";
+                say "Creature:\n$hex_dump\n";
+            }
+        }
+        close $OUT;
+    }
 
     if ( $key >= GLUT_KEY_F1 && $key <= GLUT_KEY_F12 ) {
         PostMessage( $DF_window, WM_KEYDOWN, $key + 111, 0 );
