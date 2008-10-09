@@ -164,7 +164,7 @@ my @light_position = ( -0.8, 1.5, 1.0, 0.0 );
 my ( $submenid, $menid );
 my $window_ID;
 my $DF_window;
-my $next_cede_time = 0;
+my $next_render_time = 0;
 
 my $middle_mouse = 0;
 my $last_mouse_x;
@@ -183,6 +183,23 @@ my $memory_full_checks = 0;
 my $memory_clears      = 0;
 my $memory_loop;
 my $all_protected;
+
+my $render_loop;
+my $redraw_needed;
+my $creature_delay_counter = 0;
+my $creature_loop;
+
+my $location_delay_counter = 0;
+my $loc_loop;
+
+my $landscape_delay_counter = 0;
+my $land_loop;
+
+my $building_delay_counter = 0;
+my $buil_loop;
+
+my $item_delay_counter = 0;
+my $item_loop;
 
 __PACKAGE__->run(@ARGV) unless caller();
 
@@ -378,7 +395,7 @@ sub run {
 # Set up Callback functions ####################################################
 
     # Register the callback function to do the drawing.
-    glutDisplayFunc( \&render_scene );
+    glutDisplayFunc( \&do_nothing );
 
     glutIdleFunc( \&idle_tasks );    # If there's nothing to do, draw.
 
@@ -406,29 +423,25 @@ sub run {
 
     my $main_loop = $Coro::main;
 
-    my $loc_loop = new Coro \&location_update_loop;
+    $loc_loop = new Coro \&location_update_loop;
     my $success2 = $loc_loop->ready;
     cede();
 
-    my $land_loop = new Coro \&landscape_update_loop;
+    $land_loop = new Coro \&landscape_update_loop;
     my $success3  = $land_loop->ready;
 
     generate_creature_display_lists();
-    my $creat_loop = new Coro \&creature_update_loop;
-    my $success    = $creat_loop->ready;
-    cede();
+    $creature_loop = new Coro \&creature_update_loop;
     
     generate_building_display_lists();
-    my $buil_loop = new Coro \&building_update_loop;
-    my $successbuil    = $buil_loop->ready;
-    cede();
+    $buil_loop = new Coro \&building_update_loop;
     
     generate_item_display_lists();
-    my $item_loop = new Coro \&item_update_loop;
-    my $successitem    = $item_loop->ready;
-    cede();
+    $item_loop = new Coro \&item_update_loop;
 
     $memory_loop = new Coro \&memory_control_loop;
+    
+    $render_loop = new Coro \&render_scene;
     
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.
@@ -439,6 +452,8 @@ sub run {
 
     print "moo";
 }
+
+sub do_nothing {$redraw_needed = 1;}
 ################################################################################
 ## Rendering Functions #########################################################
 ################################################################################
@@ -474,6 +489,7 @@ sub extract_base_memory_data {
 
 sub creature_update_loop {
     while (1) {
+        schedule();
         my $buf = "";
 
         _ReadMemory( $hProcess, $OFFSETS[$ver]{creature_vector} + 4,
@@ -505,9 +521,8 @@ sub creature_update_loop {
             my $buf = "";
 
             $current_creat_proc_task++;
-            for ( 0 .. $c{creature_update_slow_rate} ) {
-                cede();
-            }
+            
+            schedule();
 
             #say $proc->hexdump( $creature, 0x688 );
 
@@ -555,7 +570,7 @@ sub creature_update_loop {
   # creature moved to other cell or is new
   # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
-                    glutPostRedisplay();
+                    $redraw_needed = 1;
                     my $creature_list = $cells[$old_x][$old_y][creature_list];
                     for my $entry ( @{$creature_list} ) {
                         if ( $entry == $creature ) {
@@ -577,6 +592,7 @@ sub creature_update_loop {
 
 sub building_update_loop {
     while (1) {
+        schedule();
         my $buf = "";
 
         _ReadMemory( $hProcess, $OFFSETS[$ver]{building_vector} + 4,
@@ -604,18 +620,11 @@ sub building_update_loop {
         $current_buil_proc_task = 0;
         $max_buil_proc_tasks    = $#building_offsets;
 
-        $current_buil_proc_task++;
-        for ( 0 .. $c{building_update_slow_rate} ) {
-            cede();
-        }
-
         for my $building (@building_offsets) {
             my $buf = "";
 
             $current_buil_proc_task++;
-            for ( 0 .. $c{building_update_slow_rate} ) {
-                cede();
-            }
+            schedule();
 
             #say $proc->hexdump( $building, 0xD8 );
 
@@ -644,7 +653,7 @@ sub building_update_loop {
   # creature moved to other cell or is new
   # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
-                    glutPostRedisplay();
+                    $redraw_needed = 1;
                     my $building_list = $cells[$old_x][$old_y][building_list];
                     for my $entry ( @{$building_list} ) {
                         if ( $entry == $building ) {
@@ -666,6 +675,7 @@ sub building_update_loop {
 
 sub item_update_loop {
     while (1) {
+        schedule();
         my $buf = "";
 
         _ReadMemory( $hProcess, $OFFSETS[$ver]{item_vector} + 4,
@@ -693,18 +703,11 @@ sub item_update_loop {
         $current_item_proc_task = 0;
         $max_item_proc_tasks    = $#item_offsets;
 
-        $current_item_proc_task++;
-        for ( 0 .. $c{item_update_slow_rate} ) {
-            cede();
-        }
-
         for my $item (@item_offsets) {
             my $buf = "";
 
             $current_item_proc_task++;
-            for ( 0 .. $c{item_update_slow_rate} ) {
-                cede();
-            }
+            schedule();
 
             # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $hProcess, $item + 4, 2, $buf );
@@ -739,7 +742,7 @@ sub item_update_loop {
   # creature moved to other cell or is new
   # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
-                    glutPostRedisplay();
+                    $redraw_needed = 1;
                     my $item_list = $cells[$old_x][$old_y][item_list];
                     for my $entry ( @{$item_list} ) {
                         if ( $entry == $item ) {
@@ -803,43 +806,44 @@ sub location_update_loop {
 
         $ceiling_slice = $zmouse if $ceiling_locked;
 
-        glutPostRedisplay()
-          if ( $xmouse != $xmouse_old
-            || $ymouse != $ymouse_old
-            || $zmouse != $zmouse_old
-            || $ceiling_slice != $old_ceiling_slice );
-
-        # update camera system with mouse data
-        ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
-        reposition_camera();    # sets up initial camera position offsets
-
-        # calculate cell coords from mouse coords
-        $xcell = int $xmouse / 16;
-        $ycell = int $ymouse / 16;
-        $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
-        $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
-        $xcell = $xcount - $c{view_range} - 1
-          if $xcell >= $xcount - $c{view_range};
-        $ycell = $ycount - $c{view_range} - 1
-          if $ycell >= $ycount - $c{view_range};
-
-        $min_x_range = $xcell - $c{view_range};
-        $min_x_range = 0 if $min_x_range < 0;
-        $max_x_range = $xcell + $c{view_range};
-        $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
-        $min_y_range = $ycell - $c{view_range};
-        $min_y_range = 0 if $min_y_range < 0;
-        $max_y_range = $ycell + $c{view_range};
-        $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
-
-        for ( 0 .. $c{cursor_update_slow_rate} ) {
-            cede();
+        if ( $xmouse != $xmouse_old
+          || $ymouse != $ymouse_old
+          || $zmouse != $zmouse_old
+          || $ceiling_slice != $old_ceiling_slice ) {
+            
+            $redraw_needed = 1;
+    
+            # update camera system with mouse data
+            ( $x_pos, $z_pos, $y_pos ) = ( $xmouse, $ymouse, $zmouse );
+            reposition_camera();    # sets up initial camera position offsets
+    
+            # calculate cell coords from mouse coords
+            $xcell = int $xmouse / 16;
+            $ycell = int $ymouse / 16;
+            $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
+            $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
+            $xcell = $xcount - $c{view_range} - 1
+              if $xcell >= $xcount - $c{view_range};
+            $ycell = $ycount - $c{view_range} - 1
+              if $ycell >= $ycount - $c{view_range};
+    
+            $min_x_range = $xcell - $c{view_range};
+            $min_x_range = 0 if $min_x_range < 0;
+            $max_x_range = $xcell + $c{view_range};
+            $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
+            $min_y_range = $ycell - $c{view_range};
+            $min_y_range = 0 if $min_y_range < 0;
+            $max_y_range = $ycell + $c{view_range};
+            $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
         }
+
+        schedule();
     }
 }
 
 sub landscape_update_loop {
     while (1) {
+        schedule();
         my $buf = "";
 
         #TODO: When at the edge, only grab at inner edge.
@@ -877,9 +881,7 @@ sub landscape_update_loop {
                         $cells[$bx][$by][changed] = 1;    # cell was changed
                     }
 
-                    for ( 0 .. $c{landscape_update_slow_rate} ) {
-                        cede();
-                    }
+                    schedule();
                     $current_data_proc_task++;
                 }
             }
@@ -907,10 +909,8 @@ sub landscape_update_loop {
                                     $bx );
                                 @{$slices}[$slice] = 0;
                             }
-                            glutPostRedisplay();
-                            for ( 0 .. $c{landscape_update_slow_rate} ) {
-                                cede();
-                            }
+                            $redraw_needed = 1;
+                            schedule();
                             $current_data_proc_task++;
                         }
                         $cells[$bx][$by][changed] = 0;
@@ -945,10 +945,8 @@ sub landscape_update_loop {
                                 $bx );
                             @{$slices}[$slice] = 0;
                         }
-                        glutPostRedisplay();
-                        for ( 0 .. $c{landscape_update_slow_rate} ) {
-                            cede();
-                        }
+                        $redraw_needed = 1;
+                        schedule();
                         $current_data_proc_task++;
                     }
                     $cells[$bx][$by][changed] = 0;
@@ -1709,7 +1707,7 @@ sub menu {
         exit 0;
     }
 
-    glutPostRedisplay();
+    $redraw_needed = 1;
     return;
 }
 
@@ -1717,6 +1715,37 @@ sub menu {
 # Routine which handles background stuff when the app is idle
 
 sub idle_tasks {
+    $creature_delay_counter++;
+    if ( $creature_delay_counter > $c{creature_update_slow_rate} ) {
+        $creature_delay_counter = 0;
+        $creature_loop->ready;
+    }
+    
+    $location_delay_counter++;
+    if ( $location_delay_counter > $c{cursor_update_slow_rate} ) {
+        $location_delay_counter = 0;
+        $loc_loop->ready;
+    }
+    
+    $landscape_delay_counter++;
+    if ( $landscape_delay_counter > $c{landscape_update_slow_rate} ) {
+        $landscape_delay_counter = 0;
+        $land_loop->ready;
+    }
+    
+    $building_delay_counter++;
+    if ( $building_delay_counter > $c{building_update_slow_rate} ) {
+        $building_delay_counter = 0;
+        $buil_loop->ready;
+    }
+    
+    $item_delay_counter++;
+    if ( $item_delay_counter > $c{item_update_slow_rate} ) {
+        $item_delay_counter = 0;
+        $item_loop->ready;
+    }
+
+    $render_loop->ready if $redraw_needed and time > $next_render_time;
     $memory_loop->ready if $memory_needs_clears;
     cede();
 
@@ -1728,369 +1757,369 @@ sub idle_tasks {
 
 sub render_scene {
 
-    while ( time < $next_cede_time ) {
-        cede();
-    }
-    my $buf;    # For our strings.
-
-    # Enables, disables or otherwise adjusts
-    # as appropriate for our current settings.
-
-    glEnable(GL_TEXTURE_2D);
-
-    glEnable(GL_LIGHTING);
-
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-    glEnable(GL_DEPTH_TEST);
-
-    # Need to manipulate the ModelView matrix to move our model around.
-    glMatrixMode(GL_MODELVIEW);
-
-    gluLookAt(
-        $x_pos + $x_off,
-        $y_pos + $y_off,
-        $z_pos + $z_off,
-        $x_pos, $y_pos, $z_pos, 0, 1, 0
-    );
-
-    # Set up a light, turn it on.
-    glLightfv_p( GL_LIGHT1,
-        GL_POSITION,
-        (
-            $light_position[0], $light_position[1],
-            $light_position[2], $light_position[3]
-        )
-    );
-
-    # Clear the color and depth buffers.
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-    glColor3f( 1, 1, 1 );    # Basic polygon color
+    while ( 1 ) {;
+        my $buf;    # For our strings.
     
-    my @item_drawn;
+        # Enables, disables or otherwise adjusts
+        # as appropriate for our current settings.
     
-    # cycle through cells in range around cursor to render
-    for my $bx ( $min_x_range .. $max_x_range ) {
-        for my $by ( $min_y_range .. $max_y_range ) {
-
-            #next unless $cells[$bx][$by][cache_ptr];
-
-            my $cache_ptr = $cells[$bx][$by][cache_ptr];
-
-            next if !defined $cache_ptr;
-
-            next if !defined $cache[$cache_ptr];
-            
-            # draw landscape
-            my $slices = $cache[$cache_ptr];
-            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-                next if $slice > $ceiling_slice + 2;
-                glCallList( $slices->[$slice] ) if $slices->[$slice];
-            }
-            
-            # draw creatures
-            if (defined $cells[$bx][$by][creature_list] ) {
-                my @creature_list = @{ $cells[$bx][$by][creature_list] };
-                for my $entry (@creature_list) {
-                    last if !defined $entry;
-                    next unless $creatures_present{$entry};
+        glEnable(GL_TEXTURE_2D);
     
-                    next if $creatures{$entry}[flags] & 2;
-                    my $x = $creatures{$entry}[c_x];
-                    my $z = $creatures{$entry}[c_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $creatures{$entry}[c_y];
-                    glTranslatef( $x, $z, $y );
-                    given ( $creatures{$entry}[race] ) {
-                        when (166) {
-                            glCallList( $creature_display_lists[0] );
+        glEnable(GL_LIGHTING);
+    
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    
+        glEnable(GL_DEPTH_TEST);
+    
+        # Need to manipulate the ModelView matrix to move our model around.
+        glMatrixMode(GL_MODELVIEW);
+    
+        gluLookAt(
+            $x_pos + $x_off,
+            $y_pos + $y_off,
+            $z_pos + $z_off,
+            $x_pos, $y_pos, $z_pos, 0, 1, 0
+        );
+    
+        # Set up a light, turn it on.
+        glLightfv_p( GL_LIGHT1,
+            GL_POSITION,
+            (
+                $light_position[0], $light_position[1],
+                $light_position[2], $light_position[3]
+            )
+        );
+    
+        # Clear the color and depth buffers.
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    
+        glColor3f( 1, 1, 1 );    # Basic polygon color
+        
+        my @item_drawn;
+        
+        # cycle through cells in range around cursor to render
+        for my $bx ( $min_x_range .. $max_x_range ) {
+            for my $by ( $min_y_range .. $max_y_range ) {
+    
+                #next unless $cells[$bx][$by][cache_ptr];
+    
+                my $cache_ptr = $cells[$bx][$by][cache_ptr];
+    
+                next if !defined $cache_ptr;
+    
+                next if !defined $cache[$cache_ptr];
+                
+                # draw landscape
+                my $slices = $cache[$cache_ptr];
+                for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
+                    next if $slice > $ceiling_slice + 2;
+                    glCallList( $slices->[$slice] ) if $slices->[$slice];
+                }
+                
+                # draw creatures
+                if (defined $cells[$bx][$by][creature_list] ) {
+                    my @creature_list = @{ $cells[$bx][$by][creature_list] };
+                    for my $entry (@creature_list) {
+                        last if !defined $entry;
+                        next unless $creatures_present{$entry};
+        
+                        next if $creatures{$entry}[flags] & 2;
+                        my $x = $creatures{$entry}[c_x];
+                        my $z = $creatures{$entry}[c_z];
+                        next if $z > $ceiling_slice;
+                        my $y = $creatures{$entry}[c_y];
+                        glTranslatef( $x, $z, $y );
+                        given ( $creatures{$entry}[race] ) {
+                            when (166) {
+                                glCallList( $creature_display_lists[0] );
+                            }
+                            default {
+                                glCallList( $creature_display_lists[1] );
+        
+                            }
                         }
-                        default {
-                            glCallList( $creature_display_lists[1] );
-    
-                        }
+                        glTranslatef( -$x, -$z, -$y );
                     }
-                    glTranslatef( -$x, -$z, -$y );
                 }
-            }
-            
-            # draw buildings
-            if ( defined $cells[$bx][$by][building_list] ) {
-                my @building_list = @{ $cells[$bx][$by][building_list] };
-                for my $entry (@building_list) {
-                    last if !defined $entry;
-                    next unless $building_present{$entry};
-    
-                    my $x = $buildings{$entry}[c_x];
-                    my $z = $buildings{$entry}[c_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $buildings{$entry}[c_y];
-                    glTranslatef( $x, $z, $y );
-    
-                            glCallList( $building_display_lists[0] );
-                    glTranslatef( -$x, -$z, -$y );
+                
+                # draw buildings
+                if ( defined $cells[$bx][$by][building_list] ) {
+                    my @building_list = @{ $cells[$bx][$by][building_list] };
+                    for my $entry (@building_list) {
+                        last if !defined $entry;
+                        next unless $building_present{$entry};
+        
+                        my $x = $buildings{$entry}[c_x];
+                        my $z = $buildings{$entry}[c_z];
+                        next if $z > $ceiling_slice;
+                        my $y = $buildings{$entry}[c_y];
+                        glTranslatef( $x, $z, $y );
+        
+                                glCallList( $building_display_lists[0] );
+                        glTranslatef( -$x, -$z, -$y );
+                    }
                 }
-            }
-            
-            # draw items
-            if ( defined $cells[$bx][$by][item_list] ) {
-                my @item_list = @{ $cells[$bx][$by][item_list] };
-                for my $entry (@item_list) {
-                    last if !defined $entry;
-                    next unless $item_present{$entry};
-    
-                    my $x = $items{$entry}[c_x];
-                    my $z = $items{$entry}[c_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $items{$entry}[c_y];
-                    next if $item_drawn[$x][$z][$y];
-                    glTranslatef( $x, $z, $y );
-    
-                    glCallList( $item_display_lists[0] );
-                    glTranslatef( -$x, -$z, -$y );
-                    $item_drawn[$x][$z][$y] = 1;
+                
+                # draw items
+                if ( defined $cells[$bx][$by][item_list] ) {
+                    my @item_list = @{ $cells[$bx][$by][item_list] };
+                    for my $entry (@item_list) {
+                        last if !defined $entry;
+                        next unless $item_present{$entry};
+        
+                        my $x = $items{$entry}[c_x];
+                        my $z = $items{$entry}[c_z];
+                        next if $z > $ceiling_slice;
+                        my $y = $items{$entry}[c_y];
+                        next if $item_drawn[$x][$z][$y];
+                        glTranslatef( $x, $z, $y );
+        
+                        glCallList( $item_display_lists[0] );
+                        glTranslatef( -$x, -$z, -$y );
+                        $item_drawn[$x][$z][$y] = 1;
+                    }
                 }
+                
             }
-            
         }
-    }
-
-    # draw visible cursor
-    glDisable(GL_LIGHTING);
-    glLineWidth(2);
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
-    glPolygonMode( GL_FRONT, GL_LINE );
-    glBegin(GL_QUADS);
-    $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1000 );
-    glEnd();
-    glPolygonMode( GL_FRONT, GL_FILL );
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
-
-=cut    glBindTexture( GL_TEXTURE_2D, $texture_ID[test] );
-    glEnable(GL_POINT_SPRITE);
-    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-	glPointSize(50.0);
-    glBegin(GL_POINTS);
-    glVertex3f($x_pos, $y_pos, $z_pos);
-=cut    glEnd();
-
-    glLoadIdentity();    # Move back to the origin (for the text, below).
-
-    # We need to change the projection matrix for the text rendering.
-    glMatrixMode(GL_PROJECTION);
-
-    glPushMatrix();      # But we like our current view too; so we save it here.
-
-    glLoadIdentity();    # Now we set up a new projection for the text.
-
-    gluOrtho2D( 0, $c{window_width}, $c{window_height}, 0 );
-
-    glDisable(GL_TEXTURE_2D);    # Lit or textured text looks awful.
-    glDisable(GL_LIGHTING);
-
-    glDisable(GL_DEPTH_TEST);    # We don't want depth-testing either.
-
-    # But, for fun, let's make the text partially transparent too.
-    glColor4f( 0.6, 1.0, 0.6, .75 );
-
-    $buf = sprintf 'x_rot: %d', $x_rot;
-    glRasterPos2i( 2, 14 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'y_rot: %d', $y_rot;
-    glRasterPos2i( 2, 26 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'z_pos: %f', $z_pos;
-    glRasterPos2i( 2, 38 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'y_pos: %f', $y_pos;
-    glRasterPos2i( 2, 50 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'x_pos: %f', $x_pos;
-    glRasterPos2i( 2, 62 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'z_off: %f', $z_off;
-    glRasterPos2i( 2, 74 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'y_off: %f', $y_off;
-    glRasterPos2i( 2, 86 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'x_off: %f', $x_off;
-    glRasterPos2i( 2, 98 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Mem: %f', ( ( $memory_use / $c{memory_limit} ) * 100 );
-    glRasterPos2i( 2, 110 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
-    glRasterPos2i( 2, 122 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
-        glRasterPos2i( 2, 134 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
-
-    if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Desigs: 0b%059b',
-          $tiles[$zmouse][desig][$xmouse][$ymouse];
-        glRasterPos2i( 2, $c{window_height} - 14 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
-
-    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Occup: 0b%059b',
-          ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
-        glRasterPos2i( 2, $c{window_height} - 26 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
-
-    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Occup: 0b%059b',
-          $tiles[$zmouse][occup][$xmouse][$ymouse];
-        glRasterPos2i( 2, $c{window_height} - 2 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
-
-    $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
-    glRasterPos2i( 2, 158 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Working threads: %d', Coro::nready;
-    glRasterPos2i( 2, 146 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks";
-    glRasterPos2i( 2, 172 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks";
-    glRasterPos2i( 2, 186 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Ceiling: $ceiling_slice";
-    glRasterPos2i( 2, 198 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Mem-Act: $memory_clears / $memory_full_checks";
-    glRasterPos2i( 2, 210 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks";
-    glRasterPos2i( 2, 224 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks";
-    glRasterPos2i( 2, 236 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    #$buf = "Crea: $creature_length";
-    #glRasterPos2i( 2, 222 );
-    #print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    glColor4f( 0.2, 0.2, 0.2, 0.75 );
-
-    glBegin(GL_QUADS);
-    glVertex3f( $c{window_width} - 42, $c{window_height} - 20,   0.0 );
-    glVertex3f( $c{window_width} - 42, $c{window_height},        0.0 );
-    glVertex3f( $c{window_width} - 22, $c{window_height},        0.0 );
-    glVertex3f( $c{window_width} - 22, $c{window_height} - 20.0, 0.0 );
-    glEnd();
-
-    glBegin(GL_QUADS);
-    glVertex3f( $c{window_width} - 20, $c{window_height} - 20,   0.0 );
-    glVertex3f( $c{window_width} - 20, $c{window_height},        0.0 );
-    glVertex3f( $c{window_width},      $c{window_height},        0.0 );
-    glVertex3f( $c{window_width},      $c{window_height} - 20.0, 0.0 );
-    glEnd();
-
-    glColor4f( 1, 1, 0.2, 0.75 );
-
-    glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
-    glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
-    print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
-
-    my $height_mod = ( $c{window_height} - 22 ) / ( $zcount + 2 );
-
-    for my $slice ( 0 .. $zcount ) {
-
-        my $part   = ( 0.6 / $zcount );
-        my $bright = ( $part * $slice ) + 0.2;
-
-        glColor4f( $bright, $bright, $bright, 1 );
-
+    
+        # draw visible cursor
+        glDisable(GL_LIGHTING);
+        glLineWidth(2);
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
+        glPolygonMode( GL_FRONT, GL_LINE );
         glBegin(GL_QUADS);
-        glVertex3f( $c{window_width} - 20,
-            $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
-        glVertex3f( $c{window_width} - 20,
-            $c{window_height} - 22 - $height_mod * $slice, 0.0 );
-        glVertex3f( $c{window_width} - 0,
-            $c{window_height} - 22 - $height_mod * $slice, 0.0 );
-        glVertex3f( $c{window_width} - 0,
-            $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
+        $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1000 );
         glEnd();
-    }
-
-    for my $slice ( 0 .. $zcount ) {
-        if ( $slice == $ceiling_slice ) {
+        glPolygonMode( GL_FRONT, GL_FILL );
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
+    
+=cut        glBindTexture( GL_TEXTURE_2D, $texture_ID[test] );
+        glEnable(GL_POINT_SPRITE);
+        glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+        glPointSize(50.0);
+        glBegin(GL_POINTS);
+        glVertex3f($x_pos, $y_pos, $z_pos);
+=cut        glEnd();
+    
+        glLoadIdentity();    # Move back to the origin (for the text, below).
+    
+        # We need to change the projection matrix for the text rendering.
+        glMatrixMode(GL_PROJECTION);
+    
+        glPushMatrix();      # But we like our current view too; so we save it here.
+    
+        glLoadIdentity();    # Now we set up a new projection for the text.
+    
+        gluOrtho2D( 0, $c{window_width}, $c{window_height}, 0 );
+    
+        glDisable(GL_TEXTURE_2D);    # Lit or textured text looks awful.
+        glDisable(GL_LIGHTING);
+    
+        glDisable(GL_DEPTH_TEST);    # We don't want depth-testing either.
+    
+        # But, for fun, let's make the text partially transparent too.
+        glColor4f( 0.6, 1.0, 0.6, .75 );
+    
+        $buf = sprintf 'x_rot: %d', $x_rot;
+        glRasterPos2i( 2, 14 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'y_rot: %d', $y_rot;
+        glRasterPos2i( 2, 26 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'z_pos: %f', $z_pos;
+        glRasterPos2i( 2, 38 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'y_pos: %f', $y_pos;
+        glRasterPos2i( 2, 50 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'x_pos: %f', $x_pos;
+        glRasterPos2i( 2, 62 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'z_off: %f', $z_off;
+        glRasterPos2i( 2, 74 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'y_off: %f', $y_off;
+        glRasterPos2i( 2, 86 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'x_off: %f', $x_off;
+        glRasterPos2i( 2, 98 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'Mem: %f', ( ( $memory_use / $c{memory_limit} ) * 100 );
+        glRasterPos2i( 2, 110 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
+        glRasterPos2i( 2, 122 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
+            glRasterPos2i( 2, 134 );
+            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
+    
+        if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Desigs: 0b%059b',
+              $tiles[$zmouse][desig][$xmouse][$ymouse];
+            glRasterPos2i( 2, $c{window_height} - 14 );
+            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
+    
+        if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Occup: 0b%059b',
+              ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
+            glRasterPos2i( 2, $c{window_height} - 26 );
+            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
+    
+        if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Occup: 0b%059b',
+              $tiles[$zmouse][occup][$xmouse][$ymouse];
+            glRasterPos2i( 2, $c{window_height} - 2 );
+            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
+    
+        $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
+        glRasterPos2i( 2, 158 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = sprintf 'Working threads: %d', Coro::nready;
+        glRasterPos2i( 2, 146 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks";
+        glRasterPos2i( 2, 172 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks";
+        glRasterPos2i( 2, 186 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Ceiling: $ceiling_slice";
+        glRasterPos2i( 2, 198 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Mem-Act: $memory_clears / $memory_full_checks";
+        glRasterPos2i( 2, 210 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks";
+        glRasterPos2i( 2, 224 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks";
+        glRasterPos2i( 2, 236 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        #$buf = "Crea: $creature_length";
+        #glRasterPos2i( 2, 222 );
+        #print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+    
+        glColor4f( 0.2, 0.2, 0.2, 0.75 );
+    
+        glBegin(GL_QUADS);
+        glVertex3f( $c{window_width} - 42, $c{window_height} - 20,   0.0 );
+        glVertex3f( $c{window_width} - 42, $c{window_height},        0.0 );
+        glVertex3f( $c{window_width} - 22, $c{window_height},        0.0 );
+        glVertex3f( $c{window_width} - 22, $c{window_height} - 20.0, 0.0 );
+        glEnd();
+    
+        glBegin(GL_QUADS);
+        glVertex3f( $c{window_width} - 20, $c{window_height} - 20,   0.0 );
+        glVertex3f( $c{window_width} - 20, $c{window_height},        0.0 );
+        glVertex3f( $c{window_width},      $c{window_height},        0.0 );
+        glVertex3f( $c{window_width},      $c{window_height} - 20.0, 0.0 );
+        glEnd();
+    
+        glColor4f( 1, 1, 0.2, 0.75 );
+    
+        glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
+        glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
+        print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
+    
+        my $height_mod = ( $c{window_height} - 22 ) / ( $zcount + 2 );
+    
+        for my $slice ( 0 .. $zcount ) {
+    
             my $part   = ( 0.6 / $zcount );
             my $bright = ( $part * $slice ) + 0.2;
-
-            glColor4f( 1, 1, 0, 1 );
-
-            glRasterPos2i(
-                $c{window_width} - 17,
-                $c{window_height} - 22 - ( 0.95 * $height_mod * ( $slice + 1 ) )
-            );
-            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $slice );
+    
+            glColor4f( $bright, $bright, $bright, 1 );
+    
+            glBegin(GL_QUADS);
+            glVertex3f( $c{window_width} - 20,
+                $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
+            glVertex3f( $c{window_width} - 20,
+                $c{window_height} - 22 - $height_mod * $slice, 0.0 );
+            glVertex3f( $c{window_width} - 0,
+                $c{window_height} - 22 - $height_mod * $slice, 0.0 );
+            glVertex3f( $c{window_width} - 0,
+                $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
+            glEnd();
         }
+    
+        for my $slice ( 0 .. $zcount ) {
+            if ( $slice == $ceiling_slice ) {
+                my $part   = ( 0.6 / $zcount );
+                my $bright = ( $part * $slice ) + 0.2;
+    
+                glColor4f( 1, 1, 0, 1 );
+    
+                glRasterPos2i(
+                    $c{window_width} - 17,
+                    $c{window_height} - 22 - ( 0.95 * $height_mod * ( $slice + 1 ) )
+                );
+                print_opengl_string( GLUT_BITMAP_HELVETICA_12, $slice );
+            }
+        }
+    
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
+        glColor4f( 1, 1, 1, 1 );
+    
+        if ($ceiling_locked) {
+            glBegin(GL_QUADS);
+            OpenGL::glTexCoord2f( 0, 1 );
+            glVertex3f( $c{window_width} - 42, 0, 0.0 );
+            OpenGL::glTexCoord2f( 0, 0.84375 );
+            glVertex3f( $c{window_width} - 42, 20, 0.0 );
+            OpenGL::glTexCoord2f( 0.15625, 0.84375 );
+            glVertex3f( $c{window_width} - 22, 20, 0.0 );
+            OpenGL::glTexCoord2f( 0.15625, 1 );
+            glVertex3f( $c{window_width} - 22, 0, 0.0 );
+            glEnd();
+        }
+        else {
+            glBegin(GL_QUADS);
+            OpenGL::glTexCoord2f( 0.15625, 1 );
+            glVertex3f( $c{window_width} - 42, 0, 0.0 );
+            OpenGL::glTexCoord2f( 0.15625, 0.84375 );
+            glVertex3f( $c{window_width} - 42, 20, 0.0 );
+            OpenGL::glTexCoord2f( 0.3125, 0.84375 );
+            glVertex3f( $c{window_width} - 22, 20, 0.0 );
+            OpenGL::glTexCoord2f( 0.3125, 1 );
+            glVertex3f( $c{window_width} - 22, 0, 0.0 );
+            glEnd();
+        }
+    
+        glPopMatrix();   # Done with this special projection matrix.  Throw it away.
+    
+        glutSwapBuffers();    # All done drawing.  Let's show it.
+    
+        $next_render_time = time + $c{redraw_delay};
+        $redraw_needed = 0;
+        schedule()
     }
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
-    glColor4f( 1, 1, 1, 1 );
-
-    if ($ceiling_locked) {
-        glBegin(GL_QUADS);
-        OpenGL::glTexCoord2f( 0, 1 );
-        glVertex3f( $c{window_width} - 42, 0, 0.0 );
-        OpenGL::glTexCoord2f( 0, 0.84375 );
-        glVertex3f( $c{window_width} - 42, 20, 0.0 );
-        OpenGL::glTexCoord2f( 0.15625, 0.84375 );
-        glVertex3f( $c{window_width} - 22, 20, 0.0 );
-        OpenGL::glTexCoord2f( 0.15625, 1 );
-        glVertex3f( $c{window_width} - 22, 0, 0.0 );
-        glEnd();
-    }
-    else {
-        glBegin(GL_QUADS);
-        OpenGL::glTexCoord2f( 0.15625, 1 );
-        glVertex3f( $c{window_width} - 42, 0, 0.0 );
-        OpenGL::glTexCoord2f( 0.15625, 0.84375 );
-        glVertex3f( $c{window_width} - 42, 20, 0.0 );
-        OpenGL::glTexCoord2f( 0.3125, 0.84375 );
-        glVertex3f( $c{window_width} - 22, 20, 0.0 );
-        OpenGL::glTexCoord2f( 0.3125, 1 );
-        glVertex3f( $c{window_width} - 22, 0, 0.0 );
-        glEnd();
-    }
-
-    glPopMatrix();   # Done with this special projection matrix.  Throw it away.
-
-    glutSwapBuffers();    # All done drawing.  Let's show it.
-
-    $next_cede_time = time + $c{redraw_delay};
-    cede();
     return;
 }
 
@@ -2118,6 +2147,7 @@ sub resize_scene {
 
     $c{window_width}  = $width;
     $c{window_height} = $height;
+    
     return;
 }
 
@@ -2212,7 +2242,7 @@ sub process_key_press {
 
     PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
-    glutPostRedisplay();
+    $redraw_needed = 1;
     return;
 }
 
@@ -2294,7 +2324,7 @@ sub process_special_key_press {
         printf "SKP: No action for %d.\n", $key;
     }
 
-    glutPostRedisplay();
+    $redraw_needed = 1;
     return;
 }
 
@@ -2316,7 +2346,7 @@ sub process_mouse_click {
             && $y < $c{window_height} )
         {
             --$c{view_range} if $c{view_range} > 0;
-            glutPostRedisplay();
+            $redraw_needed = 1;
         }
         elsif ($x > $c{window_width} - 42
             && $x < $c{window_width} - 20
@@ -2326,11 +2356,11 @@ sub process_mouse_click {
             if ( $ceiling_locked == 1 ) {
                 $ceiling_locked = 0;
                 $ceiling_slice  = $zcount;
-                glutPostRedisplay();
+                $redraw_needed = 1;
             }
             else {
                 $ceiling_locked = 1;
-                glutPostRedisplay();
+                $redraw_needed = 1;
             }
         }
         elsif ($x > $c{window_width} - 20
@@ -2340,7 +2370,7 @@ sub process_mouse_click {
         {
             my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
             ++$c{view_range} if ( $c{view_range} < $size / 2 );
-            glutPostRedisplay();
+            $redraw_needed = 1;
         }
         elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}
@@ -2356,7 +2386,7 @@ sub process_mouse_click {
             $ceiling_slice = 0       if $ceiling_slice < 0;
             $ceiling_slice = $zcount if $ceiling_slice > $zcount;
             $changing_ceiling = 1;
-            glutPostRedisplay();
+            $redraw_needed = 1;
         }
         else {
             $rotating = 1;
@@ -2381,7 +2411,7 @@ sub process_active_mouse_motion {
         ) + 2;
         $ceiling_slice = 0       if $ceiling_slice < 0;
         $ceiling_slice = $zcount if $ceiling_slice > $zcount;
-        glutPostRedisplay();
+        $redraw_needed = 1;
         return;
     }
 
@@ -2426,7 +2456,7 @@ sub process_active_mouse_motion {
     $last_mouse_y = $y;
     reposition_camera();
 
-    glutPostRedisplay();
+    $redraw_needed = 1;
     return;
 }
 
