@@ -69,7 +69,7 @@ use Win32::OLE('in');
 use Benchmark ':hireswallclock';
 
 use Time::HiRes qw ( time sleep );
-use Coro qw[ cede ];
+use Coro qw[ cede schedule ];
 
 use OpenGL::Image;
 use Math::Trig;
@@ -181,6 +181,8 @@ my $ceiling_locked = 0;
 my $memory_needs_clears;
 my $memory_full_checks = 0;
 my $memory_clears      = 0;
+my $memory_loop;
+my $all_protected;
 
 __PACKAGE__->run(@ARGV) unless caller();
 
@@ -190,6 +192,7 @@ BEGIN {
     share($memory_use);
     share($memory_needs_clears);
     share($memory_limit);
+    share($all_protected);
     my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
     $thr->detach();
 
@@ -213,11 +216,12 @@ BEGIN {
             );
             $memory_use = $state_array[0]->{PrivatePageCount};
 
-            if ( $memory_use > $memory_limit ) {
+            if ( $memory_use > $memory_limit && !$all_protected ) {
                 $memory_needs_clears = 1;
                 sleep $small_sleep_time;
             }
             else {
+                $all_protected = 0;
                 sleep $sleep_time;
             }
         }
@@ -424,9 +428,8 @@ sub run {
     my $successitem    = $item_loop->ready;
     cede();
 
-    my $memory_loop = new Coro \&memory_control_loop;
-    my $success4    = $memory_loop->ready;
-
+    $memory_loop = new Coro \&memory_control_loop;
+    
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.
     print "switching to main loop...\n";
@@ -962,8 +965,8 @@ sub landscape_update_loop {
 sub memory_control_loop {
 
     while (1) {
-        cede() while ( !$memory_needs_clears );
-
+        schedule();
+        
         $memory_full_checks++;
 
         my @protected_caches;
@@ -998,24 +1001,24 @@ sub memory_control_loop {
                 $use    = $cache[$id][1];
             }
         }
-
-        if ( !defined $delete ) {
-            $memory_needs_clears = 0;
-            next;
+        
+        if ( defined $delete ) {
+            $memory_clears++;
+    
+            my $slices = $cache[$delete];
+            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
+                glDeleteLists( $cache[$delete][$slice], 1 )
+                  if ( $cache[$delete][$slice] );
+            }
+    
+            undef ${ $cache[$delete][cell_ptr] };
+    
+            undef $cache[$delete];
+            push @cache_bucket, $delete;
         }
-
-        $memory_clears++;
-
-        my $slices = $cache[$delete];
-        for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-            glDeleteLists( $cache[$delete][$slice], 1 )
-              if ( $cache[$delete][$slice] );
+        else {
+            $all_protected = 1;
         }
-
-        undef ${ $cache[$delete][cell_ptr] };
-
-        undef $cache[$delete];
-        push @cache_bucket, $delete;
 
         $memory_needs_clears = 0;
     }
@@ -1714,6 +1717,7 @@ sub menu {
 # Routine which handles background stuff when the app is idle
 
 sub idle_tasks {
+    $memory_loop->ready if $memory_needs_clears;
     cede();
 
     return;
