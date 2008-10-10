@@ -90,7 +90,7 @@ my %DRAW_MODEL = get_model_subs();
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
-$c{redraw_delay} = 1 / $c{fps_limit};
+$c{redraw_delay} = 0.5 / $c{fps_limit};
 my $memory_limit;
 $memory_limit  = $c{memory_limit};
 $config_loaded = 1;
@@ -442,6 +442,7 @@ sub run {
     $memory_loop = new Coro \&memory_control_loop;
     
     $render_loop = new Coro \&render_scene;
+    $render_loop->prio(1);
     
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.

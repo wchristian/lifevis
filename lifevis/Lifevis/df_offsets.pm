@@ -171,8 +171,6 @@ my @OFFSETS = (
         },
 ); # OFFSETS END HERE - DO NOT REMOVE THIS COMMENT
 
-
-
 sub get_df_offsets {
     return @OFFSETS;
 }
