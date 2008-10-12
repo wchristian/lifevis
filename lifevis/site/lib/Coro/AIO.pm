@@ -60,26 +60,29 @@ package Coro::AIO;
 
 use strict qw(subs vars);
 
-use Coro ();
+use IO::AIO 3.1 ();
 use AnyEvent::AIO ();
+
+use Coro ();
+use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = 4.749;
+our $VERSION = 4.8;
 
-our @EXPORT    = @IO::AIO::EXPORT;
+our @EXPORT    = (@IO::AIO::EXPORT, qw(aio_wait));
 our @EXPORT_OK = @IO::AIO::EXPORT_OK;
 our $AUTOLOAD;
 
 {
-   my @reqs = @IO::AIO::AIO_REQ ? @IO::AIO::AIO_REQ : @EXPORT;
+   my @reqs = @IO::AIO::AIO_REQ ? @IO::AIO::AIO_REQ : @IO::AIO::EXPORT;
    my %reqs = map +($_ => 1), @reqs;
 
    eval
       join "",
          map "sub $_(" . (prototype "IO::AIO::$_") . ");",
             grep !$reqs{$_},
-                @EXPORT, @EXPORT_OK;
+                @IO::AIO::EXPORT, @EXPORT_OK;
 
    for my $sub (@reqs) {
       push @EXPORT, $sub;
@@ -92,24 +95,18 @@ our $AUTOLOAD;
       eval qq{
 #line 1 "Coro::AIO::$sub($proto)"
          sub $sub($proto) {
-            my \$current = \$Coro::current;
-            my \$state;
-            my \@res;
+            my (\$current, \$state) = \$Coro::current;
 
             push \@_, sub {
-               \$state = _get_state;
-               \@res = \@_;
-               \$current->ready;
+               \$state = _get_state \$current;
             };
 
             aioreq_pri \$Coro::current->prio;
             &$iosub;
 
-            &Coro::schedule;
-            &Coro::schedule while !\$state;
+            do { &Coro::schedule } while !\$state;
 
-            _set_state \$state;
-            wantarray ? \@res : \$res[0]
+            _set_state \$state
          }
       };
       die if $@;
@@ -120,6 +117,29 @@ sub AUTOLOAD {
    (my $func = $AUTOLOAD) =~ s/^.*:://;
    *$AUTOLOAD = \&{"IO::AIO::$func"};
    goto &$AUTOLOAD;
+}
+
+=item @results = aio_wait $req
+
+This is not originally an IO::AIO request: what it does is to wait for
+C<$req> to finish and return the results. This is most useful with
+C<aio_group> requests.
+
+Is currently implemented by replacing the C<$req> callback.
+
+=cut
+
+sub aio_wait($) {
+   my ($current, $state, $cb) = $Coro::current;
+
+   $cb = $_[0]->cb (sub {
+      $state = _get_state $current;
+      &$cb if $cb;
+   });
+
+   do { &Coro::schedule } while !$state;
+
+   _set_state $state
 }
 
 =item $fh = aio_open $pathname, $flags, $mode

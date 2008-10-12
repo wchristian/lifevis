@@ -38,13 +38,15 @@ package Coro::BDB;
 no warnings;
 use strict;
 
-use Coro ();
-use AnyEvent::BDB ();
 use BDB ();
+use AnyEvent::BDB ();
+
+use Coro ();
+use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = 4.749;
+our $VERSION = 4.8;
 our $WATCHER;
 
 BDB::set_sync_prepare {
