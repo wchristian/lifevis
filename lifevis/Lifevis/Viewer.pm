@@ -63,8 +63,6 @@ use Config::Simple;
 use LWP::Simple;
 use Win32;
 
-use Win32::OLE('in');
-
 use Benchmark ':hireswallclock';
 
 use Time::HiRes qw ( time sleep );
@@ -215,19 +213,22 @@ BEGIN {
     $thr->detach();
 
     sub update_memory_use {
+        require Win32::OLE;
+        import Win32::OLE qw(in);
         my @state_array;
         my $pid                = $PROCESS_ID;
         my $sleep_time         = 2;
         my $small_sleep_time   = 0.1;
-        my $WMI_service_object = Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")
-          or croak "WMI connection failed.\n";
 
         sleep $small_sleep_time while ( !$config_loaded );
-
+        
         while (1) {
-            @state_array = in $WMI_service_object->ExecQuery(
-                'SELECT PrivatePageCount FROM Win32_Process' . " WHERE ProcessId = $pid",
-                'WQL', 0x10 | 0x20 );
+            @state_array = in (
+                Win32::OLE->GetObject("winmgmts:\\\\.\\root\\CIMV2")->ExecQuery(
+                    'SELECT PrivatePageCount FROM Win32_Process' . " WHERE ProcessId = $pid",
+                    'WQL', 0x10 | 0x20
+                )
+            );
             $memory_use = $state_array[0]->{PrivatePageCount};
 
             if ( $memory_use > $memory_limit && !$all_protected ) {
@@ -239,6 +240,7 @@ BEGIN {
                 sleep $sleep_time;
             }
         }
+        Win32::OLE->Uninitialize();
         return 1;
     }
 }
@@ -389,6 +391,7 @@ sub run {
     glutInitWindowPosition( $right - $c{window_width}, $bottom );
 
     $window_ID = glutCreateWindow( PROGRAM_TITLE . " v$VERSION" );    # Open a window
+    glutSetOption ( GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION ) ;
 
     create_menu();
 
@@ -449,7 +452,7 @@ sub run {
     $ceiling_slice = $zcount;
 
     glutMainLoop();
-
+    
     return;
 }
 
