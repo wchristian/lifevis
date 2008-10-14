@@ -23,7 +23,7 @@ our @EXPORT = ( qw(
  
  flags race c_x c_y c_z name cell_x cell_y id
  
- i_id i_x i_y i_z i_cell_x i_cell_y i_storage
+ i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address
  
  cell_ptr
  
@@ -77,7 +77,7 @@ use enum qw(
 );
 
 use enum qw(
- i_id i_x i_y i_z i_cell_x i_cell_y i_storage
+ i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address 
 );
 
 use constant cell_ptr => 0;

@@ -115,10 +115,10 @@ my %buildings;
 my $current_buil_proc_task = 0;
 my $max_buil_proc_tasks    = 0;
 
-my %item_present;
+my @item_present;
 my $current_item_proc_task = 0;
 my $max_item_proc_tasks    = 0;
-my %items;
+my @items;
 
 # cursor coordinates  in tiles at last refresh
 my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
@@ -664,6 +664,7 @@ sub item_update_loop {
     while (1) {
         schedule();
         my $buf   = "";
+        my @item_present_temp;
 
         _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{item_vector} + 4, 4 * 2, $buf );
         my @item_vector_offsets = unpack( 'L' x 2, $buf );
@@ -673,58 +674,62 @@ sub item_update_loop {
         _ReadMemory( $df_proc_handle, $item_vector_offsets[0], 4 * $item_list_length, $buf );
         my @item_offsets = unpack( 'L' x $item_list_length, $buf );
 
-        while ( my ($key) = each %item_present ) {
-            $item_present{$key} = 0;
-        }
-
-        for my $item (@item_offsets) {
-            $item_present{$item} = 1;
-        }
-
         $current_item_proc_task = 0;
         $max_item_proc_tasks    = $#item_offsets;
 
-        for my $item (@item_offsets) {
+        for my $item_address (@item_offsets) {
             my $buf = "";
 
             $current_item_proc_task++;
             schedule();
             
-            # extract storage type of current item and skip if is in bin
-            _ReadMemory( $df_proc_handle, $item + 12, 1, $buf );
-            my $storage = unpack( "C", $buf );
-            if ( $storage == 8 ) {
-                $item_present{$item} = 0;
+            # extract DF item id
+            _ReadMemory( $df_proc_handle, $item_address + 20, 4, $buf );
+            my $id = unpack( "L", $buf );
+            
+            # extract state of current item and skip applicable items
+            _ReadMemory( $df_proc_handle, $item_address + 12, 4, $buf );
+            my $state = unpack( "L", $buf );
+            if (                    
+                !($state & 0x1)           # is not lying on the ground
+                || ($state & 0x1000000)   # is hidden
+            ) {
+                undef $item_present[$id];
                 next;
             }
 
             # extract coordinates of current creature and skip if out of bounds
-            _ReadMemory( $df_proc_handle, $item + 4, 2, $buf );
+            _ReadMemory( $df_proc_handle, $item_address + 4, 2, $buf );
             my $rx = unpack( "S", $buf );
             if ( $rx > $xcount * 16 ) {
-                $item_present{$item} = 0;
+                undef $item_present[$id];
                 next;
             }
-            _ReadMemory( $df_proc_handle, $item + 8, 2, $buf );
+            _ReadMemory( $df_proc_handle, $item_address + 8, 2, $buf );
             my $rz = unpack( "S", $buf );
             next if ( $rz > $zcount + 1 );
-            _ReadMemory( $df_proc_handle, $item + 6, 2, $buf );
+            _ReadMemory( $df_proc_handle, $item_address + 6, 2, $buf );
             my $ry = unpack( "S", $buf );
-            _ReadMemory( $df_proc_handle, $item + 0, 4, $buf );
+            _ReadMemory( $df_proc_handle, $item_address + 0, 4, $buf );
             my $type = unpack( "L", $buf );
 
             #say $proc->hexdump( $item, 0x88 ),"\n ";
 
             # update record of current creature
-            $items{$item}[i_x] = $rx;
-            $items{$item}[i_y] = $ry;
-            $items{$item}[i_z] = $rz;
-            $items{$item}[i_id]  = $type;
-            $items{$item}[i_storage]  = $storage;
+            $items[$id][i_x] = $rx;
+            $items[$id][i_y] = $ry;
+            $items[$id][i_z] = $rz;
+            $items[$id][i_type]  = $type;
+            $items[$id][i_state]  = $state;
+            $items[$id][i_address] = $item_address;
+            $item_present[$id] = 1;
+            $item_present_temp[$id] = 1;
+            
+            #say "X: $rx Y: $ry Z: $rz ST: $state T: $type" if ( !$full_loop_completed && $state & (1 << 0) && ( 0 || $state & (1 << 2) ));
 
             # get old and new cell location and compare
-            my $old_x = $items{$item}[i_cell_x];
-            my $old_y = $items{$item}[i_cell_y];
+            my $old_x = $items[$id][i_cell_x];
+            my $old_y = $items[$id][i_cell_y];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
             if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
@@ -735,7 +740,7 @@ sub item_update_loop {
                     $redraw_needed = 1;
                     my $item_list = $cells[$old_x][$old_y][item_list];
                     for my $entry ( @{$item_list} ) {
-                        if ( $entry == $item ) {
+                        if ( $entry == $id ) {
                             $entry = $item_list->[$#$item_list];
                             pop @{$item_list};
                             last;
@@ -744,11 +749,12 @@ sub item_update_loop {
                 }
 
                 # add entry to new cell and update cell coordinates
-                push @{ $cells[$bx][$by][item_list] }, $item;
-                $items{$item}[i_cell_x] = $bx;
-                $items{$item}[i_cell_y] = $by;
+                push @{ $cells[$bx][$by][item_list] }, $id;
+                $items[$id][i_cell_x] = $bx;
+                $items[$id][i_cell_y] = $by;
             }
         }
+        @item_present = @item_present_temp;
         $full_loop_completed = 1;
     }
 }
@@ -1732,12 +1738,12 @@ sub render_scene {
                     for my $entry ( 0 .. $item_list_size ) {
                         my $item_id = $cells[$bx][$by][item_list][$entry];
                         next if !defined $item_id;
-                        next unless $item_present{$item_id};
+                        next unless defined $item_present[$item_id];
 
-                        my $x = $items{$item_id}[i_x];
-                        my $z = $items{$item_id}[i_z];
+                        my $x = $items[$item_id][i_x];
+                        my $z = $items[$item_id][i_z];
                         next if $z > $ceiling_slice;
-                        my $y = $items{$item_id}[i_y];
+                        my $y = $items[$item_id][i_y];
 
                         glTranslatef( $x, $z, $y );
                         glCallList( $item_display_lists[0] );
@@ -1785,39 +1791,39 @@ sub render_scene {
         # But, for fun, let's make the text partially transparent too.
         glColor4f( 0.6, 1.0, 0.6, .75 );
 
-        $buf = sprintf 'x_rot: %d', $x_rot;
+        $buf = sprintf 'X: %d', $x_pos;
         glRasterPos2i( 2, 14 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'y_rot: %d', $y_rot;
+        $buf = sprintf 'Y: %d', $z_pos;
         glRasterPos2i( 2, 26 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'z_pos: %f', $z_pos;
+        $buf = sprintf 'Z: %d', $y_pos;
         glRasterPos2i( 2, 38 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'y_pos: %f', $y_pos;
+        $buf = sprintf 'H-Angle: %.2f', $y_rot;
         glRasterPos2i( 2, 50 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'x_pos: %f', $x_pos;
+        $buf = sprintf 'V-Angle: %.2f', $x_rot;
         glRasterPos2i( 2, 62 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'z_off: %f', $z_off;
+        $buf = sprintf 'Cam-X: %.2f', $x_off;
         glRasterPos2i( 2, 74 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'y_off: %f', $y_off;
+        $buf = sprintf 'Cam-Y: %.2f', $z_off;
         glRasterPos2i( 2, 86 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'x_off: %f', $x_off;
+        $buf = sprintf 'Cam-Z: %.2f', $y_off;
         glRasterPos2i( 2, 98 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
-        $buf = sprintf 'Mem: %f', ( ( $memory_use / $c{memory_limit} ) * 100 );
+        $buf = sprintf 'Mem: %.2f %%', ( ( $memory_use / $c{memory_limit} ) * 100 );
         glRasterPos2i( 2, 110 );
         print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
 
@@ -2081,10 +2087,10 @@ sub process_key_press {
     my $scan = VkKeyScan($key);
     $scan &= 0xff;
 
-    if ( $scan == VK_F ) {
-        $proc->set_u32( $OFFSETS[$ver]{mouse_z}, $zmouse + 1 );    # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
-        print "moo";
-    }
+    #if ( $scan == VK_F ) {
+    #    $proc->set_u32( $OFFSETS[$ver]{mouse_z}, $zmouse + 1 );    # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
+    #    print "moo";
+    #}
 
     PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
 
@@ -2104,15 +2110,15 @@ sub process_special_key_press {
         print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";
         say "\n\n--------------------------------";
         say "X: $xmouse Y: $ymouse Z: $zmouse\n";
-        for my $item ( keys %items ) {
-            next if !defined $items{$item}[c_x];
-            next if !defined $items{$item}[c_y];
-            next if !defined $items{$item}[c_z];
-            if (   $items{$item}[c_x] == $xmouse
-                && $items{$item}[c_y] == $ymouse
-                && $items{$item}[c_z] == $zmouse )
+        for my $item ( 0..$#items ) {
+            next if !defined $items[$item][i_x];
+            next if !defined $items[$item][i_y];
+            next if !defined $items[$item][i_z];
+            if (   $items[$item][i_x] == $xmouse
+                && $items[$item][i_y] == $ymouse
+                && $items[$item][i_z] == $zmouse )
             {
-                my $hex_dump = $proc->hexdump( $item, 0x88 );
+                my $hex_dump = $proc->hexdump( $items[$item][i_address], 0x88 );
                 print $OUT "Item:\n$hex_dump\n\n";
                 say "Item:\n$hex_dump\n";
             }
