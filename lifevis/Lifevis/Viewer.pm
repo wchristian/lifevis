@@ -689,6 +689,14 @@ sub item_update_loop {
 
             $current_item_proc_task++;
             schedule();
+            
+            # extract storage type of current item and skip if is in bin
+            _ReadMemory( $df_proc_handle, $item + 12, 1, $buf );
+            my $storage = unpack( "C", $buf );
+            if ( $storage == 8 ) {
+                $item_present{$item} = 0;
+                next;
+            }
 
             # extract coordinates of current creature and skip if out of bounds
             _ReadMemory( $df_proc_handle, $item + 4, 2, $buf );
@@ -702,20 +710,21 @@ sub item_update_loop {
             next if ( $rz > $zcount + 1 );
             _ReadMemory( $df_proc_handle, $item + 6, 2, $buf );
             my $ry = unpack( "S", $buf );
-            _ReadMemory( $df_proc_handle, $item + 88, 2, $buf );
-            my $type = unpack( "S", $buf );
+            _ReadMemory( $df_proc_handle, $item + 0, 4, $buf );
+            my $type = unpack( "L", $buf );
 
             #say $proc->hexdump( $item, 0x88 ),"\n ";
 
             # update record of current creature
-            $items{$item}[c_x] = $rx;
-            $items{$item}[c_y] = $ry;
-            $items{$item}[c_z] = $rz;
-            $items{$item}[id]  = $type;
+            $items{$item}[i_x] = $rx;
+            $items{$item}[i_y] = $ry;
+            $items{$item}[i_z] = $rz;
+            $items{$item}[i_id]  = $type;
+            $items{$item}[i_storage]  = $storage;
 
             # get old and new cell location and compare
-            my $old_x = $items{$item}[cell_x];
-            my $old_y = $items{$item}[cell_y];
+            my $old_x = $items{$item}[i_cell_x];
+            my $old_y = $items{$item}[i_cell_y];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
             if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
@@ -736,8 +745,8 @@ sub item_update_loop {
 
                 # add entry to new cell and update cell coordinates
                 push @{ $cells[$bx][$by][item_list] }, $item;
-                $items{$item}[cell_x] = $bx;
-                $items{$item}[cell_y] = $by;
+                $items{$item}[i_cell_x] = $bx;
+                $items{$item}[i_cell_y] = $by;
             }
         }
         $full_loop_completed = 1;
@@ -1725,10 +1734,10 @@ sub render_scene {
                         next if !defined $item_id;
                         next unless $item_present{$item_id};
 
-                        my $x = $items{$item_id}[c_x];
-                        my $z = $items{$item_id}[c_z];
+                        my $x = $items{$item_id}[i_x];
+                        my $z = $items{$item_id}[i_z];
                         next if $z > $ceiling_slice;
-                        my $y = $items{$item_id}[c_y];
+                        my $y = $items{$item_id}[i_y];
 
                         glTranslatef( $x, $z, $y );
                         glCallList( $item_display_lists[0] );
@@ -2089,7 +2098,7 @@ sub process_special_key_press {
     my $key = shift;
 
     if ( $key == GLUT_KEY_F12 ) {
-        $force_rt = 1;
+        #$force_rt = 1;
         open my $OUT, ">>", 'export.txt' or die( "horribly: " . $! );
         print $OUT "\n\n--------------------------------\n";
         print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";

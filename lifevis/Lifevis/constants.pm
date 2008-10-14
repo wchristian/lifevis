@@ -23,6 +23,8 @@ our @EXPORT = ( qw(
  
  flags race c_x c_y c_z name cell_x cell_y id
  
+ i_id i_x i_y i_z i_cell_x i_cell_y i_storage
+ 
  cell_ptr
  
  changed z offset creature_list cache_ptr building_list item_list
@@ -72,6 +74,10 @@ use constant occup => 2;
 
 use enum qw(
  flags race c_x c_y c_z name cell_x cell_y id
+);
+
+use enum qw(
+ i_id i_x i_y i_z i_cell_x i_cell_y i_storage
 );
 
 use constant cell_ptr => 0;
