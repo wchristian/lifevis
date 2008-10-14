@@ -10,7 +10,7 @@ require DynaLoader;
 
 use Carp;
 
-$VERSION = '0.56_01';
+$VERSION = '0.57';
 $BUILD_VERSION = $XS_VERSION = $VERSION;
 $VERSION = eval($VERSION);
 
@@ -34,7 +34,7 @@ our $glext_dependencies =
   GL_ARB_pixel_buffer_object=>'1.5', #42
   GL_ARB_point_parameters=>'1.0', #14
   GL_ARB_point_sprite=>'1.4', #35
-  GL_ARB_shading_language_100=>'1.5;ARB_shader_objects,ARB_fragment_shader,ARB_vertex_shader', #33
+  GL_ARB_shading_language_100=>'1.4;ARB_shader_objects,ARB_fragment_shader,ARB_vertex_shader', #33
   GL_ARB_shader_objects=>'1.4', #30
   GL_ARB_shadow=>'1.1;ARB_depth_texture', #23
   GL_ARB_shadow_ambient=>'1.1;ARB_shadow,ARB_depth_texture', #23
@@ -1112,6 +1112,11 @@ glPointParameterfvARB_s
 glPointParameterfvARB_p
 glSampleCoverageARB
 glClampColorARB
+
+glpHasGLUT
+glpCheckExtension
+glpFullScreen
+glpRestoreScreen
 );
 # gl_func
 
@@ -1170,6 +1175,7 @@ gluUnProject_p
 
 @glut_func = qw(
 glutInit
+done_glutInit
 glutInitWindowSize
 glutInitWindowPosition
 glutInitDisplayMode
@@ -1213,12 +1219,15 @@ glutDisplayFunc
 glutOverlayDisplayFunc
 glutReshapeFunc
 glutKeyboardFunc
+glutKeyboardUpFunc
 glutMouseFunc
 glutMotionFunc
 glutPassiveMotionFunc
 glutVisibilityFunc
+glutWindowStatusFunc
 glutEntryFunc
 glutSpecialFunc
+glutSpecialUpFunc
 glutSpaceballMotionFunc
 glutSpaceballRotateFunc
 glutSpaceballButtonFunc
@@ -1260,7 +1269,60 @@ glutSolidIcosahedron
 glutWireIcosahedron
 glutSolidTeapot
 glutWireTeapot
+glutSetOption
+glutGameModeString
+glutEnterGameMode
+glutLeaveGameMode
+glutGameModeGet
+glutCloseFunc
+glutLeaveMainLoop
+glutIgnoreKeyRepeat
+glutSetKeyRepeat
+glutForceJoystickFunc
+glutBitmapHeight
+glutBitmapLength
+glutBitmapString
+glutInitDisplayString
+glutMainLoopEvent
+glutMenuDestroyFunc
+glutMouseWheelFunc
+glutPostWindowOverlayRedisplay
+glutPostWindowRedisplay
+glutReportErrors
+glutSolidCylinder
+glutSolidRhombicDodecahedron
+glutStrokeHeight
+glutStrokeLength
+glutStrokeString
+glutWarpPointer
+glutWireCylinder
+glutWireRhombicDodecahedron
 );
+
+##------------------------------------------------------------------------
+## Open/FreeGLUT not implemented yet       -chm 2008-09-06
+##------------------------------------------------------------------------
+##
+## Need to determine desired interface for data
+## glutGetMenuData (void)
+## glutSetMenuData (void *data)
+## glutGetWindowData (void)
+## glutSetWindowData (void *data)
+##
+## Need to determine desired/useful interface
+## glutGetProcAddress (const char *procName)
+##
+## Need to add pollInterval argument to glutJoystickFunc() call
+## glutJoystickFunc (void(*callback)(unsigned int buttons, int xaxis, int yaxis, int zaxis), int pollInterval)
+##
+## Need to determine handling of offset[3] argument
+## glutWireSierpinskiSponge (int num_levels, const GLdouble offset[3], GLdouble scale)
+## glutSolidSierpinskiSponge (int num_levels, const GLdouble offset[3], GLdouble scale)
+##
+## Deprecated function, use glutCloseFunc
+## glutWMCloseFunc (void(*callback)(void))
+##
+##------------------------------------------------------------------------
 
 @glx_func = qw(
 glpcOpenWindow
@@ -4448,6 +4510,17 @@ GLUT_CURSOR_BOTTOM_LEFT_CORNER
 GLUT_CURSOR_INHERIT
 GLUT_CURSOR_NONE
 GLUT_CURSOR_FULL_CROSSHAIR
+GLUT_ACTION_EXIT
+GLUT_ACTION_GLUTMAINLOOP_RETURNS
+GLUT_ACTION_CONTINUE_EXECUTION
+GLUT_ACTION_ON_WINDOW_CLOSE
+GLUT_GAME_MODE_ACTIVE
+GLUT_GAME_MODE_POSSIBLE
+GLUT_GAME_MODE_WIDTH
+GLUT_GAME_MODE_HEIGHT
+GLUT_GAME_MODE_PIXEL_DEPTH
+GLUT_GAME_MODE_REFRESH_RATE
+GLUT_GAME_MODE_DISPLAY_CHANGED
 );
 
 @glx_const = qw(
@@ -6113,6 +6186,44 @@ sub glpFlush {
   glXSwapBuffers() if __had_dbuffer_hack();
 }
 
+sub OpenGL::Quad::DESTROY ($) {gluDeleteQuadric(shift)}
+@OpenGL::Quad::ISA = 'GLUquadricObjPtr';
+sub __new_gluQuad () {bless gluNewQuadric(), 'OpenGL::Quad'}
+
+sub glpSolidSphere ($$$) {
+  gluSphere(__new_gluQuad, shift, shift, shift);
+}
+unless (_have_glut()) {
+  *glutSolidSphere = \&glpSolidSphere;
+}
+
+
+sub glpFullScreen
+{
+  my $params = {};
+
+  $params->{original_x} = glutGet(0x0064);	# GLUT_WINDOW_X
+  $params->{original_y} = glutGet(0x0065);	# GLUT_WINDOW_Y
+  $params->{original_w} = glutGet(0x0066);	# GLUT_WINDOW_WIDTH
+  $params->{original_h} = glutGet(0x0067);	# GLUT_WINDOW_HEIGHT
+
+  glutFullScreen();
+
+  $params->{w} = glutGet(0x0066);		# GLUT_WINDOW_WIDTH
+  $params->{h} = glutGet(0x0067);		# GLUT_WINDOW_HEIGHT
+
+  return $params;
+}
+
+sub glpRestoreScreen
+{
+  my($params) = @_;
+
+  glutPositionWindow($params->{original_x},$params->{original_y});
+  glutReshapeWindow($params->{original_w},$params->{original_h});
+  glutPostRedisplay();
+}
+
 sub glpCheckExtension
 {
   my(@extensions) = @_;
@@ -6158,17 +6269,6 @@ sub glpCheckExtension
     }
   }
   return 0;
-}
-
-sub OpenGL::Quad::DESTROY ($) {gluDeleteQuadric(shift)}
-@OpenGL::Quad::ISA = 'GLUquadricObjPtr';
-sub __new_gluQuad () {bless gluNewQuadric(), 'OpenGL::Quad'}
-
-sub glpSolidSphere ($$$) {
-  gluSphere(__new_gluQuad, shift, shift, shift);
-}
-unless (_have_glut()) {
-  *glutSolidSphere = \&glpSolidSphere;
 }
 
 1;

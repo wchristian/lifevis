@@ -15,7 +15,7 @@ require Exporter;
 use Carp;
 
 use vars qw($VERSION $DESCRIPTION @ISA);
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 $DESCRIPTION = qq
 {Supports optimized internal interfaces to the ImageMagick library.};
@@ -171,10 +171,15 @@ sub new
   $self->{params}->{engine} = 'Magick';
   $self->{params}->{version} = EngineVersion();
 
+  $self->{params}->{components} = 4;
+  $self->{params}->{alpha} = 0;
+  $self->{params}->{flipped} = 1;
+
   # Use source image if supplied
+  my $img;
   if ($self->{params}->{source})
   {
-    my $img = new Image::Magick();
+    $img = new Image::Magick();
     return undef if (!$img);
 
     my $stat = $img->Read($self->{params}->{source});
@@ -184,7 +189,6 @@ sub new
       $img->Get('Width','Height');
     return undef if (!$self->{params}->{width} || !$self->{params}->{height});
 
-    $img->Flip();
     $self->{native} = $img;
   }
   # Otherwise create uninitialized image
@@ -197,14 +201,14 @@ sub new
     if ($w && $h)
     {
       my $dim = $w.'x'.$h;
-      $self->{native} = new Image::Magick(size=>$dim,magick=>'RGBA',depth=>8);
+      $self->{native} = new Image::Magick(size=>$dim, magick=>'RGBA', depth=>8);
     }
     elsif ($blob)
     {
       $self->{native} = new Image::Magick();
     }
     return undef if (!$self->{native});
-    my $img = $self->{native};
+    $img = $self->{native};
 
     # Populate with blob
     if ($blob)
@@ -218,21 +222,24 @@ sub new
           $img->Get('Width','Height');
       }
     }
-    # Otherwise fill with black
+    # Otherwise fill with 'none'
     else
     {
-      my $stat = $img->Read('xc:black');
+      my $stat = $img->Read('xc:none');
       return undef if ($stat);
       $img->Set(type=>'truecolormatte');
-      $img->Negate(channel=>'alpha');
     }
   }
+
+  my $alpha = $img->Get('matte');
+  $img->Set('matte'=>'True') if (!$alpha);
 
   # Good to go
   bless($self,$class);
 
   # Init params
-  $self->init();
+  return undef if (!$self->init());
+  $self->SyncOGA();
 
   return $self;
 }
@@ -242,68 +249,73 @@ sub init
 {
   my($self) = @_;
 
-  my $params = $self->{params};
-  $params->{components} = 4;
-  $params->{flipped} = 1;
+  my $w = $self->{params}->{width};
+  my $h = $self->{params}->{height};
+  $self->{params}->{pixels} = $w * $h; 
 
-  my $w = $params->{width};
-  my $h = $params->{height};
-  $params->{pixels} = $w * $h; 
-  my $elements = $params->{pixels} * $params->{components};
+  my $elements = $self->{params}->{pixels} * $self->{params}->{components};
 
   my $img = $self->{native};
 
   # Use C pointer to image cache, if supported
-  if ($params->{version} ge '6.3.5')
+  if ($self->{params}->{version} ge '6.3.5')
   {
     my $q = $img->Get('quantum');
 
     if ($q == 8)
     {
-      $params->{gl_internalformat} = GL_RGBA8;
-      $params->{gl_type} = GL_UNSIGNED_BYTE;
-      $params->{size} = 1;
+      $self->{params}->{gl_internalformat} = GL_RGBA8;
+      $self->{params}->{gl_type} = GL_UNSIGNED_BYTE;
+      $self->{params}->{size} = 1;
     }
     elsif ($q == 16)
     {
-      $params->{gl_internalformat} = GL_RGBA16;
-      $params->{gl_type} = GL_UNSIGNED_SHORT;
-      $params->{size} = 2;
+      $self->{params}->{gl_internalformat} = GL_RGBA16;
+      $self->{params}->{gl_type} = GL_UNSIGNED_SHORT;
+      $self->{params}->{size} = 2;
+    }
+    else
+    {
+      print "Unsupported pixel quantum\n";
     }
 
-    if ($params->{gl_type})
+    if ($self->{params}->{gl_type})
     {
-      $params->{gl_format} = $params->{endian} ? GL_RGBA : GL_BGRA;
-      my $alpha = $img->Get('matte');
-      $img->Set('matte'=>'True') if (!$alpha);
+      $self->{params}->{gl_format} = 
+        $self->{params}->{endian} ? GL_RGBA : GL_BGRA;
 
-      $img->Negate(channel=>'Alpha');
-      $params->{alpha} = -1;
-      $params->{length} =  $params->{size} * $elements;
+      $self->{params}->{length} =  $self->{params}->{size} * $elements;
 
-      $self->{oga} = OpenGL::Array->new_pointer($params->{gl_type},
+      $self->{oga} = OpenGL::Array->new_pointer($self->{params}->{gl_type},
         $img->GetImagePixels(rows=>$h),$elements);
 
-      return if ($self->{oga});
+      $self->{params}->{alpha} = -1;
+
+      return $self->{oga};
     }
   }
 
   # Fall back to using standard PerlMagick interface
   $self->{blobs} = 1;
-  $params->{gl_internalformat} = GL_RGBA8;
-  $params->{gl_type} = GL_UNSIGNED_BYTE;
-  $params->{size} = 1;
-  $params->{gl_format} = GL_RGBA;
-  $params->{alpha} = 1;
-  $params->{length} = $params->{pixels} * $params->{components} *
-    $params->{size};
+  $self->{params}->{gl_internalformat} = GL_RGBA8;
+  $self->{params}->{gl_type} = GL_UNSIGNED_BYTE;
+  $self->{params}->{size} = 1;
+  $self->{params}->{gl_format} = GL_RGBA;
+  $self->{params}->{alpha} = 1;
+
+  $self->{params}->{length} =
+    $self->{params}->{pixels} * $self->{params}->{components} *
+    $self->{params}->{size};
 
   $img->Set(magick=>'RGBA',depth=>8);
-  $self->{oga} = OpenGL::Array->new_scalar($params->{gl_type},
+  $self->{oga} = OpenGL::Array->new_scalar($self->{params}->{gl_type},
     $img->ImageToBlob(),$elements);
+
+  return $self->{oga};
 }
 
-# Sync image cache
+# Sync from GPU framebuffer (OGA/blob) to IM
+# Call before using native calls
 sub Sync
 {
   my($self) = @_;
@@ -317,65 +329,55 @@ sub Sync
   {
     $img->SyncImagePixels();
   }
+
+  $img->Negate(channel=>'Alpha') if ($self->{params}->{alpha} < 0);
+  $img->Flip();
 }
 
-# Sync oga
+# Sync from IM to GPU framebuffer (OGA/blob)
+# Call after using native calls
 sub SyncOGA
 {
   my($self) = @_;
 
   my $img = $self->{native};
-  my $params = $self->{params};
+
+  $img->Flip();
+  $img->Negate(channel=>'Alpha') if ($self->{params}->{alpha} < 0);
 
   my($w,$h) = $img->Get('width','height');
-  if ($w != $params->{width} || $h != $params->{height})
+  my $pixels = $w * $h;
+  my $elements = $pixels * $self->{params}->{components};
+
+  if ($self->{blobs})
   {
-    $params->{width} = $w;
-    $params->{height} = $h;
-    $params->{pixels} = $w * $h; 
-
-    my $elements = $params->{pixels} * $params->{components};
-    $params->{length} = $elements * $params->{size};
-
-    if ($self->{blobs})
-    {
-      $img->Set(magick=>'RGBA',depth=>8);
-
-      $self->{oga} = OpenGL::Array->new_scalar($params->{gl_type},
-        $img->ImageToBlob(),$elements);
-    }
-    else
-    {
-      my $alpha = $img->Get('matte');
-      $img->Set('matte'=>'True') if (!$alpha);
-
-      $img->Negate(channel=>'Alpha');
-
-      $self->{oga} = OpenGL::Array->new_pointer($params->{gl_type},
-        $img->GetImagePixels(rows=>$h),$elements);
-    }
-  }
-  elsif ($self->{blobs})
-  {
-    my $elements = $params->{pixels} * $params->{components};
-
     $img->Set(magick=>'RGBA',depth=>8);
 
-    $self->{oga} = OpenGL::Array->new_scalar($params->{gl_type},
+    $self->{oga} = OpenGL::Array->new_scalar($self->{params}->{gl_type},
       $img->ImageToBlob(),$elements);
   }
-  else
+
+  if ($w == $self->{params}->{width} && $h == $self->{params}->{height})
   {
-    my $h = $params->{height};
+    return if ($self->{blobs});
     $self->{oga}->update_pointer($img->GetImagePixels(rows=>$h));
   }
+
+  $self->{params}->{width} = $w;
+  $self->{params}->{height} = $h;
+  $self->{params}->{pixels} = $pixels; 
+  $self->{params}->{length} = $elements * $self->{params}->{size};
+
+  return if ($self->{blobs});
+
+  $self->{oga} = OpenGL::Array->new_pointer($self->{params}->{gl_type},
+    $img->GetImagePixels(rows=>$h),$elements);
 }
 
 # Get OpenGL::Array object
 sub GetArray
 {
   my($self) = @_;
-  $self->SyncOGA();
   return $self->{oga};
 }
 
@@ -383,7 +385,6 @@ sub GetArray
 sub Ptr
 {
   my($self) = @_;
-  $self->SyncOGA() if (!$self->{blobs});
   return undef if (!$self->{oga});
   return $self->{oga}->ptr();
 }
@@ -393,19 +394,8 @@ sub Save
 {
   my($self,$file,%user_params) = @_;
   my $img = $self->{native};
-  my $params = $self->{params};
 
   $self->Sync();
-
-  if ($params->{alpha} == -1)
-  {
-    $img->Negate(channel=>'alpha');
-  }
-
-  if ($params->{flipped})
-  {
-    $img->Flip();
-  }
 
   my $blob;
   if ($file)
@@ -429,16 +419,7 @@ sub Save
     ($blob) = $clone->ImageToBlob();
   }
 
-  if ($params->{flipped})
-  {
-    $img->Flip();
-    $self->SyncOGA();
-  }
-
-  if ($params->{alpha} == -1)
-  {
-    $img->Negate(channel=>'alpha');
-  }
+  $self->SyncOGA();
 
   return $blob;
 }

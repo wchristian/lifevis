@@ -176,6 +176,7 @@ my $rotating         = 0;
 my $changing_ceiling = 0;
 my $ceiling_slice;
 my $ceiling_locked = 0;
+my $view_range_changed;
 
 my $memory_needs_clears;
 my $memory_full_checks = 0;
@@ -806,9 +807,10 @@ sub location_update_loop {
         if (   $xmouse != $xmouse_old
             || $ymouse != $ymouse_old
             || $zmouse != $zmouse_old
-            || $ceiling_slice != $old_ceiling_slice )
+            || $ceiling_slice != $old_ceiling_slice
+            || $view_range_changed )
         {
-
+            $view_range_changed = 0;
             $redraw_needed = 1;
 
             # update camera system with mouse data
@@ -1998,7 +2000,7 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 45.0, $width / $height, 0.1, 1300.0 );
+    gluPerspective( 45.0, $width / $height, 0.1, 700.0 );
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -2197,6 +2199,7 @@ sub process_mouse_click {
         {
             --$c{view_range} if $c{view_range} > 0;
             $redraw_needed = 1;
+            $view_range_changed = 1;
         }
         elsif ($x > $c{window_width} - 42
             && $x < $c{window_width} - 20
@@ -2221,6 +2224,7 @@ sub process_mouse_click {
             my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
             ++$c{view_range} if ( $c{view_range} < $size / 2 );
             $redraw_needed = 1;
+            $view_range_changed = 1;
         }
         elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}

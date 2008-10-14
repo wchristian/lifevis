@@ -37,7 +37,7 @@ use AnyEvent ();
 use AnyEvent::Handle ();
 use AnyEvent::Util qw(AF_INET6);
 
-our $VERSION = 4.234;
+our $VERSION = 4.3;
 
 our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
 

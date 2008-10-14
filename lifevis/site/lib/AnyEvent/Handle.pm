@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.234;
+our $VERSION = 4.3;
 
 =head1 SYNOPSIS
 
@@ -60,14 +60,6 @@ treatment of characters applies to this module as well.
 
 All callbacks will be invoked with the handle object as their first
 argument.
-
-=head2 SIGPIPE is not handled by this module
-
-SIGPIPE is not handled by this module, so one of the practical
-requirements of using it is to ignore SIGPIPE (C<$SIG{PIPE} =
-'IGNORE'>). At least, this is highly recommend in a networked program: If
-you use AnyEvent::Handle in a filter program (like sort), exiting on
-SIGPIPE is probably the right thing to do.
 
 =head1 METHODS
 
@@ -242,7 +234,8 @@ socket. No errors will be reported (this mostly matches how the operating
 system treats outstanding data at socket close time).
 
 This will not work for partial TLS data that could not be encoded
-yet. This data will be lost.
+yet. This data will be lost. Calling the C<stoptls> method in time might
+help.
 
 =item tls => "accept" | "connect" | Net::SSLeay::SSL object
 
@@ -283,13 +276,6 @@ texts.
 Note that you are responsible to depend on the JSON module if you want to
 use this functionality, as AnyEvent does not have a dependency itself.
 
-=item filter_r => $cb
-
-=item filter_w => $cb
-
-These exist, but are undocumented at this time. (They are used internally
-by the TLS code).
-
 =back
 
 =cut
@@ -303,10 +289,8 @@ sub new {
 
    AnyEvent::Util::fh_nonblocking $self->{fh}, 1;
 
-   if ($self->{tls}) {
-      require Net::SSLeay;
-      $self->starttls (delete $self->{tls}, delete $self->{tls_ctx});
-   }
+   $self->starttls (delete $self->{tls}, delete $self->{tls_ctx})
+      if $self->{tls};
 
    $self->{_activity} = AnyEvent->now;
    $self->_timeout;
@@ -328,7 +312,7 @@ sub _shutdown {
    delete $self->{_ww};
    delete $self->{fh};
 
-   $self->stoptls;
+   &_freetls;
 
    delete $self->{on_read};
    delete $self->{_queue};
@@ -497,7 +481,7 @@ sub on_drain {
    $self->{on_drain} = $cb;
 
    $cb->($self)
-      if $cb && $self->{low_water_mark} >= length $self->{wbuf};
+      if $cb && $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf});
 }
 
 =item $handle->push_write ($data)
@@ -524,7 +508,7 @@ sub _drain_wbuf {
             $self->{_activity} = AnyEvent->now;
 
             $self->{on_drain}($self)
-               if $self->{low_water_mark} >= length $self->{wbuf}
+               if $self->{low_water_mark} >= (length $self->{wbuf}) + (length $self->{_tls_wbuf})
                   && $self->{on_drain};
 
             delete $self->{_ww} unless length $self->{wbuf};
@@ -558,8 +542,10 @@ sub push_write {
            ->($self, @_);
    }
 
-   if ($self->{filter_w}) {
-      $self->{filter_w}($self, \$_[0]);
+   if ($self->{tls}) {
+      $self->{_tls_wbuf} .= $_[0];
+
+      &_dotls ($self);
    } else {
       $self->{wbuf} .= $_[0];
       $self->_drain_wbuf;
@@ -586,7 +572,7 @@ Formats the given value as netstring
 register_write_type netstring => sub {
    my ($self, $string) = @_;
 
-   sprintf "%d:%s,", (length $string), $string
+   (length $string) . ":$string,"
 };
 
 =item packstring => $format, $data
@@ -805,7 +791,7 @@ sub _drain_rbuf {
          }
       } else {
          # read side becomes idle
-         delete $self->{_rw};
+         delete $self->{_rw} unless $self->{tls};
          last;
       }
    }
@@ -1110,7 +1096,8 @@ uses the same format as a Perl C<pack> format, but must specify a single
 integer only (only one of C<cCsSlLqQiInNvVjJw> is allowed, plus an
 optional C<!>, C<< < >> or C<< > >> modifier).
 
-DNS over TCP uses a prefix of C<n>, EPP uses a prefix of C<N>.
+For example, DNS over TCP uses a prefix of C<n> (2 octet network order),
+EPP uses a prefix of C<N> (4 octtes).
 
 Example: read a block of data prefixed by its length in BER-encoded
 format (very efficient).
@@ -1273,12 +1260,15 @@ you change the C<on_read> callback or push/unshift a read callback, and it
 will automatically C<stop_read> for you when neither C<on_read> is set nor
 there are any read requests in the queue.
 
+These methods will have no effect when in TLS mode (as TLS doesn't support
+half-duplex connections).
+
 =cut
 
 sub stop_read {
    my ($self) = @_;
 
-   delete $self->{_rw};
+   delete $self->{_rw} unless $self->{tls};
 }
 
 sub start_read {
@@ -1288,15 +1278,19 @@ sub start_read {
       Scalar::Util::weaken $self;
 
       $self->{_rw} = AnyEvent->io (fh => $self->{fh}, poll => "r", cb => sub {
-         my $rbuf = $self->{filter_r} ? \my $buf : \$self->{rbuf};
+         my $rbuf = \($self->{tls} ? my $buf : $self->{rbuf});
          my $len = sysread $self->{fh}, $$rbuf, $self->{read_size} || 8192, length $$rbuf;
 
          if ($len > 0) {
             $self->{_activity} = AnyEvent->now;
 
-            $self->{filter_r}
-               ? $self->{filter_r}($self, $rbuf)
-               : $self->{_in_drain} || $self->_drain_rbuf;
+            if ($self->{tls}) {
+               Net::SSLeay::BIO_write ($self->{_rbio}, $$rbuf);
+
+               &_dotls ($self);
+            } else {
+               $self->_drain_rbuf unless $self->{_in_drain};
+            }
 
          } elsif (defined $len) {
             delete $self->{_rw};
@@ -1310,44 +1304,46 @@ sub start_read {
    }
 }
 
+# poll the write BIO and send the data if applicable
 sub _dotls {
    my ($self) = @_;
 
-   my $buf;
+   my $tmp;
 
    if (length $self->{_tls_wbuf}) {
-      while ((my $len = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
-         substr $self->{_tls_wbuf}, 0, $len, "";
+      while (($tmp = Net::SSLeay::write ($self->{tls}, $self->{_tls_wbuf})) > 0) {
+         substr $self->{_tls_wbuf}, 0, $tmp, "";
       }
    }
 
-   if (length ($buf = Net::SSLeay::BIO_read ($self->{_wbio}))) {
-      $self->{wbuf} .= $buf;
-      $self->_drain_wbuf;
-   }
-
-   while (defined ($buf = Net::SSLeay::read ($self->{tls}))) {
-      if (length $buf) {
-         $self->{rbuf} .= $buf;
-         $self->_drain_rbuf unless $self->{_in_drain};
-      } else {
+   while (defined ($tmp = Net::SSLeay::read ($self->{tls}))) {
+      unless (length $tmp) {
          # let's treat SSL-eof as we treat normal EOF
+         delete $self->{_rw};
          $self->{_eof} = 1;
-         $self->_shutdown;
-         return;
+         &_freetls;
       }
+
+      $self->{rbuf} .= $tmp;
+      $self->_drain_rbuf unless $self->{_in_drain};
+      $self->{tls} or return; # tls session might have gone away in callback
    }
 
-   my $err = Net::SSLeay::get_error ($self->{tls}, -1);
+   $tmp = Net::SSLeay::get_error ($self->{tls}, -1);
 
-   if ($err!= Net::SSLeay::ERROR_WANT_READ ()) {
-      if ($err == Net::SSLeay::ERROR_SYSCALL ()) {
+   if ($tmp != Net::SSLeay::ERROR_WANT_READ ()) {
+      if ($tmp == Net::SSLeay::ERROR_SYSCALL ()) {
          return $self->_error ($!, 1);
-      } elsif ($err == Net::SSLeay::ERROR_SSL ())  {
+      } elsif ($tmp == Net::SSLeay::ERROR_SSL ())  {
          return $self->_error (&Errno::EIO, 1);
       }
 
-      # all others are fine for our purposes
+      # all other errors are fine for our purposes
+   }
+
+   while (length ($tmp = Net::SSLeay::BIO_read ($self->{_wbio}))) {
+      $self->{wbuf} .= $tmp;
+      $self->_drain_wbuf;
    }
 }
 
@@ -1367,13 +1363,19 @@ The TLS connection object will end up in C<< $handle->{tls} >> after this
 call and can be used or changed to your liking. Note that the handshake
 might have already started when this function returns.
 
+If it an error to start a TLS handshake more than once per
+AnyEvent::Handle object (this is due to bugs in OpenSSL).
+
 =cut
 
 sub starttls {
    my ($self, $ssl, $ctx) = @_;
 
-   $self->stoptls;
+   require Net::SSLeay;
 
+   Carp::croak "it is an error to call starttls more than once on an Anyevent::Handle object"
+      if $self->{tls};
+   
    if ($ssl eq "accept") {
       $ssl = Net::SSLeay::new ($ctx || TLS_CTX ());
       Net::SSLeay::set_accept_state ($ssl);
@@ -1392,9 +1394,10 @@ sub starttls {
    #
    # in short: this is a mess.
    # 
-   # note that we do not try to kepe the length constant between writes as we are required to do.
+   # note that we do not try to keep the length constant between writes as we are required to do.
    # we assume that most (but not all) of this insanity only applies to non-blocking cases,
-   # and we drive openssl fully in blocking mode here.
+   # and we drive openssl fully in blocking mode here. Or maybe we don't - openssl seems to
+   # have identity issues in that area.
    Net::SSLeay::CTX_set_mode ($self->{tls},
       (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ENABLE_PARTIAL_WRITE () } || 1)
       | (eval { local $SIG{__DIE__}; Net::SSLeay::MODE_ACCEPT_MOVING_WRITE_BUFFER () } || 2));
@@ -1404,39 +1407,47 @@ sub starttls {
 
    Net::SSLeay::set_bio ($ssl, $self->{_rbio}, $self->{_wbio});
 
-   $self->{filter_w} = sub {
-      $_[0]{_tls_wbuf} .= ${$_[1]};
-      &_dotls;
-   };
-   $self->{filter_r} = sub {
-      Net::SSLeay::BIO_write ($_[0]{_rbio}, ${$_[1]});
-      &_dotls;
-   };
+   &_dotls; # need to trigger the initial handshake
+   $self->start_read; # make sure we actually do read
 }
 
 =item $handle->stoptls
 
-Destroys the SSL connection, if any. Partial read or write data will be
-lost.
+Shuts down the SSL connection - this makes a proper EOF handshake by
+sending a close notify to the other side, but since OpenSSL doesn't
+support non-blocking shut downs, it is not possible to re-use the stream
+afterwards.
 
 =cut
 
 sub stoptls {
    my ($self) = @_;
 
-   Net::SSLeay::free (delete $self->{tls}) if $self->{tls};
+   if ($self->{tls}) {
+      Net::SSLeay::shutdown ($self->{tls});
 
-   delete $self->{_rbio};
-   delete $self->{_wbio};
-   delete $self->{_tls_wbuf};
-   delete $self->{filter_r};
-   delete $self->{filter_w};
+      &_dotls;
+
+      # we don't give a shit. no, we do, but we can't. no...
+      # we, we... have to use openssl :/
+      &_freetls;
+   }
+}
+
+sub _freetls {
+   my ($self) = @_;
+
+   return unless $self->{tls};
+
+   Net::SSLeay::free (delete $self->{tls});
+   
+   delete @$self{qw(_rbio _wbio _tls_wbuf)};
 }
 
 sub DESTROY {
    my $self = shift;
 
-   $self->stoptls;
+   &_freetls;
 
    my $linger = exists $self->{linger} ? $self->{linger} : 3600;
 
@@ -1497,6 +1508,52 @@ sub TLS_CTX() {
 }
 
 =back
+
+
+=head1 NONFREQUENTLY ASKED QUESTIONS
+
+=over 4
+
+=item How do I read data until the other side closes the connection?
+
+If you just want to read your data into a perl scalar, the easiest way
+to achieve this is by setting an C<on_read> callback that does nothing,
+clearing the C<on_eof> callback and in the C<on_error> callback, the data
+will be in C<$_[0]{rbuf}>:
+
+   $handle->on_read (sub { });
+   $handle->on_eof (undef);
+   $handle->on_error (sub {
+      my $data = delete $_[0]{rbuf};
+      undef $handle;
+   });
+
+The reason to use C<on_error> is that TCP connections, due to latencies
+and packets loss, might get closed quite violently with an error, when in
+fact, all data has been received.
+
+It is usually better to use acknowledgements when transfering data,
+to make sure the other side hasn't just died and you got the data
+intact. This is also one reason why so many internet protocols have an
+explicit QUIT command.
+
+
+=item I don't want to destroy the handle too early - how do I wait until
+all data has been written?
+
+After writing your last bits of data, set the C<on_drain> callback
+and destroy the handle in there - with the default setting of
+C<low_water_mark> this will be called precisely when all data has been
+written to the socket:
+
+   $handle->push_write (...);
+   $handle->on_drain (sub {
+      warn "all data submitted to the kernel\n";
+      undef $handle;
+   });
+
+=back
+
 
 =head1 SUBCLASSING AnyEvent::Handle
 

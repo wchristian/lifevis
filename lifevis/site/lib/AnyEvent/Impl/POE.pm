@@ -15,7 +15,13 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 
 This module provides transparent support for AnyEvent. You don't have to
 do anything to make POE work with AnyEvent except by loading POE before
-creating the first AnyEvent watcher.
+creating the first AnyEvent watcher. There are some cases where POE will
+issue spurious (and non-suppressable) warnings. These can be avoided by
+loading AnyEvent::Impl::POE before loading any other modules using POE and
+AnyEvent, i.e. in your main program.
+
+AnyEvent::Impl::POE will output some spurious message how to work around
+POE's spurious messages when it detects these cases.
 
 Unfortunately, POE isn't generic enough to implement a fully working
 AnyEvent backend: POE is too badly designed, too badly documented and too
@@ -255,9 +261,20 @@ use strict;
 use AnyEvent ();
 use POE;
 
-# have to do this to keep POE from spilling ugly messages
-POE::Session->create (inline_states => { _start => sub { @_[KERNEL]->stop } });
-POE::Kernel->run;
+# if POE is already running
+if (${ $poe_kernel->[POE::Kernel::KR_RUN] } && POE::Kernel::KR_RUN_CALLED) {
+    print STDERR <<EOF;
+POE is going to complain about
+ Sessions were started, but POE::Kernel's run() method was never...
+Try putting:
+ use AnyEvent::Impl::POE;
+at the very top of your main program to suppress these spurious warnings.
+EOF
+} else {
+   # workaround to suppress noise
+   POE::Session->create (inline_states => { _start => sub { @_[KERNEL]->stop } });
+   POE::Kernel->run;
+}
 
 sub io {
    my ($class, %arg) = @_;

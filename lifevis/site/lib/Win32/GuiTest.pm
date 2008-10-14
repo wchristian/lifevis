@@ -1,5 +1,5 @@
 #
-# $Id: GuiTest.pm,v 1.11 2007/10/09 09:00:16 dk Exp $
+# $Id: GuiTest.pm,v 1.5 2008/10/01 11:32:45 int32 Exp $
 #
 
 =head1 NAME
@@ -94,7 +94,6 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $debug %EXPORT_TAGS);
 
 require Exporter;
 require DynaLoader;
-require AutoLoader;
 
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default. Note: do not export
@@ -243,7 +242,7 @@ require AutoLoader;
 }
 $EXPORT_TAGS{ALL}= \@EXPORT_OK;
                              
-$VERSION = '1.54';
+$VERSION = '1.56';
 
 $debug = 0;
 
@@ -636,53 +635,95 @@ undef matches everything.
 =cut 
 
 sub FindWindowLike {
-    my $hWndStart  = shift || GetDesktopWindow(); # Where to start
-    my $windowre = shift; # Regexp
-    my $classre  = shift; # Regexp
-    my $ID         = shift; # Control/Op. ID
-    my $maxlevel   = shift; 
+
+    my %arg;
+    my $hWndStart;
+    my $windowre;
+    my $classre;
+    my $ID;
+    my $maxlevel;
+    my $oo_mode = 0; # Object oriented mode
+
+    if( defined($_[0]) and $_[ 0 ] eq "Win32::GuiTest" )  # Object
+    {
+        shift(@_);
+        %arg       = @_;
+   	    $hWndStart = $arg{ '-parent' } || GetDesktopWindow(); # Where to start
+        $windowre  = $arg{ '-titleregex' }; # Regexp
+        $classre   = $arg{ '-classregex' }; # Regexp
+        $ID        = $arg{ '-childid' }; # Control/Op. ID
+        $maxlevel  = $arg{ '-maxlevel' };
+        $oo_mode   = 1;
+    }elsif( defined($_[0]) and ref( $_[ 0 ] eq "Win32::GuiTest::Window" ) )  # Object
+    {
+        shift(@_);
+        %arg       = @_;
+   	    $hWndStart = $arg{ '-parent' } || $_[ 0 ]->{ '-handle' }; 
+                                            # Where to start
+        $windowre  = $arg{ '-titleregex' }; # Regexp
+        $classre   = $arg{ '-classregex' }; # Regexp
+        $ID        = $arg{ '-childid' }; # Control/Op. ID
+        $maxlevel  = $arg{ '-maxlevel' };
+        $oo_mode   = 1;
+    }
+    else{                     #Static
+        $hWndStart  = shift || GetDesktopWindow(); # Where to start
+    	$windowre   = shift; # Regexp
+    	$classre    = shift; # Regexp
+    	$ID         = shift; # Control/Op. ID
+    	$maxlevel   = shift;
+    }
 
     my @found;
 
     #DbgShow("Children < @hwnds >\n");
     for my $hwnd (GetChildWindows($hWndStart)) {
         next if $maxlevel && GetChildDepth($hWndStart, $hwnd) > $maxlevel;
-            
+
         # Get the window text and class name:
         my $sWindowText = GetWindowText($hwnd);
         my $sClassname  = GetClassName($hwnd);
 
-	#DbgShow("($hwnd, $sWindowText, $sClassname) has ". scalar @children . 
+	#DbgShow("($hwnd, $sWindowText, $sClassname) has ". scalar @children .
         #        " children < @children >\n");
 
-        # If window is a child get the ID:
+        # If window is a child get the ID:                                                                                                      `
         my $sID;
         if (GetParent($hwnd) != 0) {
-            $sID = GetWindowLong($hwnd, GWL_ID());   
+            $sID = GetWindowLong($hwnd, GWL_ID());
         }
-	
+
         DbgShow("Using window pattern ($windowre)\n") if $windowre;
         DbgShow("Using class pattern ($classre)\n") if $classre;
 
-	if ((!$windowre || $sWindowText =~ /$windowre/) && 
+	if ((!$windowre || $sWindowText =~ /$windowre/) &&
             (!$classre  || $sClassname =~ /$classre/))
         {
             DbgShow("Matched $1\n") if $1;
 			# If ID not supplied OR child window ID equals
 			# the one supplied.
-            if ((not defined($ID)) || (defined($sID) && $sID == $ID)) {   
-                # If find a match add handle to array:   
+            if ((not defined($ID)) || (defined($sID) && $sID == $ID)) {
+                # If find a match add handle to array:
 				push @found, $hwnd;
-            }   
-            DbgShow("Window Found(" . 
+            }
+            DbgShow("Window Found(" .
                 "Text  : '$sWindowText'" .
 		" Class : '$sClassname'" .
-		" Handle: '$hwnd')\n");   
+		" Handle: '$hwnd')\n");
         }
     }
 
     #DbgShow("FindWin found < @found >\n");
-    return @found;
+    if( not $oo_mode ){
+        return @found;
+    }else{
+        my @found_obj = ();
+        foreach my $wnd ( @found ){
+            push( @found_obj, 
+                  Win32::GuiTest::Window->new( '-handle' => $wnd ) );
+        }
+        return @found_obj;
+    }
 }
 
 sub DbgShow {
@@ -1651,9 +1692,32 @@ Destroys the contents of the DIB section.
 =cut
 
 
-# Preloaded methods go here.
+package Win32::GuiTest::Window;
 
-# Autoload methods go after =cut, and are processed by the autosplit program.
+sub new
+{
+    my ( $proto, %params ) = @_;
+    
+    my $class = ref( $proto ) || $proto;
+    my $self = {};
+
+    $self->{ '-handle' } = $params{ '-handle' };
+    bless( $self, $class );
+    return $self;
+}
+
+sub SetForegroundWindow
+{
+    my $self = shift;
+    Win32::GuiTest::SetForegroundWindow( $self->{ '-handle' } );
+}
+
+sub GetWindowRect
+{
+    my $self = shift;
+    return Win32::GuiTest::GetWindowRect( $self->{ '-handle' } );
+}
+
 
 1;
 __END__
@@ -1697,6 +1761,16 @@ To get the latest source code you need a CVS client and then do the following:
 
 See more detailed explanations here http://sourceforge.net/projects/winguitest/
 
+=head2 cygwin
+
+g++ needs to be installed
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+=head2 MSVC environment
 
 To setup a development environment for compiling the C++ code you can either buy
 Visual Studio with Visual C++ or you can download a few things free of charge from 
