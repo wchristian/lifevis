@@ -392,6 +392,7 @@ sub run {
 
     $window_ID = glutCreateWindow( PROGRAM_TITLE . " v$VERSION" );    # Open a window
     glutSetOption ( GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION ) ;
+    glutIgnoreKeyRepeat (1);
 
     create_menu();
 
@@ -1044,7 +1045,7 @@ sub generate_building_display_lists {
     glNewList( $dl, GL_COMPILE );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[metal] );
     glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Wall}->( 0, 0.1, 0, 1, 10000 );
+    $DRAW_MODEL{Wall}->( 0, 0.05, 0, 1, 10000 );
     glEnd();
     glEndList();
 }
