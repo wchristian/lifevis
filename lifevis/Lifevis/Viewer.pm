@@ -1798,103 +1798,103 @@ sub render_scene {
 
         $buf = sprintf 'X: %d', $x_pos;
         glRasterPos2i( 2, 14 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Y: %d', $z_pos;
         glRasterPos2i( 2, 26 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Z: %d', $y_pos;
         glRasterPos2i( 2, 38 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'H-Angle: %.2f', $y_rot;
         glRasterPos2i( 2, 50 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'V-Angle: %.2f', $x_rot;
         glRasterPos2i( 2, 62 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Cam-X: %.2f', $x_off;
         glRasterPos2i( 2, 74 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Cam-Y: %.2f', $z_off;
         glRasterPos2i( 2, 86 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Cam-Z: %.2f', $y_off;
         glRasterPos2i( 2, 98 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Mem: %.2f %%', ( ( $memory_use / $c{memory_limit} ) * 100 );
         glRasterPos2i( 2, 110 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
         glRasterPos2i( 2, 122 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
             $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
             glRasterPos2i( 2, 134 );
-            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
         }
 
         if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
             $buf = sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
             glRasterPos2i( 2, $c{window_height} - 14 );
-            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
         }
 
         if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
             $buf = sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
             glRasterPos2i( 2, $c{window_height} - 26 );
-            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
         }
 
         if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
             $buf = sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
             glRasterPos2i( 2, $c{window_height} - 2 );
-            print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
         }
 
         $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
         glRasterPos2i( 2, 158 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = sprintf 'Working threads: %d', Coro::nready;
         glRasterPos2i( 2, 146 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks";
         glRasterPos2i( 2, 172 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks";
         glRasterPos2i( 2, 186 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Ceiling: $ceiling_slice";
         glRasterPos2i( 2, 198 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Mem-Act: $memory_clears / $memory_full_checks";
         glRasterPos2i( 2, 210 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks";
         glRasterPos2i( 2, 224 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks";
         glRasterPos2i( 2, 236 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         #$buf = "Crea: $creature_length";
         #glRasterPos2i( 2, 222 );
-        #print_opengl_string( GLUT_BITMAP_HELVETICA_12, $buf );
+        #glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
         glColor4f( 0.2, 0.2, 0.2, 0.75 );
 
@@ -1915,9 +1915,9 @@ sub render_scene {
         glColor4f( 1, 1, 0.2, 0.75 );
 
         glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, "-" );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, "-" );
         glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
-        print_opengl_string( GLUT_BITMAP_HELVETICA_12, "+" );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, "+" );
 
         my $height_mod = ( $c{window_height} - 22 ) / ( $zcount + 2 );
 
@@ -1942,7 +1942,7 @@ sub render_scene {
 
                 glRasterPos2i( $c{window_width} - 17,
                     $c{window_height} - 22 - ( 0.95 * $height_mod * ( $slice + 1 ) ) );
-                print_opengl_string( GLUT_BITMAP_HELVETICA_12, $slice );
+                glutBitmapString( GLUT_BITMAP_HELVETICA_12, $slice );
             }
         }
 
@@ -2331,16 +2331,6 @@ sub reposition_camera {
 
 # ------
 # String rendering routine; leverages on GLUT routine.
-
-sub print_opengl_string {
-    my ( $font, $str ) = @_;
-    my @c = split //, $str;
-
-    for (@c) {
-        glutBitmapCharacter( $font, ord $_ );
-    }
-    return;
-}
 
 sub set_detached {
     ($detached) = $_[1];
