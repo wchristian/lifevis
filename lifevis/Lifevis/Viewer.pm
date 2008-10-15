@@ -118,6 +118,8 @@ my $current_item_proc_task = 0;
 my $max_item_proc_tasks    = 0;
 my @items;
 
+my ($mouse_cursor_x,$mouse_cursor_y);
+
 # cursor coordinates  in tiles at last refresh
 my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
 
@@ -2187,9 +2189,12 @@ sub process_special_key_press {
 sub process_mouse_click {
     my ( $button, $state, $x, $y ) = @_;
     if ( $button == GLUT_MIDDLE_BUTTON && $state == GLUT_DOWN ) {
+        glutSetCursor(GLUT_CURSOR_NONE);
         $middle_mouse = 1;
         $last_mouse_x = $x;
         $last_mouse_y = $y;
+        $mouse_cursor_x = $x;
+        $mouse_cursor_y = $y;
     }
 
     if ( $button == GLUT_LEFT_BUTTON && $state == GLUT_DOWN ) {
@@ -2242,10 +2247,17 @@ sub process_mouse_click {
             $redraw_needed    = 1;
         }
         else {
+            $mouse_cursor_x = $x;
+            $mouse_cursor_y = $y;
+            glutSetCursor(GLUT_CURSOR_NONE);
             $rotating = 1;
         }
     }
 
+    glutWarpPointer($mouse_cursor_x, $mouse_cursor_y) if $button == GLUT_MIDDLE_BUTTON   && $state == GLUT_UP && $middle_mouse == 1;
+    glutWarpPointer($mouse_cursor_x, $mouse_cursor_y) if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP && $rotating == 1;
+    glutSetCursor(GLUT_CURSOR_INHERIT) if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
+    glutSetCursor(GLUT_CURSOR_INHERIT) if $button == GLUT_MIDDLE_BUTTON   && $state == GLUT_UP;
     $changing_ceiling = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
     $rotating         = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
     $middle_mouse     = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
@@ -2303,7 +2315,15 @@ sub process_active_mouse_motion {
     $last_mouse_x = $x;
     $last_mouse_y = $y;
     reposition_camera();
+    
+    if ( ( $rotating == 1 || $middle_mouse == 1 ) && ( $new_x != 0 || $new_y != 0 ) ) {
+        
+        $last_mouse_x = $mouse_cursor_x;
+        $last_mouse_y = $mouse_cursor_y;
+        glutWarpPointer( $last_mouse_x, $last_mouse_y );
+    }
 
+    
     $redraw_needed = 1;
     return;
 }
