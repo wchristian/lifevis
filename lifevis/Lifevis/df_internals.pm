@@ -3,7 +3,7 @@ use strict;
 
 use base 'Exporter';
 
-our @EXPORT = ( qw( get_df_tile_type_data get_df_item_id_data ) );
+our @EXPORT = ( qw( get_df_tile_type_data get_df_item_id_data get_ramp_bitmasks ) );
 
 # TODO: Make auto-converter from ods to this file.
 
@@ -327,6 +327,61 @@ $item_ids[16] = "Alder logs";
 
 sub get_df_item_id_data {
     return @item_ids;
+}
+
+
+my @ramps = (
+    { mask => 0b0_1111_0000, func => '4S' },
+    { mask => 0b0_1101_0000, func => '3S1' },
+    { mask => 0b0_1110_0000, func => '3S2' },
+    { mask => 0b0_0111_0000, func => '3S3' },
+    { mask => 0b0_1011_0000, func => '3S4' },
+    { mask => 0b0_1100_0010, func => '2S_1D1' },
+    { mask => 0b0_0110_0001, func => '2S_1D2' },
+    { mask => 0b0_0011_1000, func => '2S_1D3' },
+    { mask => 0b0_1001_0100, func => '2S_1D4' },
+    { mask => 0b0_1100_0000, func => '2S1' },
+    { mask => 0b0_0110_0000, func => '2S2' },
+    { mask => 0b0_0011_0000, func => '2S3' },
+    { mask => 0b0_1001_0000, func => '2S4' },
+    { mask => 0b0_1010_0000, func => '1S_1S1' },
+    { mask => 0b0_0101_0000, func => '1S_1S2' },
+    { mask => 0b0_1000_0100, func => '1S_1DL1' },
+    { mask => 0b0_0100_0010, func => '1S_1DL2' },
+    { mask => 0b0_0010_0001, func => '1S_1DL3' },
+    { mask => 0b0_0001_1000, func => '1S_1DL4' },
+    { mask => 0b0_1000_0010, func => '1S_1DR1' },
+    { mask => 0b0_0100_0001, func => '1S_1DR2' },
+    { mask => 0b0_0010_1000, func => '1S_1DR3' },
+    { mask => 0b0_0001_0100, func => '1S_1DR4' },
+    { mask => 0b0_1000_0000, func => '1S1' },
+    { mask => 0b0_0100_0000, func => '1S2' },
+    { mask => 0b0_0010_0000, func => '1S3' },
+    { mask => 0b0_0001_0000, func => '1S4' },
+    { mask => 0b0_0000_1111, func => '4D' },
+    { mask => 0b0_0000_1101, func => '3D1' },
+    { mask => 0b0_0000_1110, func => '3D2' },
+    { mask => 0b0_0000_0111, func => '3D3' },
+    { mask => 0b0_0000_1011, func => '3D4' },
+    { mask => 0b0_0001_1100, func => '1S_2D4' },
+    { mask => 0b0_1000_0110, func => '1S_2D1' },
+    { mask => 0b0_0100_0011, func => '1S_2D2' },
+    { mask => 0b0_0010_1001, func => '1S_2D3' },
+    { mask => 0b0_0000_1001, func => '2D1' },
+    { mask => 0b0_0000_1100, func => '2D2' },
+    { mask => 0b0_0000_0110, func => '2D3' },
+    { mask => 0b0_0000_0011, func => '2D4' },
+    { mask => 0b0_0000_1010, func => '1D_1D1' },
+    { mask => 0b0_0000_0101, func => '1D_1D2' },
+    { mask => 0b0_0000_1000, func => '1D1' },
+    { mask => 0b0_0000_0100, func => '1D2' },
+    { mask => 0b0_0000_0010, func => '1D3' },
+    { mask => 0b0_0000_0001, func => '1D4' },
+    { mask => 0b1_0000_0000, func => 'N' },
+);
+
+sub get_ramp_bitmasks {
+    return @ramps;
 }
 
 1;

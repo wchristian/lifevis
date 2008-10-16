@@ -52,9 +52,9 @@ my $detached;
 use lib '.';
 use lib '..';
 use Lifevis::constants;
-use Lifevis::df_offsets;
 use Lifevis::df_internals;
 use Lifevis::models;
+use Lifevis::ProcessConnection;
 
 use threads;
 use threads::shared;
@@ -86,6 +86,7 @@ $memory_use = 0;
 my @item_ids   = get_df_item_id_data();
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
+my @ramps = get_ramp_bitmasks();
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
@@ -93,10 +94,6 @@ $c{redraw_delay} = 0.5 / $c{fps_limit};
 my $memory_limit;
 $memory_limit  = $c{memory_limit};
 $config_loaded = 1;
-
-my @OFFSETS = get_df_offsets();
-my $ver;
-my $proc;
 
 my ( $xcount, $ycount, $zcount );    # dimensions of the map data we're dealing with, counts in cells
 my ( $x_max, $y_max );               # dimensions of the map data we're dealing with, counts in tiles
@@ -147,11 +144,6 @@ my @creature_display_lists;
 my @building_display_lists;
 my @item_display_lists;
 my @tiles;
-my @ramps;
-
-my $df_proc_handle;
-my $dwarf_pid;
-my $pe_timestamp;
 
 # Settings for our light.  Try playing with these (or add more lights).
 my @light_ambient = ( 0.7, 0.7, 0.7, 1.0 );
@@ -201,6 +193,10 @@ my $buil_loop;
 my $item_delay_counter = 0;
 my $item_loop;
 my $force_rt;
+
+my @offsets;
+my $df_proc_handle;
+my $proc;
 
 __PACKAGE__->run(@ARGV) unless caller();
 
@@ -316,61 +312,15 @@ sub run {
     #my ( %special_inputs, %normal_inputs ); # disabled until we actually pipe stuff to lifevis again
 
     # TODO: Split these and ramp-tops into seperate models. Fix texturing on ramp models where i fucked up diagonals.
-    @ramps = (
-        { mask => 0b0_1111_0000, func => '4S' },
-        { mask => 0b0_1101_0000, func => '3S1' },
-        { mask => 0b0_1110_0000, func => '3S2' },
-        { mask => 0b0_0111_0000, func => '3S3' },
-        { mask => 0b0_1011_0000, func => '3S4' },
-        { mask => 0b0_1100_0010, func => '2S_1D1' },
-        { mask => 0b0_0110_0001, func => '2S_1D2' },
-        { mask => 0b0_0011_1000, func => '2S_1D3' },
-        { mask => 0b0_1001_0100, func => '2S_1D4' },
-        { mask => 0b0_1100_0000, func => '2S1' },
-        { mask => 0b0_0110_0000, func => '2S2' },
-        { mask => 0b0_0011_0000, func => '2S3' },
-        { mask => 0b0_1001_0000, func => '2S4' },
-        { mask => 0b0_1010_0000, func => '1S_1S1' },
-        { mask => 0b0_0101_0000, func => '1S_1S2' },
-        { mask => 0b0_1000_0100, func => '1S_1DL1' },
-        { mask => 0b0_0100_0010, func => '1S_1DL2' },
-        { mask => 0b0_0010_0001, func => '1S_1DL3' },
-        { mask => 0b0_0001_1000, func => '1S_1DL4' },
-        { mask => 0b0_1000_0010, func => '1S_1DR1' },
-        { mask => 0b0_0100_0001, func => '1S_1DR2' },
-        { mask => 0b0_0010_1000, func => '1S_1DR3' },
-        { mask => 0b0_0001_0100, func => '1S_1DR4' },
-        { mask => 0b0_1000_0000, func => '1S1' },
-        { mask => 0b0_0100_0000, func => '1S2' },
-        { mask => 0b0_0010_0000, func => '1S3' },
-        { mask => 0b0_0001_0000, func => '1S4' },
-        { mask => 0b0_0000_1111, func => '4D' },
-        { mask => 0b0_0000_1101, func => '3D1' },
-        { mask => 0b0_0000_1110, func => '3D2' },
-        { mask => 0b0_0000_0111, func => '3D3' },
-        { mask => 0b0_0000_1011, func => '3D4' },
-        { mask => 0b0_0001_1100, func => '1S_2D4' },
-        { mask => 0b0_1000_0110, func => '1S_2D1' },
-        { mask => 0b0_0100_0011, func => '1S_2D2' },
-        { mask => 0b0_0010_1001, func => '1S_2D3' },
-        { mask => 0b0_0000_1001, func => '2D1' },
-        { mask => 0b0_0000_1100, func => '2D2' },
-        { mask => 0b0_0000_0110, func => '2D3' },
-        { mask => 0b0_0000_0011, func => '2D4' },
-        { mask => 0b0_0000_1010, func => '1D_1D1' },
-        { mask => 0b0_0000_0101, func => '1D_1D2' },
-        { mask => 0b0_0000_1000, func => '1D1' },
-        { mask => 0b0_0000_0100, func => '1D2' },
-        { mask => 0b0_0000_0010, func => '1D3' },
-        { mask => 0b0_0000_0001, func => '1D4' },
-        { mask => 0b1_0000_0000, func => 'N' },
-    );
 
     # ------
     # The main() function.  Inits OpenGL.  Calls our own init function,
     # then passes control onto OpenGL.
 
-    connect_to_DF();
+    Lifevis::ProcessConnection::initialize($VERSION,$detached);
+    my $offsets_ref;
+    ($proc,$df_proc_handle,$offsets_ref) = connect_to_DF();
+    @offsets = @{$offsets_ref};
 
     extract_base_memory_data();
 
@@ -401,7 +351,7 @@ sub run {
     # Set up Callback functions ####################################################
 
     # Register the callback function to do the drawing.
-    glutDisplayFunc( \&do_nothing );
+    glutDisplayFunc( sub { $redraw_needed = 1; } );
 
     glutIdleFunc( \&idle_tasks );                                     # If there's nothing to do, draw.
 
@@ -459,22 +409,21 @@ sub run {
     return;
 }
 
-sub do_nothing { $redraw_needed = 1; return; }
 ################################################################################
 ## Rendering Functions #########################################################
 ################################################################################
 
 sub extract_base_memory_data {
-    $xcount = $proc->get_u32( $OFFSETS[$ver]{x_count} );    # map size in cells
-    $ycount = $proc->get_u32( $OFFSETS[$ver]{y_count} );
-    $zcount = $proc->get_u32( $OFFSETS[$ver]{z_count} );
+    $xcount = $proc->get_u32( $offsets[x_count] );    # map size in cells
+    $ycount = $proc->get_u32( $offsets[y_count] );
+    $zcount = $proc->get_u32( $offsets[z_count] );
     set_zcount_for_models($zcount);
 
     $x_max = ( $xcount * 16 ) - 1;
     $y_max = ( $ycount * 16 ) - 1;
 
     # checking whether the game has a map already
-    $map_base = $proc->get_u32( $OFFSETS[$ver]{map_loc} );
+    $map_base = $proc->get_u32( $offsets[map_loc] );
     croak 'Map data is not yet available, make sure you have a game loaded.'
       unless ($map_base);
 
@@ -498,7 +447,7 @@ sub creature_update_loop {
         schedule();
         my $buf = "";
 
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{creature_vector} + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[creature_vector] + 4, 4 * 2, $buf );
         my @creature_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $creature_list_length = ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
@@ -595,7 +544,7 @@ sub building_update_loop {
         schedule();
         my $buf = "";
 
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{building_vector} + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[building_vector] + 4, 4 * 2, $buf );
         my @building_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $building_list_length = ( $building_vector_offsets[1] - $building_vector_offsets[0] ) / 4;
@@ -673,7 +622,7 @@ sub item_update_loop {
         my $buf   = "";
         my @item_present_temp;
 
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{item_vector} + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[item_vector] + 4, 4 * 2, $buf );
         my @item_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $item_list_length = ( $item_vector_offsets[1] - $item_vector_offsets[0] ) / 4;
@@ -777,11 +726,11 @@ sub location_update_loop {
         $zmouse_old = $zmouse;
 
         # get mouse data
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{mouse_x}, 4, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[mouse_x], 4, $buf );
         $xmouse = unpack( "L", $buf );
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{mouse_y}, 4, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[mouse_y], 4, $buf );
         $ymouse = unpack( "L", $buf );
-        _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{mouse_z}, 4, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[mouse_z], 4, $buf );
         $zmouse = unpack( "L", $buf );
 
         #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
@@ -792,15 +741,15 @@ sub location_update_loop {
             || $ymouse > $ycount * 16
             || $zmouse > $zcount )
         {
-            _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{viewport_x}, 4, $buf );
+            _ReadMemory( $df_proc_handle, $offsets[viewport_x], 4, $buf );
             my $viewport_x = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{window_grid_x}, 4, $buf );
+            _ReadMemory( $df_proc_handle, $offsets[window_grid_x], 4, $buf );
             my $window_grid_x = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{viewport_y}, 4, $buf );
+            _ReadMemory( $df_proc_handle, $offsets[viewport_y], 4, $buf );
             my $viewport_y = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{window_grid_y}, 4, $buf );
+            _ReadMemory( $df_proc_handle, $offsets[window_grid_y], 4, $buf );
             my $window_grid_y = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $OFFSETS[$ver]{viewport_z}, 4, $buf );
+            _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4, $buf );
             my $viewport_z = unpack( "L", $buf );
 
             $xmouse = $viewport_x + int( $window_grid_x / 6 );
@@ -837,6 +786,7 @@ sub location_update_loop {
             $min_x_range = 0 if $min_x_range < 0;
             $max_x_range = $xcell + $c{view_range};
             $max_x_range = $xcount - 1 if $max_x_range > $xcount - 1;
+            
             $min_y_range = $ycell - $c{view_range};
             $min_y_range = 0 if $min_y_range < 0;
             $max_y_range = $ycell + $c{view_range};
@@ -1240,13 +1190,13 @@ sub new_process_block {
     my $changed = 0;
     my $buf     = "";
 
-    _ReadMemory( $df_proc_handle, $block_offset + $OFFSETS[$ver]{type_off}, 2 * 256, $buf );
+    _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256, $buf );
     my @type_data = unpack( 'S' x 256, $buf );
 
-    _ReadMemory( $df_proc_handle, $block_offset + $OFFSETS[$ver]{designation_off}, 4 * 256, $buf );
+    _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256, $buf );
     my @designation_data = unpack( 'L' x 256, $buf );
 
-    _ReadMemory( $df_proc_handle, $block_offset + $OFFSETS[$ver]{occupancy_off}, 4 * 256, $buf );
+    _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256, $buf );
     my @occupation_data = unpack( 'L' x 256, $buf );
 
     my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
@@ -1314,219 +1264,7 @@ sub ask {
     return;
 }
 
-sub connect_to_DF {
-    $ver = init_process_connection();
-
-    refresh_datastore() unless $ver;
-
-    return;
-}
-
-sub init_process_connection {
-    ### get dwarf process id #######################################################
-    my %list = Win32::Process::List->new()->GetProcesses();
-    for my $key ( keys %list ) {
-        $dwarf_pid = $key if ( $list{$key} =~ /dwarfort.exe/ );
-    }
-    fatal_error( 'Could not find process ID, make sure DF is running and' . ' a savegame is loaded.' )
-      unless ($dwarf_pid);
-
-    ### lower priority of dwarf fortress ###########################################
-    Win32::Process::Open( my $dwarf_process, $dwarf_pid, 1 );
-    $dwarf_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
-    croak 'Could not lower DF process priority, this is really odd and'
-      . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ($dwarf_process);
-
-    Win32::Process::Open( my $self_process, $PROCESS_ID, 1 );
-    $self_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
-    croak 'Could not lower own process priority, this is really odd and'
-      . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ($self_process);
-
-    ### actually read stuff from memory ############################################
-    $proc =
-      Win32::Process::Memory->new( { pid => $dwarf_pid, access => 'read/write/query' } )
-      ;    # open process with read access
-    croak 'Could not open memory access to Dwarf Fortress, this is really odd'
-      . ' and should not happen, try running as'
-      . ' administrator or poke Mithaldu/Xenofur.'
-      unless ($proc);
-    $df_proc_handle = $proc->{hProcess};
-
-    ### Let's Pla... erm, figure out what version this is ##########################
-
-    for my $i ( 0 .. $#OFFSETS ) {
-        $pe_timestamp = $proc->get_u32( $OFFSETS[$i]{pe_timestamp_offset} );
-        return $i if ( $OFFSETS[$i]{PE} == $pe_timestamp );
-    }
-    return;
-}
-
 ################################################################################
-
-sub refresh_datastore {
-    say 'Could not find DF version in local data store.' . " Checking for new memory address data...\n";
-    import_remote_xml();
-
-    $ver = init_process_connection();
-
-    croak 'Version could not be correctly identified.'
-      . ' Please contact Xenofur/Mithaldu or Jifodus'
-      . " for updated memory addresses.\n"
-      unless $ver;
-    return;
-}
-
-sub import_remote_xml {
-    say '  Remotely...';
-    my $source = 'http://www.geocities.com/jifodus/tables/dwarvis/';
-    my @xml_list;
-
-    my $list = get($source);
-    croak 'Could not download the index of the online offset stores!'
-      unless defined $list;
-
-    while ( $list =~ m/<A HREF="(.+?\.xml)">/gi ) {
-        push @xml_list, $1;
-    }
-
-    say '    Found ' . ( $#xml_list + 1 ) . ' memory data files...';
-
-    for my $file (@xml_list) {
-        my $known = 0;
-        for my $i ( 0 .. $#OFFSETS ) {
-            $known = 1 if $file =~ m/$OFFSETS[$i]{version}/;
-        }
-
-        if ($known) {
-            say "    One file ($file) discarded," . ' memory data inside already known.';
-            next;
-        }
-
-        my $xml = get( $source . $file );
-        croak 'Could not get it!' unless defined $xml;
-
-        my $msg_file = $file;
-        $msg_file =~ s/core\.xml/messages.txt/;
-        my $message = get( $source . $msg_file );
-
-        process_xml( $xml, $message );
-    }
-    return;
-}
-
-sub process_xml {
-    my ( $xml, $message ) = @_;
-    my ( @data_store, @new_data_store );
-
-    my %config_hash;
-
-    if ( $xml =~ m/<version name="(.+?)" \/>/i ) {
-        $config_hash{version} = $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<pe timestamp_offset="0x(.+?)" timestamp="0x(.+?)" \/>/i ) {
-        $config_hash{pe_timestamp_offset} = hex $1;
-        $config_hash{PE}                  = hex $2;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_data" value="0x(.+?)" \/>/i ) {
-        $config_hash{map_loc} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_x_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{x_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_y_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{y_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_z_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{z_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_type_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{type_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_designation_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{designation_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_occupancy_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{occupancy_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_x" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_x} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_y" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_y} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_z" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_z} = hex $1;
-    }
-    else { return 0; }
-
-    for my $i ( 0 .. $#OFFSETS ) {
-        return 0 if $OFFSETS[$i]{version} eq $config_hash{version};
-    }
-
-    say "    Recognized new memory address data for DF $config_hash{version}," . ' inserting into data store.';
-    say "--- -- -\n$message\n--- -- -" if defined $message;
-    push @OFFSETS, \%config_hash;
-
-    open my $HANDLE, '<', 'Lifevis/df_offsets.pm'
-      or croak("horribly: $OS_ERROR");
-    @data_store = <$HANDLE>;
-    close $HANDLE or croak("horribly: $OS_ERROR");
-
-    for my $line (@data_store) {
-        if ( $line =~ m/OFFSETS\ END\ HERE/ ) {
-            push @new_data_store, "    {\n";
-            push @new_data_store, "        version => \"$config_hash{version}\",\n";
-            push @new_data_store, '        PE => ' . sprintf( '0x%08x', $config_hash{PE} ) . ",\n";
-            push @new_data_store, '        map_loc => ' . sprintf( '0x%08x', $config_hash{map_loc} ) . ",\n";
-            push @new_data_store, '        x_count => ' . sprintf( '0x%08x', $config_hash{x_count} ) . ",\n";
-            push @new_data_store, '        y_count => ' . sprintf( '0x%08x', $config_hash{y_count} ) . ",\n";
-            push @new_data_store, '        z_count => ' . sprintf( '0x%08x', $config_hash{z_count} ) . ",\n";
-            push @new_data_store,
-              '        pe_timestamp_offset => ' . sprintf( '0x%08x', $config_hash{pe_timestamp_offset} ) . ",\n";
-            push @new_data_store, '        type_off        => ' . sprintf( '0x%08x', $config_hash{type_off} ) . ",\n";
-            push @new_data_store,
-              '        designation_off => ' . sprintf( '0x%08x', $config_hash{designation_off} ) . ",\n";
-            push @new_data_store,
-              '        occupancy_off   => ' . sprintf( '0x%08x', $config_hash{occupancy_off} ) . ",\n";
-            push @new_data_store, '        mouse_x   => ' . sprintf( '0x%08x', $config_hash{mouse_x} ) . ",\n";
-            push @new_data_store, '        mouse_y   => ' . sprintf( '0x%08x', $config_hash{mouse_y} ) . ",\n";
-            push @new_data_store, '        mouse_z   => ' . sprintf( '0x%08x', $config_hash{mouse_z} ) . ",\n";
-            push @new_data_store, "    },\n";
-        }
-        push @new_data_store, $line;
-    }
-
-    open $HANDLE, '>', 'Lifevis/df_offsets.pm' or croak("horribly: $OS_ERROR");
-    for my $line (@new_data_store) {
-        print {$HANDLE} $line;
-    }
-    close $HANDLE or croak("horribly: $OS_ERROR");
-    return;
-}
 
 ################################################################################
 

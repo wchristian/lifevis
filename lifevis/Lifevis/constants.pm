@@ -29,6 +29,10 @@ our @EXPORT = ( qw(
  
  changed z offset creature_list cache_ptr building_list item_list
  
+ version PE map_loc x_count y_count z_count pe_timestamp_offset type_off designation_off occupancy_off mouse_x
+ mouse_y mouse_z creature_vector creature_race creature_x creature_y viewport_x viewport_y viewport_z window_grid_x
+ window_grid_y menu_state view_state building_vector item_vector
+ 
  ) );
 
 use constant PROGRAM_TITLE =>
@@ -84,6 +88,12 @@ use constant cell_ptr => 0;
 
 use enum qw(
  changed z offset creature_list cache_ptr building_list item_list
+);
+
+use enum qw(
+ version PE map_loc x_count y_count z_count pe_timestamp_offset type_off designation_off occupancy_off mouse_x
+ mouse_y mouse_z creature_vector creature_race creature_x creature_y viewport_x viewport_y viewport_z window_grid_x
+ window_grid_y menu_state view_state building_vector item_vector
 );
 
 1;
