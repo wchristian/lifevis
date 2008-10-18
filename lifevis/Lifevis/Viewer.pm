@@ -109,11 +109,11 @@ my $full_loop_completed;
 my $memory_use;
 $memory_use = 0;
 
-my %building_visuals   = get_df_building_visuals();
-my @TILE_TYPES = get_df_tile_type_data();
-my %DRAW_MODEL = get_model_subs();
-my @ramps      = get_ramp_bitmasks();
-my %vtables = get_vtables();
+my %building_visuals = get_df_building_visuals();
+my @TILE_TYPES       = get_df_tile_type_data();
+my %DRAW_MODEL       = get_model_subs();
+my @ramps            = get_ramp_bitmasks();
+my %vtables          = get_vtables();
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
@@ -585,11 +585,11 @@ sub building_update_loop {
             my $vtable = unpack( "L", $buf );
 
             # update record of current creature
-            $buildings{$building}[b_x] = $rx;
-            $buildings{$building}[b_y] = $ry;
-            $buildings{$building}[b_z] = $rz;
+            $buildings{$building}[b_x]            = $rx;
+            $buildings{$building}[b_y]            = $ry;
+            $buildings{$building}[b_z]            = $rz;
             $buildings{$building}[b_vtable_const] = $vtable;
-            $buildings{$building}[b_vtable_id] = $vtables{$vtable};
+            $buildings{$building}[b_vtable_id]    = $vtables{$vtable};
             warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
 
             # get old and new cell location and compare
@@ -681,14 +681,14 @@ sub item_update_loop {
             #say $proc->hexdump( $item, 0x88 ),"\n ";
 
             # update record of current creature
-            $items[$id][i_x]        = $rx;
-            $items[$id][i_y]        = $ry;
-            $items[$id][i_z]        = $rz;
-            $items[$id][i_type]     = $type;
-            $items[$id][i_state]    = $state;
-            $items[$id][i_address]  = $item_address;
+            $items[$id][i_x]            = $rx;
+            $items[$id][i_y]            = $ry;
+            $items[$id][i_z]            = $rz;
+            $items[$id][i_type]         = $type;
+            $items[$id][i_state]        = $state;
+            $items[$id][i_address]      = $item_address;
             $items[$id][i_vtable_const] = $vtable;
-            $items[$id][i_vtable_id] = $vtables{$vtable};
+            $items[$id][i_vtable_id]    = $vtables{$vtable};
             warn sprintf "UNKNOWN ITEM VTABLE: %x\n", $vtable unless $items[$id][i_vtable_id];
             $item_present[$id]      = 1;
             $item_present_temp[$id] = 1;
@@ -1004,7 +1004,7 @@ sub generate_creature_display_lists {
 }
 
 sub generate_building_display_lists {
-    for my $building_visual (keys %building_visuals) {
+    for my $building_visual ( keys %building_visuals ) {
         my $dl = glGenLists(1);
         $building_display_lists{$building_visual} = $dl;
         glNewList( $dl, GL_COMPILE );
@@ -1535,7 +1535,7 @@ sub render_models {
                     }
                     else {
                         glCallList( $building_display_lists{default} );
-                        
+
                     }
                     glTranslatef( -$x, -$z, -$y );
                 }
@@ -1700,7 +1700,7 @@ sub render_ui {
     glColor4f( 1, 1, 0.2, 0.75 ) if ( $c{view_range} > 0 );
     glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, "-" );
-    
+
     glColor4f( 0.2, 0.2, 0.2, 0.75 );
     my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
     glColor4f( 1, 1, 0.2, 0.75 ) if ( $c{view_range} < $size / 2 );
@@ -1783,7 +1783,7 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    my $far_clip = 33*(1+(2*$c{view_range}));
+    my $far_clip = 33 * ( 1 + ( 2 * $c{view_range} ) );
     $far_clip = 100 if $far_clip < 100;
     gluPerspective( 45.0, $width / $height, 1, $far_clip );
 
@@ -1841,7 +1841,7 @@ sub build_textures {
     create_texture( 'ui',                         ui );
     create_texture( 'items',                      items );
     create_texture( 'wood',                       wood );
-    create_texture( 'red',                       red );
+    create_texture( 'red',                        red );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -1988,9 +1988,9 @@ sub process_mouse_click {
             && $y > $c{window_height} - 20
             && $y < $c{window_height} )
         {
-            if ($c{view_range} > 0) {
+            if ( $c{view_range} > 0 ) {
                 --$c{view_range};
-                resize_scene($c{window_width},$c{window_height});
+                resize_scene( $c{window_width}, $c{window_height} );
                 $redraw_needed      = 1;
                 $view_range_changed = 1;
             }
@@ -2016,10 +2016,10 @@ sub process_mouse_click {
             && $y < $c{window_height} )
         {
             my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
-            
+
             if ( $c{view_range} < $size / 2 ) {
                 ++$c{view_range};
-                resize_scene($c{window_width},$c{window_height});
+                resize_scene( $c{window_width}, $c{window_height} );
                 $redraw_needed      = 1;
                 $view_range_changed = 1;
             }

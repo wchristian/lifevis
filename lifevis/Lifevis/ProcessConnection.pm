@@ -14,7 +14,7 @@ use Lifevis::constants;
 use Lifevis::df_offsets;
 
 use base 'Exporter';
-our @EXPORT = qw( connect_to_DF );
+our @EXPORT    = qw( connect_to_DF );
 our @EXPORT_OK = qw( );
 
 my $ver;
@@ -33,36 +33,36 @@ sub connect_to_DF {
     $ver = init_process_connection();
 
     refresh_datastore() unless $ver;
-    
-    my @offsets;
-    $offsets[version] = $OFFSETS[$ver]{'version'};
-    $offsets[PE] = $OFFSETS[$ver]{'PE'};
-    $offsets[map_loc] = $OFFSETS[$ver]{'map_loc'};
-    $offsets[x_count] = $OFFSETS[$ver]{'x_count'};
-    $offsets[y_count] = $OFFSETS[$ver]{'y_count'};
-    $offsets[z_count] = $OFFSETS[$ver]{'z_count'};
-    $offsets[pe_timestamp_offset] = $OFFSETS[$ver]{'pe_timestamp_offset'};
-    $offsets[type_off] = $OFFSETS[$ver]{'type_off'};
-    $offsets[designation_off] = $OFFSETS[$ver]{'designation_off'};
-    $offsets[occupancy_off] = $OFFSETS[$ver]{'occupancy_off'};
-    $offsets[mouse_x] = $OFFSETS[$ver]{'mouse_x'};
-    $offsets[mouse_y] = $OFFSETS[$ver]{'mouse_y'};
-    $offsets[mouse_z] = $OFFSETS[$ver]{'mouse_z'};
-    $offsets[creature_vector] = $OFFSETS[$ver]{'creature_vector'};
-    $offsets[creature_race] = $OFFSETS[$ver]{'creature_race'};
-    $offsets[creature_x] = $OFFSETS[$ver]{'creature_x'};
-    $offsets[creature_y] = $OFFSETS[$ver]{'creature_y'};
-    $offsets[viewport_x] = $OFFSETS[$ver]{'viewport_x'};
-    $offsets[viewport_y] = $OFFSETS[$ver]{'viewport_y'};
-    $offsets[viewport_z] = $OFFSETS[$ver]{'viewport_z'};
-    $offsets[window_grid_x] = $OFFSETS[$ver]{'window_grid_x'};
-    $offsets[window_grid_y] = $OFFSETS[$ver]{'window_grid_y'};
-    $offsets[menu_state] = $OFFSETS[$ver]{'menu_state'};
-    $offsets[view_state] = $OFFSETS[$ver]{'view_state'};
-    $offsets[building_vector] = $OFFSETS[$ver]{'building_vector'};
-    $offsets[item_vector] = $OFFSETS[$ver]{'item_vector'};
 
-    return ($proc,$df_proc_handle,\@offsets);
+    my @offsets;
+    $offsets[version]             = $OFFSETS[$ver]{'version'};
+    $offsets[PE]                  = $OFFSETS[$ver]{'PE'};
+    $offsets[map_loc]             = $OFFSETS[$ver]{'map_loc'};
+    $offsets[x_count]             = $OFFSETS[$ver]{'x_count'};
+    $offsets[y_count]             = $OFFSETS[$ver]{'y_count'};
+    $offsets[z_count]             = $OFFSETS[$ver]{'z_count'};
+    $offsets[pe_timestamp_offset] = $OFFSETS[$ver]{'pe_timestamp_offset'};
+    $offsets[type_off]            = $OFFSETS[$ver]{'type_off'};
+    $offsets[designation_off]     = $OFFSETS[$ver]{'designation_off'};
+    $offsets[occupancy_off]       = $OFFSETS[$ver]{'occupancy_off'};
+    $offsets[mouse_x]             = $OFFSETS[$ver]{'mouse_x'};
+    $offsets[mouse_y]             = $OFFSETS[$ver]{'mouse_y'};
+    $offsets[mouse_z]             = $OFFSETS[$ver]{'mouse_z'};
+    $offsets[creature_vector]     = $OFFSETS[$ver]{'creature_vector'};
+    $offsets[creature_race]       = $OFFSETS[$ver]{'creature_race'};
+    $offsets[creature_x]          = $OFFSETS[$ver]{'creature_x'};
+    $offsets[creature_y]          = $OFFSETS[$ver]{'creature_y'};
+    $offsets[viewport_x]          = $OFFSETS[$ver]{'viewport_x'};
+    $offsets[viewport_y]          = $OFFSETS[$ver]{'viewport_y'};
+    $offsets[viewport_z]          = $OFFSETS[$ver]{'viewport_z'};
+    $offsets[window_grid_x]       = $OFFSETS[$ver]{'window_grid_x'};
+    $offsets[window_grid_y]       = $OFFSETS[$ver]{'window_grid_y'};
+    $offsets[menu_state]          = $OFFSETS[$ver]{'menu_state'};
+    $offsets[view_state]          = $OFFSETS[$ver]{'view_state'};
+    $offsets[building_vector]     = $OFFSETS[$ver]{'building_vector'};
+    $offsets[item_vector]         = $OFFSETS[$ver]{'item_vector'};
+
+    return ( $proc, $df_proc_handle, \@offsets );
 }
 
 sub init_process_connection {
@@ -272,7 +272,7 @@ sub process_xml {
 ### helpers
 
 sub initialize {
-    ($VERSION,$detached) = $_[1];
+    ( $VERSION, $detached ) = $_[1];
 }
 
 sub fatal_error {
