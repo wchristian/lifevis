@@ -8,7 +8,7 @@ use lib '..';
 
 my $detached = 0;
 
-if ( !grep(m/-console/, @ARGV) and !grep(m/-modelgen/, @ARGV) ) {
+if ( !grep(m/-console/, @ARGV) and !grep(m/-modelgen/, @ARGV) and !grep(m/-vtableconv/, @ARGV) ) {
     require Win32::Detached;
     open STDERR, '>>error.txt';
     open STDOUT, '>>log.txt';
@@ -24,6 +24,13 @@ if ( grep(m/-viewer/, @ARGV) ) {
 if ( grep(m/-modelgen/, @ARGV) ) {
     require Lifevis::ModelGen;
     Lifevis::ModelGen->run();
+    say "Press Enter to close.";
+    my $in = <STDIN>;
+}
+
+if ( grep(m/-vtableconv/, @ARGV) ) {
+    require Lifevis::VtableConv;
+    Lifevis::VtableConv->run();
     say "Press Enter to close.";
     my $in = <STDIN>;
 }

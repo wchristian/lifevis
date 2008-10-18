@@ -1,0 +1,5975 @@
+0096E394h: possible vtable (2 methods)
+(SI)
+0000: std::exception
+ std::exception::`vftable'
+  referencing functions: 
+  .text:00927876
+  .text:00927887 (std::exception::exception)
+  .text:009278D5 (std::exception::exception)
+  .text:009278ED (std::exception::exception)
+  .text:00927945
+  scalar deleting destructor: 009279A4h
+  destructor: 00927945h
+
+0096E3B4h: possible vtable (2 methods)
+(SI)
+0000: std::bad_cast
+0000:     std::exception
+ std::bad_cast::`vftable'
+  referencing functions: 
+  .text:00927968
+  .text:009279C0
+  scalar deleting destructor: 009279C0h
+
+0096E3C0h: possible vtable (1 methods)
+(SI)
+0000: type_info
+ type_info::`vftable'
+  referencing functions: 
+  .text:00927A67
+  scalar deleting destructor: 00927A75h
+  destructor: 00927A67h
+
+0096E3C8h: possible vtable (2 methods)
+(SI)
+0000: std::bad_alloc
+0000:     std::exception
+ std::bad_alloc::`vftable'
+  referencing functions: 
+  .text:00406050
+  .text:0040A750
+  .text:0047D690
+  .text:0047D6E0
+  .text:00927D07 (std::bad_alloc::bad_alloc)
+  .text:00927D20 (operator new)
+  .text:0096D545
+  scalar deleting destructor: 00406050h
+
+0096EB18h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0092E38B ()
+
+0096FC74h: possible vtable (1 methods)
+  referencing functions: 
+
+0096FC84h: possible vtable (1 methods)
+  referencing functions: 
+
+0096FC88h: possible vtable (1 methods)
+  referencing functions: 
+
+0096FCE8h: possible vtable (1 methods)
+  referencing functions: 
+
+009701B0h: possible vtable (1 methods)
+  referencing functions: 
+
+00970548h: possible vtable (2 methods)
+(SI)
+0000: std::logic_error
+0000:     std::exception
+ std::logic_error::`vftable'
+  referencing functions: 
+  .text:00406080
+  .text:00406100
+  .text:00406140
+  .text:00406190
+
+00970554h: possible vtable (2 methods)
+(SI)
+0000: std::length_error
+0000:     std::logic_error
+0000:         std::exception
+ std::length_error::`vftable'
+  referencing functions: 
+  .text:0093708E
+
+00970560h: possible vtable (2 methods)
+(SI)
+0000: std::out_of_range
+0000:     std::logic_error
+0000:         std::exception
+ std::out_of_range::`vftable'
+  referencing functions: 
+  .text:0093706C
+  .text:009370CD (2 times)
+  scalar deleting destructor: 0093706Ch
+
+00970594h: possible vtable (1 methods)
+(SI)
+0000: std::locale::facet
+ std::locale::facet::`vftable'
+  referencing functions: 
+  .text:0040D160
+  .text:00412E50
+  .text:00413E00
+  .text:0042BD20
+  .text:0093737D (std::locale::_Locimp::~_Locimp)
+  scalar deleting destructor: 00412E50h
+
+0097059Ch: possible vtable (1 methods)
+(SI)
+0000: std::locale::_Locimp
+0000:     std::locale::facet
+ std::locale::_Locimp::`vftable'
+  referencing functions: 
+  .text:00937334 (std::locale::_Locimp::_Locimp)
+  .text:0093737D (std::locale::_Locimp::~_Locimp)
+  scalar deleting destructor: 009373BAh
+  destructor: 0093737Dh
+  constructor: 00937334h
+
+00970634h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00929D90 (3 times) ()
+
+0097063Ch: possible vtable (2 methods)
+(SI)
+0000: std::bad_exception
+0000:     std::exception
+ std::bad_exception::`vftable'
+  referencing functions: 
+  .text:00937FB6
+  .text:009387F6 ()
+  scalar deleting destructor: 00937FB6h
+
+00970654h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00939319 ()
+
+009723B8h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00401630
+  .text:005B57F0
+  .text:006B9CD0
+
+009746D8h: possible vtable (11 methods)
+(SI)
+0000: abstract_buildingst
+ abstract_buildingst::`vftable'
+  referencing functions: 
+  .text:004067F0
+  .text:004068D0
+  scalar deleting destructor: 00406960h
+  destructor: 004067F0h
+  constructor: 004068D0h
+
+00974708h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_storest
+0000:     abstract_buildingst
+ abstract_building_storest::`vftable'
+  referencing functions: 
+  .text:004069F0
+
+00974738h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_mead_hallst
+0000:     abstract_buildingst
+ abstract_building_mead_hallst::`vftable'
+  referencing functions: 
+  .text:00406A90
+
+00974768h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_keepst
+0000:     abstract_buildingst
+ abstract_building_keepst::`vftable'
+  referencing functions: 
+  .text:00406AF0
+
+00974798h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_home_singlest
+0000:     abstract_buildingst
+ abstract_building_home_singlest::`vftable'
+  referencing functions: 
+  .text:00406F00
+  .text:00522F60
+  .text:006C0890
+  scalar deleting destructor: 00406960h
+  destructor: 004067F0h
+
+009747C8h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_home_apartmentst
+0000:     abstract_buildingst
+ abstract_building_home_apartmentst::`vftable'
+  referencing functions: 
+  .text:00406F00
+  .text:00522FC0
+  .text:006C0890
+  scalar deleting destructor: 00406960h
+  destructor: 004067F0h
+
+009747F8h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_home_apartment_roomst
+0000:     abstract_buildingst
+ abstract_building_home_apartment_roomst::`vftable'
+  referencing functions: 
+  .text:00406F00
+  .text:0054DE90
+  .text:006C0890
+  scalar deleting destructor: 00406960h
+  destructor: 004067F0h
+
+00974828h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_dark_towerst
+0000:     abstract_buildingst
+ abstract_building_dark_towerst::`vftable'
+  referencing functions: 
+  .text:00406B50
+
+00974858h: possible vtable (11 methods)
+(SI)
+0000: abstract_building_templest
+0000:     abstract_buildingst
+ abstract_building_templest::`vftable'
+  referencing functions: 
+  .text:00406C10
+
+00974DA0h: possible vtable (1 methods)
+(SI)
+0000: std::ios_base
+0004:     std::_Iosb<int>
+ std::ios_base::`vftable'
+  referencing functions: 
+  .text:0040D1F0
+  .text:00412350
+  .text:00412390
+  .text:004123C0
+  .text:004124A0
+  .text:00412530
+  .text:0041A500
+  .text:0041A600
+  .text:0041A6E0
+  .text:0041A7F0
+  .text:0041AA70
+  .text:0041AB70
+  .text:00429960
+  .text:004299C0
+  .text:0051D4F0
+  .text:0051D750
+  .text:0051E660
+  .text:005D7900
+  .text:005E01F0
+  .text:00644670
+  .text:006508E0
+  .text:006B4330
+  .text:006B9CD0
+  .text:006BA4A0
+  .text:006D4950
+  .text:007D2480
+  .text:007F99C0
+  .text:00819FD0
+  .text:008519E0
+  .text:0085B050
+
+00974DA8h: possible vtable (1 methods)
+(SI)
+0000: std::basic_ios<char,std::char_traits<char>>
+0000:     std::ios_base
+0004:         std::_Iosb<int>
+ std::basic_ios<char,struct std::char_traits<char>>::`vftable'
+  referencing functions: 
+  .text:00429110
+  .text:00429760
+  .text:0051E4E0
+  .text:005B6010
+
+00974DB0h: possible vtable (14 methods)
+(SI)
+0000: std::basic_streambuf<char,std::char_traits<char>>
+ std::basic_streambuf<char,struct std::char_traits<char>>::`vftable'
+  referencing functions: 
+  .text:00411770
+  .text:00412400
+  .text:00429230
+  .text:0042AA20
+
+00974DECh: possible vtable (1 methods)
+ std::basic_istream<char,struct std::char_traits<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:004116A0
+  .text:00411758 (istream::~istream)
+  .text:004123C0
+  .text:00412530
+  .text:0051E5C0
+  .text:0051E7F0
+
+00974DF4h: possible vtable (1 methods)
+ std::basic_ostream<char,struct std::char_traits<char>>::`vftable'{for `std::_Iosb<int>'}
+  referencing functions: 
+  .text:00411440 (basic_ostream<char,char_traits<char>>::~basic_ostream<char,char_traits<char>>)
+  .text:004116A0
+  .text:00412350
+  .text:00412530
+  .text:004291A0
+  .text:00429840
+  .text:00429B20
+  .text:005B61D0
+
+00974DFCh: possible vtable (1 methods)
+ std::basic_iostream<char,struct std::char_traits<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:004116A0
+  .text:00412530
+  .text:005B61D0
+
+00974E04h: possible vtable (14 methods)
+(SI)
+0000: std::basic_filebuf<char,std::char_traits<char>>
+0000:     std::basic_streambuf<char,std::char_traits<char>>
+ std::basic_filebuf<char,struct std::char_traits<char>>::`vftable'
+  referencing functions: 
+  .text:00411770
+  .text:00429760
+  .text:0051E4E0
+  .text:005B6010
+  scalar deleting destructor: 00412510h
+  destructor: 00411770h
+
+00974E40h: possible vtable (1 methods)
+ std::basic_fstream<char,struct std::char_traits<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:004116A0
+  .text:005B6010
+
+00974E48h: possible vtable (2 methods)
+(SI)
+0000: std::runtime_error
+0000:     std::exception
+ std::runtime_error::`vftable'
+  referencing functions: 
+  .text:0040CE80
+  .text:0040CEF0
+  .text:0040D0B0
+
+00974E54h: possible vtable (8 methods)
+(SI)
+0000: std::codecvt<char,char,int>
+0000:     std::codecvt_base
+0000:         std::locale::facet
+ std::codecvt<char,char,int>::`vftable'
+  referencing functions: 
+  .text:00413C40
+  scalar deleting destructor: 00412E50h
+
+00974E78h: possible vtable (10 methods)
+(SI)
+0000: art_image_elementst
+ art_image_elementst::`vftable'
+  referencing functions: 
+  .text:0040D890
+  scalar deleting destructor: 0040D890h
+
+00974EA4h: possible vtable (10 methods)
+(SI)
+0000: art_image_element_creaturest
+0000:     art_image_elementst
+ art_image_element_creaturest::`vftable'
+  referencing functions: 
+  .text:0040D590
+  .text:0040E7E0
+  .text:0040E8C0
+  .text:00410EC0 (4 times)
+  .text:00675C20
+  .text:00675D30
+  .text:00675E40
+  .text:00675FE0
+  .text:00676180
+  .text:00676320
+  .text:00676430
+  .text:00676540
+  .text:00676680 (2 times)
+  .text:00676850 (2 times)
+  .text:00676A20 (2 times)
+  .text:00676C00
+  .text:00676D40 (2 times)
+  .text:00676F20 (2 times)
+  .text:00677120 (2 times)
+  .text:00677300
+  .text:00677460
+  .text:00677590
+  .text:006776C0
+  .text:006777F0
+  .text:006778F0
+  .text:00677A20
+  .text:00677B60
+  .text:00677CC0 (2 times)
+  .text:00677E40 (2 times)
+  .text:00678010
+  .text:00678110
+  .text:006782B0 (2 times)
+  .text:006784B0 (2 times)
+  .text:00678720 (2 times)
+  .text:006788F0 (2 times)
+  .text:00678AC0 (2 times)
+  .text:00678C90 (2 times)
+  .text:00678E60 (2 times)
+  .text:00679030 (2 times)
+  .text:00679210 (2 times)
+  .text:006793F0 (3 times)
+  .text:006798F0 (2 times)
+  .text:00679AC0 (2 times)
+  .text:00679C90 (2 times)
+  .text:0067A090
+  .text:0067A260
+  .text:0067A430
+  .text:0067A760
+  .text:0067A940
+  .text:0067AAE0
+  .text:0067ACB0
+  .text:0067AE90
+  .text:0067AFA0
+  .text:0067B100 (2 times)
+  .text:0067B2B0
+  .text:0067B3E0 (2 times)
+  .text:0067B5E0 (2 times)
+  .text:0067B8C0
+  .text:0067BA70
+  .text:0067BD50 (2 times)
+  .text:0067BEC0 (2 times)
+  .text:0067C0D0
+  .text:0067C220 (6 times)
+  .text:0067C630 (6 times)
+  .text:0067D090 (2 times)
+  .text:0067D3B0 (2 times)
+  .text:008AEE60 (3 times)
+  .text:008DBAE0
+  scalar deleting destructor: 0040D890h
+
+00974ED0h: possible vtable (10 methods)
+(SI)
+0000: art_image_element_itemst
+0000:     art_image_elementst
+ art_image_element_itemst::`vftable'
+  referencing functions: 
+  .text:0040D720
+  .text:0040D790
+  .text:00675E40
+  .text:00675FE0
+  .text:00676180
+  .text:0067A600
+  .text:0067A940
+  .text:008DBAE0
+  scalar deleting destructor: 0040D890h
+
+00974EFCh: possible vtable (10 methods)
+(SI)
+0000: art_image_element_plantst
+0000:     art_image_elementst
+ art_image_element_plantst::`vftable'
+  referencing functions: 
+  .text:0040D7C0
+  .text:0040E7E0
+  .text:0040E8C0
+  .text:008AEE60 (2 times)
+  scalar deleting destructor: 0040D890h
+
+00974F28h: possible vtable (10 methods)
+(SI)
+0000: art_image_element_treest
+0000:     art_image_elementst
+ art_image_element_treest::`vftable'
+  referencing functions: 
+  .text:0040D860
+  .text:0040E7E0
+  .text:0040E8C0
+  .text:006793F0
+  .text:008AEE60
+  scalar deleting destructor: 0040D890h
+
+00974F54h: possible vtable (10 methods)
+(SI)
+0000: art_image_element_shapest
+0000:     art_image_elementst
+ art_image_element_shapest::`vftable'
+  referencing functions: 
+  .text:0040D950
+  .text:0040E7E0
+  .text:0040E8C0
+  .text:008DBAE0
+  scalar deleting destructor: 0040D890h
+
+00974F80h: possible vtable (6 methods)
+(SI)
+0000: art_image_propertyst
+ art_image_propertyst::`vftable'
+  referencing functions: 
+  .text:0040D9A0
+  .text:0040DCE0
+
+00974F9Ch: possible vtable (6 methods)
+(SI)
+0000: art_image_property_transitive_verbst
+0000:     art_image_propertyst
+ art_image_property_transitive_verbst::`vftable'
+  referencing functions: 
+  .text:0040DB30
+  .text:0040E980
+  .text:00410EC0
+  .text:00675E40
+  .text:00675FE0
+  .text:00676180
+  .text:00676680
+  .text:00676850
+  .text:00676A20
+  .text:00676D40
+  .text:00676F20
+  .text:00677120
+  .text:00677CC0
+  .text:00677E40
+  .text:006782B0
+  .text:006784B0
+  .text:00678720
+  .text:006788F0
+  .text:00678AC0
+  .text:00678C90
+  .text:00678E60
+  .text:00679030
+  .text:00679210
+  .text:006793F0 (4 times)
+  .text:006798F0
+  .text:00679AC0
+  .text:00679C90
+  .text:0067A090
+  .text:0067A260
+  .text:0067A430
+  .text:0067A760
+  .text:0067A940
+  .text:0067AAE0
+  .text:0067ACB0
+  .text:0067B100
+  .text:0067B3E0
+  .text:0067B5E0
+  .text:0067BD50
+  .text:0067C220
+  .text:0067C630 (3 times)
+  .text:0067D090
+  .text:0067D3B0
+  .text:008AEE60 (9 times)
+
+00974FB8h: possible vtable (6 methods)
+(SI)
+0000: art_image_property_intransitive_verbst
+0000:     art_image_propertyst
+ art_image_property_intransitive_verbst::`vftable'
+  referencing functions: 
+  .text:0040DC50
+  .text:0040E980
+  .text:00410EC0 (3 times)
+  .text:00675C20
+  .text:00675D30
+  .text:00676320
+  .text:00676430
+  .text:00676540
+  .text:00676C00
+  .text:00677300
+  .text:00677460
+  .text:00677590
+  .text:006776C0
+  .text:006777F0
+  .text:006778F0
+  .text:00677A20
+  .text:00677B60
+  .text:00678010
+  .text:00678110
+  .text:006784B0
+  .text:006793F0 (3 times)
+  .text:00679C90 (6 times)
+  .text:0067A600
+  .text:0067AE90
+  .text:0067AFA0
+  .text:0067B2B0
+  .text:0067B5E0 (3 times)
+  .text:0067B8C0 (2 times)
+  .text:0067BA70
+  .text:0067BEC0 (2 times)
+  .text:0067C0D0
+  .text:0067C220 (2 times)
+  .text:0067C630 (16 times)
+  .text:0067D090 (2 times)
+  .text:008AEE60
+
+00975028h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0041E9B0
+  .text:005BE450
+  .text:007A0450
+
+009753E4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00415870
+
+00975824h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00415870
+  .text:0041A310
+
+00976388h: possible vtable (1 methods)
+  referencing functions: 
+  .text:004181E0
+  .text:004186C0
+
+0097640Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:004181E0
+  .text:004186C0
+
+009765FCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:00418ED0
+  .text:00419120
+
+00976630h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00418ED0
+  .text:00419120
+
+00976718h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00419530
+  .text:00419A70
+
+00976878h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00419530
+  .text:00419A70
+  .text:0049DE50
+  .text:00850520
+
+00977CCCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:00423A80
+
+00978074h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00423A80
+  .text:00861010
+
+009788A0h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00425A90
+  .text:0089EF50
+
+00978BECh: possible vtable (1 methods)
+  referencing functions: 
+  .text:00426020
+  .text:0089EF50
+
+00978EACh: possible vtable (14 methods)
+(SI)
+0000: std::basic_stringbuf<char,std::char_traits<char>,std::allocator<char>>
+0000:     std::basic_streambuf<char,std::char_traits<char>>
+ std::basic_stringbuf<char,struct std::char_traits<char>,class std::allocator<char>>::`vftable'
+  referencing functions: 
+  .text:00429230
+  .text:00429D50
+  scalar deleting destructor: 004299A0h
+  destructor: 00429230h
+  constructor: 00429D50h
+
+00978EE8h: possible vtable (1 methods)
+ std::basic_ostringstream<char,struct std::char_traits<char>,class std::allocator<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:00429110
+  .text:004291A0
+
+00978EF8h: possible vtable (1 methods)
+ std::basic_ofstream<char,struct std::char_traits<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:00429760
+  .text:00429840
+
+00978F08h: possible vtable (11 methods)
+(SI)
+0000: std::ctype<char>
+0000:     std::ctype_base
+0000:         std::locale::facet
+ std::ctype<char>::`vftable'
+  referencing functions: 
+  .text:00413CE0
+  .text:00413E00
+  scalar deleting destructor: 00414010h
+  destructor: 00413E00h
+  constructor: 00413CE0h
+
+00978F38h: possible vtable (2 methods)
+(SI)
+0000: std::ios_base::failure
+0000:     std::runtime_error
+0000:         std::exception
+ std::ios_base::failure::`vftable'
+  referencing functions: 
+  .text:00414070 (3 times)
+
+00978F44h: possible vtable (6 methods)
+(SI)
+0000: std::numpunct<char>
+0000:     std::locale::facet
+ std::numpunct<char>::`vftable'
+  referencing functions: 
+  .text:0042BD20
+  .text:0042C920
+
+00978F60h: possible vtable (9 methods)
+(SI)
+0000: std::num_put<char,std::ostreambuf_iterator<char,std::char_traits<char>>>
+0000:     std::locale::facet
+ std::num_put<char,class std::ostreambuf_iterator<char,struct std::char_traits<char>>>::`vftable'
+  referencing functions: 
+  .text:0042C880
+  scalar deleting destructor: 00412E50h
+
+0097905Ch: possible vtable (5 methods)
+(SI)
+0000: block_square_eventst
+ block_square_eventst::`vftable'
+  referencing functions: 
+  .text:0042D2D0
+  scalar deleting destructor: 0042D2D0h
+
+00979074h: possible vtable (5 methods)
+(SI)
+0000: block_square_event_mineralst
+0000:     block_square_eventst
+ block_square_event_mineralst::`vftable'
+  referencing functions: 
+  .text:00437A80
+  .text:0080F8A0 (4 times)
+  .text:008D13D0
+  scalar deleting destructor: 0042D2D0h
+
+0097908Ch: possible vtable (5 methods)
+(SI)
+0000: block_square_event_frozen_liquidst
+0000:     block_square_eventst
+ block_square_event_frozen_liquidst::`vftable'
+  referencing functions: 
+  .text:0042D120
+  .text:008D13D0
+  scalar deleting destructor: 0042D2D0h
+
+009790A4h: possible vtable (5 methods)
+(SI)
+0000: block_square_event_world_constructionst
+0000:     block_square_eventst
+ block_square_event_world_constructionst::`vftable'
+  referencing functions: 
+  .text:00437BB0
+  .text:008D13D0
+  scalar deleting destructor: 0042D2D0h
+
+009790BCh: possible vtable (2 methods)
+(SI)
+0000: cave_columnst
+ cave_columnst::`vftable'
+  referencing functions: 
+  .text:004360B0 (2 times)
+  .text:008D1C10
+
+009790C8h: possible vtable (2 methods)
+(SI)
+0000: cave_column_rectanglest
+ cave_column_rectanglest::`vftable'
+  referencing functions: 
+  .text:004360B0
+  .text:008D1C10
+
+009790D4h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_lostst
+0000:     history_eventst
+ history_event_masterpiece_lostst::`vftable'
+  referencing functions: 
+  .text:0042D860
+  .text:00662460
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009798C0h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00446290
+
+00979A60h: possible vtable (8 methods)
+(SI)
+0000: projst
+ projst::`vftable'
+  referencing functions: 
+  .text:0043A4C0
+  .text:004504C0
+  .text:00450F80
+  .text:007AFF60
+  .text:007B0020
+  .text:007B00E0
+  .text:007B01A0
+  .text:007B01F0
+
+00979A84h: possible vtable (83 methods)
+(SI)
+0000: buildingst
+ buildingst::`vftable'
+  referencing functions: 
+  .text:00441A60
+  .text:0045C900
+  scalar deleting destructor: 00441B40h
+  destructor: 0045C900h
+  constructor: 00441A60h
+
+00979BD4h: possible vtable (87 methods)
+(SI)
+0000: building_actualst
+0000:     buildingst
+ building_actualst::`vftable'
+  referencing functions: 
+  .text:0043CCA0
+  .text:0045C800
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+  constructor: 0043CCA0h
+
+00979D34h: possible vtable (83 methods)
+(SI)
+0000: building_civzonest
+0000:     buildingst
+ building_civzonest::`vftable'
+  referencing functions: 
+  .text:0043CA90
+  scalar deleting destructor: 0043CB30h
+  destructor: 0043CB50h
+
+00979E84h: possible vtable (87 methods)
+(SI)
+0000: building_wellst
+0000:     building_actualst
+0000:         buildingst
+ building_wellst::`vftable'
+  referencing functions: 
+  .text:0043FE60
+  .text:0043FEF0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+00979FE4h: possible vtable (83 methods)
+(SI)
+0000: building_stockpilest
+0000:     buildingst
+ building_stockpilest::`vftable'
+  referencing functions: 
+  .text:0043C6A0
+
+0097A134h: possible vtable (181 methods)
+(SI)
+0000: item_actualst
+0000:     itemst
+ item_actualst::`vftable'
+  referencing functions: 
+  .text:006E6F10
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0097A40Ch: possible vtable (181 methods)
+(SI)
+0000: item_liquid_miscst
+0000:     item_liquidst
+0000:         item_liquipowderst
+0000:             item_actualst
+0000:                 itemst
+ item_liquid_miscst::`vftable'
+  referencing functions: 
+  .text:00439D00
+  .text:006DF1F0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0097A6E4h: possible vtable (181 methods)
+(SI)
+0000: item_remainsst
+0000:     item_actualst
+0000:         itemst
+ item_remainsst::`vftable'
+  referencing functions: 
+  .text:00439EB0
+  .text:006DF350
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0097A9BCh: possible vtable (181 methods)
+(SI)
+0000: item_verminst
+0000:     item_critterst
+0000:         item_actualst
+0000:             itemst
+ item_verminst::`vftable'
+  referencing functions: 
+  .text:0043A040
+  .text:006DF710
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0097AC94h: possible vtable (180 methods)
+(SI)
+0000: item_plantst
+0000:     item_actualst
+0000:         itemst
+ item_plantst::`vftable'
+  referencing functions: 
+  .text:0043A120
+  .text:006DF9E0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0097AF68h: possible vtable (8 methods)
+(SI)
+0000: proj_itemst
+0000:     projst
+ proj_itemst::`vftable'
+  referencing functions: 
+  .text:0043A460
+  .text:0043A4C0
+  .text:004504C0
+  .text:00450F80
+  .text:007AFF60
+  scalar deleting destructor: 0043A560h
+  destructor: 0043A4C0h
+
+0097AF8Ch: possible vtable (87 methods)
+(SI)
+0000: building_boxst
+0000:     building_actualst
+0000:         buildingst
+ building_boxst::`vftable'
+  referencing functions: 
+  .text:0043CD10
+  .text:0043CD90
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097B0ECh: possible vtable (87 methods)
+(SI)
+0000: building_cabinetst
+0000:     building_actualst
+0000:         buildingst
+ building_cabinetst::`vftable'
+  referencing functions: 
+  .text:0043CE10
+  .text:0043CE90
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097B24Ch: possible vtable (87 methods)
+(SI)
+0000: building_weaponrackst
+0000:     building_actualst
+0000:         buildingst
+ building_weaponrackst::`vftable'
+  referencing functions: 
+  .text:0045D710
+  scalar deleting destructor: 0045D7D0h
+  destructor: 0045D7F0h
+
+0097B3ACh: possible vtable (87 methods)
+(SI)
+0000: building_armorstandst
+0000:     building_actualst
+0000:         buildingst
+ building_armorstandst::`vftable'
+  referencing functions: 
+  .text:0045D850
+  scalar deleting destructor: 0045D9E0h
+  destructor: 0045DA00h
+
+0097B50Ch: possible vtable (87 methods)
+(SI)
+0000: building_doorst
+0000:     building_actualst
+0000:         buildingst
+ building_doorst::`vftable'
+  referencing functions: 
+  .text:0043D390
+  .text:0043D420
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097B66Ch: possible vtable (87 methods)
+(SI)
+0000: building_hatchst
+0000:     building_actualst
+0000:         buildingst
+ building_hatchst::`vftable'
+  referencing functions: 
+  .text:0043D4C0
+  .text:0043D550
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097B7CCh: possible vtable (87 methods)
+(SI)
+0000: building_bridgest
+0000:     building_actualst
+0000:         buildingst
+ building_bridgest::`vftable'
+  referencing functions: 
+  .text:0043D640
+  .text:0043D6D0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097B92Ch: possible vtable (87 methods)
+(SI)
+0000: building_floodgatest
+0000:     building_actualst
+0000:         buildingst
+ building_floodgatest::`vftable'
+  referencing functions: 
+  .text:0043D890
+  .text:0043D920
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097BA8Ch: possible vtable (87 methods)
+(SI)
+0000: building_grate_wallst
+0000:     building_actualst
+0000:         buildingst
+ building_grate_wallst::`vftable'
+  referencing functions: 
+  .text:0043D9C0
+  .text:0043DA50
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097BBECh: possible vtable (87 methods)
+(SI)
+0000: building_grate_floorst
+0000:     building_actualst
+0000:         buildingst
+ building_grate_floorst::`vftable'
+  referencing functions: 
+  .text:0043DAF0
+  .text:0043DB80
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097BD4Ch: possible vtable (87 methods)
+(SI)
+0000: building_bars_verticalst
+0000:     building_actualst
+0000:         buildingst
+ building_bars_verticalst::`vftable'
+  referencing functions: 
+  .text:0043DC60
+  .text:0043DCF0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097BEACh: possible vtable (87 methods)
+(SI)
+0000: building_bars_floorst
+0000:     building_actualst
+0000:         buildingst
+ building_bars_floorst::`vftable'
+  referencing functions: 
+  .text:0043DD90
+  .text:0043DE20
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C00Ch: possible vtable (87 methods)
+(SI)
+0000: building_trapst
+0000:     building_actualst
+0000:         buildingst
+ building_trapst::`vftable'
+  referencing functions: 
+  .text:0043DFF0
+  scalar deleting destructor: 0043E0E0h
+  destructor: 0043E100h
+
+0097C16Ch: possible vtable (18 methods)
+(SI)
+0000: building_gear_assemblyst
+0000:     building_actualst
+0000:         buildingst
+ building_gear_assemblyst::`vftable'
+  referencing functions: 
+  .text:0043E180
+  .text:0043E220
+
+0097C2CCh: possible vtable (87 methods)
+(SI)
+0000: building_axle_horizontalst
+0000:     building_actualst
+0000:         buildingst
+ building_axle_horizontalst::`vftable'
+  referencing functions: 
+  .text:0043E3A0
+  .text:0043E430
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C42Ch: possible vtable (87 methods)
+(SI)
+0000: building_axle_verticalst
+0000:     building_actualst
+0000:         buildingst
+ building_axle_verticalst::`vftable'
+  referencing functions: 
+  .text:0043E5D0
+  .text:0043E660
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C58Ch: possible vtable (87 methods)
+(SI)
+0000: building_supportst
+0000:     building_actualst
+0000:         buildingst
+ building_supportst::`vftable'
+  referencing functions: 
+  .text:0043E7B0
+  .text:0043E830
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C6ECh: possible vtable (87 methods)
+(SI)
+0000: building_weaponst
+0000:     building_actualst
+0000:         buildingst
+ building_weaponst::`vftable'
+  referencing functions: 
+  .text:0043E8C0
+  .text:0043E950
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C84Ch: possible vtable (87 methods)
+(SI)
+0000: building_archerytargetst
+0000:     building_actualst
+0000:         buildingst
+ building_archerytargetst::`vftable'
+  referencing functions: 
+  .text:0043EA20
+  .text:0043EA90
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097C9ACh: possible vtable (87 methods)
+(SI)
+0000: building_screw_pumpst
+0000:     building_actualst
+0000:         buildingst
+ building_screw_pumpst::`vftable'
+  referencing functions: 
+  .text:0043EB60
+  .text:0043EC00
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097CB0Ch: possible vtable (87 methods)
+(SI)
+0000: building_water_wheelst
+0000:     building_actualst
+0000:         buildingst
+ building_water_wheelst::`vftable'
+  referencing functions: 
+  .text:0043EE20
+  .text:0043EEC0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097CC6Ch: possible vtable (87 methods)
+(SI)
+0000: building_windmillst
+0000:     building_actualst
+0000:         buildingst
+ building_windmillst::`vftable'
+  referencing functions: 
+  .text:0043F310
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097CDCCh: possible vtable (87 methods)
+(SI)
+0000: building_chainst
+0000:     building_actualst
+0000:         buildingst
+ building_chainst::`vftable'
+  referencing functions: 
+  .text:0043F360
+  .text:0043F3F0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097CF2Ch: possible vtable (87 methods)
+(SI)
+0000: building_cagest
+0000:     building_actualst
+0000:         buildingst
+ building_cagest::`vftable'
+  referencing functions: 
+  .text:0043F590
+  scalar deleting destructor: 0045D7D0h
+  destructor: 0045D7F0h
+
+0097D08Ch: possible vtable (87 methods)
+(SI)
+0000: building_siegeenginest
+0000:     building_actualst
+0000:         buildingst
+ building_siegeenginest::`vftable'
+  referencing functions: 
+  .text:0043F610
+  .text:0043F6A0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D1ECh: possible vtable (87 methods)
+(SI)
+0000: building_bedst
+0000:     building_actualst
+0000:         buildingst
+ building_bedst::`vftable'
+  referencing functions: 
+  .text:0043F890
+  .text:0043F910
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D34Ch: possible vtable (87 methods)
+(SI)
+0000: building_tablest
+0000:     building_actualst
+0000:         buildingst
+ building_tablest::`vftable'
+  referencing functions: 
+  .text:0043F9B0
+  .text:0043FA30
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D4ACh: possible vtable (87 methods)
+(SI)
+0000: building_chairst
+0000:     building_actualst
+0000:         buildingst
+ building_chairst::`vftable'
+  referencing functions: 
+  .text:0043FAB0
+  .text:0043FB30
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D60Ch: possible vtable (87 methods)
+(SI)
+0000: building_shopst
+0000:     building_actualst
+0000:         buildingst
+ building_shopst::`vftable'
+  referencing functions: 
+  .text:0043FBB0
+  .text:0043FC50
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D76Ch: possible vtable (87 methods)
+(SI)
+0000: building_coffinst
+0000:     building_actualst
+0000:         buildingst
+ building_coffinst::`vftable'
+  referencing functions: 
+  .text:0043FD10
+  .text:0043FD90
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097D8CCh: possible vtable (87 methods)
+(SI)
+0000: building_statuest
+0000:     building_actualst
+0000:         buildingst
+ building_statuest::`vftable'
+  referencing functions: 
+  .text:004400D0
+  .text:00440150
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097DA2Ch: possible vtable (87 methods)
+(SI)
+0000: building_window_gemst
+0000:     building_windowst
+0000:         building_actualst
+0000:             buildingst
+ building_window_gemst::`vftable'
+  referencing functions: 
+  .text:00440200
+  .text:00440280
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097DB8Ch: possible vtable (87 methods)
+(SI)
+0000: building_window_glassst
+0000:     building_windowst
+0000:         building_actualst
+0000:             buildingst
+ building_window_glassst::`vftable'
+  referencing functions: 
+  .text:00440300
+  .text:00440380
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097DCECh: possible vtable (87 methods)
+(SI)
+0000: building_farmplotst
+0000:     building_actualst
+0000:         buildingst
+ building_farmplotst::`vftable'
+  referencing functions: 
+  .text:00440410
+  .text:004404B0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097DE4Ch: possible vtable (87 methods)
+(SI)
+0000: building_animaltrapst
+0000:     building_actualst
+0000:         buildingst
+ building_animaltrapst::`vftable'
+  referencing functions: 
+  .text:00440700
+  .text:00440790
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097DFACh: possible vtable (87 methods)
+(SI)
+0000: building_furnacest
+0000:     building_actualst
+0000:         buildingst
+ building_furnacest::`vftable'
+  referencing functions: 
+  .text:00440AB0
+  scalar deleting destructor: 00440B50h
+  destructor: 00440B70h
+
+0097E10Ch: possible vtable (87 methods)
+(SI)
+0000: building_workshopst
+0000:     building_actualst
+0000:         buildingst
+ building_workshopst::`vftable'
+  referencing functions: 
+  .text:00440E10
+
+0097E26Ch: possible vtable (87 methods)
+(SI)
+0000: building_tradedepotst
+0000:     building_actualst
+0000:         buildingst
+ building_tradedepotst::`vftable'
+  referencing functions: 
+  .text:00440EF0
+  .text:00440F80
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097E3CCh: possible vtable (87 methods)
+(SI)
+0000: building_wagonst
+0000:     building_actualst
+0000:         buildingst
+ building_wagonst::`vftable'
+  referencing functions: 
+  .text:00441040
+  .text:004410B0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097E52Ch: possible vtable (87 methods)
+(SI)
+0000: building_road_dirtst
+0000:     building_roadst
+0000:         building_actualst
+0000:             buildingst
+ building_road_dirtst::`vftable'
+  referencing functions: 
+  .text:004411E0
+  .text:00441250
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097E68Ch: possible vtable (87 methods)
+(SI)
+0000: building_road_pavedst
+0000:     building_roadst
+0000:         building_actualst
+0000:             buildingst
+ building_road_pavedst::`vftable'
+  referencing functions: 
+  .text:004412C0
+  .text:00441330
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097E7ECh: possible vtable (87 methods)
+(SI)
+0000: building_constructionst
+0000:     building_actualst
+0000:         buildingst
+ building_constructionst::`vftable'
+  referencing functions: 
+  .text:00441430
+  .text:004414A0
+  scalar deleting destructor: 0043F990h
+  destructor: 0045C800h
+
+0097E94Ch: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_arch_designst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_arch_designst::`vftable'
+  referencing functions: 
+  .text:00441800
+  .text:00661AC0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+0097E9CCh: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_arch_constructst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_arch_constructst::`vftable'
+  referencing functions: 
+  .text:004418F0
+  .text:00661B50
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+0097EAE4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0047EDC0 (4 times)
+  .text:00485A50 (4 times)
+  .text:005AB0B0
+  .text:007606A0
+  .text:008772E0
+  .text:00879230
+  .text:00885E80
+  .text:008889A0
+  .text:008A8670
+
+0097ECB8h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0047EDC0 (4 times)
+  .text:0061B1C0 (2 times)
+  .text:0061C4C0 (2 times)
+  .text:0063D360
+  .text:0066FB20 (3 times)
+  .text:0073E300
+  .text:007B21F0
+  .text:007F1C20 (2 times)
+  .text:008772E0 (7 times)
+  .text:00879230 (7 times)
+
+0097F258h: possible vtable (8 methods)
+(SI)
+0000: proj_unitst
+0000:     projst
+ proj_unitst::`vftable'
+  referencing functions: 
+  .text:0047EB70
+  .text:007B0020
+
+0098021Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:00497270 (3 times)
+
+00980350h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_conversationst
+0000:     viewscreenst
+ viewscreen_conversationst::`vftable'
+  referencing functions: 
+  .text:00491D80
+  scalar deleting destructor: 004B0750h
+
+00980380h: possible vtable (9 methods)
+(SI)
+0000: taskst
+ taskst::`vftable'
+  referencing functions: 
+  .text:0048A9B0
+  .text:0085AC80
+  .text:0085AD50
+
+009803A8h: possible vtable (9 methods)
+(SI)
+0000: task_kill_nemesisst
+0000:     taskst
+ task_kill_nemesisst::`vftable'
+  referencing functions: 
+  .text:0048AA00
+  .text:0085AC80
+
+009803D0h: possible vtable (11 methods)
+(SI)
+0000: viewscreenst
+ viewscreenst::`vftable'
+  referencing functions: 
+  .text:004AF780
+  .text:004AF830
+  .text:004AFC70
+  .text:004B0750 (viewscreen_conversationst::`scalar deleting destructor')
+  .text:004BF6C0
+  .text:004D6BE0
+  .text:004F4DC0
+  .text:005C72F0
+  .text:005DE990
+  .text:005DE9C0
+  .text:005DF0C0
+  .text:005DF450
+  .text:00600E80
+  .text:00602A30
+  .text:0060B860
+  .text:0060FAA0
+  .text:006125F0
+  .text:006145C0
+  .text:0062BC30
+  .text:00646F67
+  .text:0064AAD0
+  .text:00692F10
+  .text:00692F80
+  .text:006933F0
+  .text:006AF500
+  .text:006B4200
+  .text:006BF6C0
+  .text:006CDCB0
+  .text:007520A0
+  .text:0075FFC0
+  .text:0076DA10
+  .text:0076DE40
+  .text:0076E110
+  .text:00854920
+  scalar deleting destructor: 004B0750h
+
+00981674h: possible vtable (1 methods)
+  referencing functions: 
+  .text:004ABB80
+
+009839DCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:004EE120
+
+009839E4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:004EE120
+
+009839F4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:004EE120
+
+00983A24h: possible vtable (181 methods)
+(SI)
+0000: item_globst
+0000:     item_actualst
+0000:         itemst
+ item_globst::`vftable'
+  referencing functions: 
+  .text:004AEB50
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00983CFCh: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_reach_summitst
+0000:     history_eventst
+ history_event_hist_figure_reach_summitst::`vftable'
+  referencing functions: 
+  .text:004AF170
+
+00983D7Ch: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_choicest
+ adventure_item_interact_choicest::`vftable'
+  referencing functions: 
+  .text:004CBB60
+  scalar deleting destructor: 004CBB60h
+
+00983D8Ch: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_strugglest
+0000:     adventure_item_interact_choicest
+ adventure_item_interact_strugglest::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983D9Ch: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_pull_outst
+0000:     adventure_item_interact_choicest
+ adventure_item_interact_pull_outst::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983DACh: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_fill_with_waterst
+0000:     adventure_item_interact_fillst
+0000:         adventure_item_interact_choicest
+ adventure_item_interact_fill_with_waterst::`vftable'
+  referencing functions: 
+  .text:004C83A0 (2 times)
+  scalar deleting destructor: 004CBB60h
+
+00983DBCh: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_fill_with_bloodst
+0000:     adventure_item_interact_fillst
+0000:         adventure_item_interact_choicest
+ adventure_item_interact_fill_with_bloodst::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983DCCh: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_fill_with_vomitst
+0000:     adventure_item_interact_fillst
+0000:         adventure_item_interact_choicest
+ adventure_item_interact_fill_with_vomitst::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983DDCh: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_fill_with_mudst
+0000:     adventure_item_interact_fillst
+0000:         adventure_item_interact_choicest
+ adventure_item_interact_fill_with_mudst::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983DECh: possible vtable (3 methods)
+(SI)
+0000: adventure_item_interact_fill_with_slimest
+0000:     adventure_item_interact_fillst
+0000:         adventure_item_interact_choicest
+ adventure_item_interact_fill_with_slimest::`vftable'
+  referencing functions: 
+  .text:004C83A0
+  scalar deleting destructor: 004CBB60h
+
+00983DFCh: possible vtable (11 methods)
+(SI)
+0000: adventure_optionst
+ adventure_optionst::`vftable'
+  referencing functions: 
+  .text:004CDBC0
+  scalar deleting destructor: 004CDBC0h
+
+00983E2Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_option_eat_unit_contaminantst
+0000:     adventure_optionst
+ adventure_option_eat_unit_contaminantst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983E5Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_option_eat_item_contaminantst
+0000:     adventure_optionst
+ adventure_option_eat_item_contaminantst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983E8Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_option_view_contaminantst
+0000:     adventure_optionst
+ adventure_option_view_contaminantst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983EBCh: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_eat_mudst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_eat_mudst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983EECh: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_drink_waterst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_drink_waterst::`vftable'
+  referencing functions: 
+  .text:004CBC60 (2 times)
+  scalar deleting destructor: 004CDBC0h
+
+00983F1Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_eat_slimest
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_eat_slimest::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983F4Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_drink_bloodst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_drink_bloodst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983F7Ch: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_eat_vomitst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_eat_vomitst::`vftable'
+  referencing functions: 
+  .text:004CBC60
+  scalar deleting destructor: 004CDBC0h
+
+00983FACh: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_pickup_vermin_eventst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_pickup_vermin_eventst::`vftable'
+  referencing functions: 
+  .text:004CFD30
+  scalar deleting destructor: 004CDBC0h
+
+00983FDCh: possible vtable (11 methods)
+(SI)
+0000: adventure_environment_pickup_ignite_vegst
+0000:     adventure_environment_optionst
+0000:         adventure_optionst
+ adventure_environment_pickup_ignite_vegst::`vftable'
+  referencing functions: 
+  .text:004CFD30
+  scalar deleting destructor: 004CDBC0h
+
+0098400Ch: possible vtable (2 methods)
+(SI)
+0000: adventure_movement_attack_creaturest
+0000:     adventure_movement_optionst
+ adventure_movement_attack_creaturest::`vftable'
+  referencing functions: 
+  .text:004EC290
+
+00984018h: possible vtable (2 methods)
+(SI)
+0000: adventure_movement_building_interactst
+0000:     adventure_movement_optionst
+ adventure_movement_building_interactst::`vftable'
+  referencing functions: 
+  .text:004EC290
+
+00984024h: possible vtable (2 methods)
+(SI)
+0000: adventure_movement_movest
+0000:     adventure_movement_optionst
+ adventure_movement_movest::`vftable'
+  referencing functions: 
+  .text:004EC290 (2 times)
+
+00984030h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_dungeonmodest
+0000:     viewscreenst
+ viewscreen_dungeonmodest::`vftable'
+  referencing functions: 
+  .text:004AFCD0
+  scalar deleting destructor: 004B0750h
+
+00984060h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_adventure_travelst
+0000:     viewscreenst
+ viewscreen_adventure_travelst::`vftable'
+  referencing functions: 
+  .text:004AF9B0
+
+00984090h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_adventure_logst
+0000:     viewscreenst
+ viewscreen_adventure_logst::`vftable'
+  referencing functions: 
+  .text:004BF270
+  scalar deleting destructor: 004BF6A0h
+  destructor: 004BF6C0h
+
+009840C0h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_dungeon_wrestlest
+0000:     viewscreenst
+ viewscreen_dungeon_wrestlest::`vftable'
+  referencing functions: 
+  .text:004AF780
+  .text:004BFB50
+  scalar deleting destructor: 004AF810h
+  destructor: 004AF780h
+  constructor: 004BFB50h
+
+009840F0h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_dungeon_monsterstatusst
+0000:     viewscreenst
+ viewscreen_dungeon_monsterstatusst::`vftable'
+  referencing functions: 
+  .text:004AF830
+  .text:004EDAB0
+  scalar deleting destructor: 004AF8A0h
+  destructor: 004AF830h
+  constructor: 004EDAB0h
+
+00984120h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_dungeon_announcest
+0000:     viewscreenst
+ viewscreen_dungeon_announcest::`vftable'
+  referencing functions: 
+  .text:004BDDE0
+  scalar deleting destructor: 004B0750h
+
+00984150h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_setupadventurest
+0000:     viewscreenst
+ viewscreen_setupadventurest::`vftable'
+  referencing functions: 
+  .text:004D6680
+
+00984388h: possible vtable (8 methods)
+(SI)
+0000: build_req_choice_genst
+0000:     build_req_choicest
+ build_req_choice_genst::`vftable'
+  referencing functions: 
+  .text:00512190
+
+009843ACh: possible vtable (9 methods)
+(SI)
+0000: build_req_choice_specst
+0000:     build_req_choicest
+ build_req_choice_specst::`vftable'
+  referencing functions: 
+  .text:00512190 (2 times)
+
+009843D4h: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_diedst
+0000:     history_eventst
+ history_event_hist_figure_diedst::`vftable'
+  referencing functions: 
+  .text:004F45C0
+  .text:0065F690
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00984454h: possible vtable (5 methods)
+(SI)
+0000: interface_buttonst
+ interface_buttonst::`vftable'
+  referencing functions: 
+  .text:004F49A0
+  .text:006C1470
+  .text:006D88E0
+  scalar deleting destructor: 006C1470h
+
+0098446Ch: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_material_selectorst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_material_selectorst::`vftable'
+  referencing functions: 
+  .text:004F4800
+  scalar deleting destructor: 006C1470h
+
+00984484h: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_category_selectorst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_category_selectorst::`vftable'
+  referencing functions: 
+  .text:004F4890
+  scalar deleting destructor: 006C1470h
+
+0098449Ch: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_new_jobst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_new_jobst::`vftable'
+  referencing functions: 
+  .text:004F4910
+
+009844B4h: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_permit_trapcompst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_permit_trapcompst::`vftable'
+  referencing functions: 
+  .text:00509C20
+  scalar deleting destructor: 006C1470h
+
+009844CCh: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_permit_foreign_weaponst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_permit_foreign_weaponst::`vftable'
+  referencing functions: 
+  .text:00509C20
+  scalar deleting destructor: 006C1470h
+
+009844E4h: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_permit_foreign_siegeammost
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_permit_foreign_siegeammost::`vftable'
+  referencing functions: 
+  .text:00509C20
+  scalar deleting destructor: 006C1470h
+
+009844FCh: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_permit_itemst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_permit_itemst::`vftable'
+  referencing functions: 
+  .text:004F49E0
+  .text:00509C20 (2 times)
+  .text:00509FF0 (5 times)
+  scalar deleting destructor: 006C1470h
+
+00984514h: possible vtable (5 methods)
+(SI)
+0000: interface_button_building_permit_foreign_armorst
+0000:     interface_button_buildingst
+0000:         interface_buttonst
+ interface_button_building_permit_foreign_armorst::`vftable'
+  referencing functions: 
+  .text:00509FF0
+  scalar deleting destructor: 006C1470h
+
+0098452Ch: possible vtable (11 methods)
+(SI)
+0000: viewscreen_dwarfmodest
+0000:     viewscreenst
+ viewscreen_dwarfmodest::`vftable'
+  referencing functions: 
+  .text:004F4CE0
+  scalar deleting destructor: 004F4DA0h
+  destructor: 004F4DC0h
+
+0098455Ch: possible vtable (11 methods)
+(SI)
+0000: viewscreen_selectitemst
+0000:     viewscreenst
+ viewscreen_selectitemst::`vftable'
+  referencing functions: 
+  .text:004F4C30
+  .text:00506FC0
+  scalar deleting destructor: 004F4CC0h
+  destructor: 004F4C30h
+  constructor: 00506FC0h
+
+0098469Ch: possible vtable (1 methods)
+ std::basic_ifstream<char,struct std::char_traits<char>>::`vftable'{for `std::basic_ios<char,struct std::char_traits<char>>'}
+  referencing functions: 
+  .text:0051E4E0
+  .text:0051E5C0
+
+009846ACh: possible vtable (3 methods)
+(SI)
+0000: text_info_elementst
+ text_info_elementst::`vftable'
+  referencing functions: 
+  .text:00517D50
+  .text:00517D90
+  scalar deleting destructor: 00517D90h
+
+009846BCh: possible vtable (3 methods)
+(SI)
+0000: text_info_element_stringst
+0000:     text_info_elementst
+ text_info_element_stringst::`vftable'
+  referencing functions: 
+  .text:00517CE0
+
+009846CCh: possible vtable (3 methods)
+(SI)
+0000: text_info_element_longst
+0000:     text_info_elementst
+ text_info_element_longst::`vftable'
+  referencing functions: 
+  .text:0051D750
+  scalar deleting destructor: 00517D90h
+
+00984D5Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:00545000
+
+00984D60h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00545000
+
+00984F90h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_warst
+0000:     history_event_collectionst
+ history_event_collection_warst::`vftable'
+  referencing functions: 
+  .text:00524350
+
+00984FC4h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_abductionst
+0000:     history_event_collectionst
+ history_event_collection_abductionst::`vftable'
+  referencing functions: 
+  .text:00524830
+
+00984FF8h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_theftst
+0000:     history_event_collectionst
+ history_event_collection_theftst::`vftable'
+  referencing functions: 
+  .text:00524C90
+
+0098502Ch: possible vtable (14 methods)
+(SI)
+0000: general_refst
+ general_refst::`vftable'
+  referencing functions: 
+  .text:007B78F0
+  scalar deleting destructor: 007B78F0h
+
+00985068h: possible vtable (14 methods)
+(SI)
+0000: general_ref_mapsquarest
+0000:     general_refst
+ general_ref_mapsquarest::`vftable'
+  referencing functions: 
+  .text:0051FCF0
+  .text:0054C4B0
+  .text:007B7F90
+  .text:007B8420
+  .text:008F2410
+  .text:0090F370
+  scalar deleting destructor: 007B78F0h
+
+009850A4h: possible vtable (15 methods)
+(SI)
+0000: general_ref_entity_art_imagest
+0000:     general_refst
+ general_ref_entity_art_imagest::`vftable'
+  referencing functions: 
+  .text:0051FD30
+  .text:00558780
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009850E4h: possible vtable (181 methods)
+(SI)
+0000: item_meatst
+0000:     item_actualst
+0000:         itemst
+ item_meatst::`vftable'
+  referencing functions: 
+  .text:00520FD0
+  .text:006DF3F0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009853BCh: possible vtable (181 methods)
+(SI)
+0000: item_fishst
+0000:     item_actualst
+0000:         itemst
+ item_fishst::`vftable'
+  referencing functions: 
+  .text:005210C0
+  .text:006DF490
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00985694h: possible vtable (181 methods)
+(SI)
+0000: item_craftedst
+0000:     item_actualst
+0000:         itemst
+ item_craftedst::`vftable'
+  referencing functions: 
+  .text:00521280
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0098596Ch: possible vtable (181 methods)
+(SI)
+0000: item_constructedst
+0000:     item_craftedst
+0000:         item_actualst
+0000:             itemst
+ item_constructedst::`vftable'
+  referencing functions: 
+  .text:005214E0
+  .text:006E6D60
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+  constructor: 005214E0h
+
+00985C44h: possible vtable (181 methods)
+(SI)
+0000: item_doorst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_doorst::`vftable'
+  referencing functions: 
+  .text:00521540
+  .text:006E0B00
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00985F1Ch: possible vtable (181 methods)
+(SI)
+0000: item_bedst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_bedst::`vftable'
+  referencing functions: 
+  .text:005215D0
+  .text:006E0E50
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009861F4h: possible vtable (181 methods)
+(SI)
+0000: item_chairst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_chairst::`vftable'
+  referencing functions: 
+  .text:00521660
+  .text:006E0EB0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009864CCh: possible vtable (181 methods)
+(SI)
+0000: item_flaskst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_flaskst::`vftable'
+  referencing functions: 
+  .text:00521710
+  .text:006E0F70
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009867A4h: possible vtable (151 methods)
+(SI)
+0000: item_barrelst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_barrelst::`vftable'
+  referencing functions: 
+  .text:005217A0
+  .text:006E1490
+
+00986A7Ch: possible vtable (181 methods)
+(SI)
+0000: item_tablest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_tablest::`vftable'
+  referencing functions: 
+  .text:005218B0
+  .text:00547870
+  .text:006E1710
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00986D54h: possible vtable (181 methods)
+(SI)
+0000: item_weaponst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_weaponst::`vftable'
+  referencing functions: 
+  .text:00521940
+  .text:006E1B70
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+0098702Ch: possible vtable (181 methods)
+(SI)
+0000: item_armorst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_armorst::`vftable'
+  referencing functions: 
+  .text:00521AE0
+  .text:006E1BF0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00987304h: possible vtable (181 methods)
+(SI)
+0000: item_shoesst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_shoesst::`vftable'
+  referencing functions: 
+  .text:00521BC0
+  .text:006E1C70
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009875DCh: possible vtable (181 methods)
+(SI)
+0000: item_shieldst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_shieldst::`vftable'
+  referencing functions: 
+  .text:00521C90
+  .text:006E1CF0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009878B4h: possible vtable (181 methods)
+(SI)
+0000: item_helmst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_helmst::`vftable'
+  referencing functions: 
+  .text:00521D70
+  .text:006E1D70
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00987B8Ch: possible vtable (181 methods)
+(SI)
+0000: item_glovesst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_glovesst::`vftable'
+  referencing functions: 
+  .text:00521FF0
+  .text:006E1DF0
+
+00987E64h: possible vtable (181 methods)
+(SI)
+0000: item_boxst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_boxst::`vftable'
+  referencing functions: 
+  .text:005220E0
+  .text:006E1E80
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+0098813Ch: possible vtable (181 methods)
+(SI)
+0000: item_ammost
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_ammost::`vftable'
+  referencing functions: 
+  .text:00522190
+  .text:006E2640
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00988414h: possible vtable (181 methods)
+(SI)
+0000: item_pantsst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_pantsst::`vftable'
+  referencing functions: 
+  .text:005222D0
+  .text:006E2D90
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009886ECh: possible vtable (181 methods)
+(SI)
+0000: item_backpackst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_backpackst::`vftable'
+  referencing functions: 
+  .text:005223E0
+  .text:006E2E10
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009889C4h: possible vtable (181 methods)
+(SI)
+0000: item_quiverst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_quiverst::`vftable'
+  referencing functions: 
+  .text:00522480
+  .text:006E2E70
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00988C9Ch: possible vtable (181 methods)
+(SI)
+0000: item_coinst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_coinst::`vftable'
+  referencing functions: 
+  .text:00522520
+  .text:006E3620
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+00988F74h: possible vtable (31 methods)
+(SI)
+0000: history_event_created_sitest
+0000:     history_eventst
+ history_event_created_sitest::`vftable'
+  referencing functions: 
+  .text:00523880
+  .text:0065E5E0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00988FF4h: possible vtable (31 methods)
+(SI)
+0000: history_event_created_buildingst
+0000:     history_eventst
+ history_event_created_buildingst::`vftable'
+  referencing functions: 
+  .text:005238F0
+  .text:0065E660
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00989074h: possible vtable (31 methods)
+(SI)
+0000: history_event_replaced_buildingst
+0000:     history_eventst
+ history_event_replaced_buildingst::`vftable'
+  referencing functions: 
+  .text:00523A30
+  .text:0065E6E0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009890F4h: possible vtable (31 methods)
+(SI)
+0000: history_event_entity_razed_buildingst
+0000:     history_eventst
+ history_event_entity_razed_buildingst::`vftable'
+  referencing functions: 
+  .text:00523C00
+  .text:0065E760
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00989174h: possible vtable (31 methods)
+(SI)
+0000: history_event_created_world_constructionst
+0000:     history_eventst
+ history_event_created_world_constructionst::`vftable'
+  referencing functions: 
+  .text:00523C80
+  .text:0065E930
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009891F4h: possible vtable (31 methods)
+(SI)
+0000: history_event_reclaim_sitest
+0000:     history_eventst
+ history_event_reclaim_sitest::`vftable'
+  referencing functions: 
+  .text:00523DB0
+  .text:0065E9B0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00989274h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_peace_acceptedst
+0000:     history_eventst
+ history_event_war_peace_acceptedst::`vftable'
+  referencing functions: 
+  .text:00523E50
+  .text:00660610
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009892F4h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_peace_rejectedst
+0000:     history_eventst
+ history_event_war_peace_rejectedst::`vftable'
+  referencing functions: 
+  .text:00523F70
+  .text:00660690
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00989374h: possible vtable (31 methods)
+(SI)
+0000: history_event_entity_createdst
+0000:     history_eventst
+ history_event_entity_createdst::`vftable'
+  referencing functions: 
+  .text:00524040
+  .text:006619C0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009893F4h: possible vtable (31 methods)
+(SI)
+0000: history_event_entity_incorporatedst
+0000:     history_eventst
+ history_event_entity_incorporatedst::`vftable'
+  referencing functions: 
+  .text:005240C0
+  .text:00661A40
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00989888h: possible vtable (14 methods)
+(SI)
+0000: general_ref_buildingst
+0000:     general_refst
+ general_ref_buildingst::`vftable'
+  referencing functions: 
+  .text:0057D9E0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009898C4h: possible vtable (15 methods)
+(SI)
+0000: general_ref_building_well_tagst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_well_tagst::`vftable'
+  referencing functions: 
+  .text:0057DA90
+  .text:005A4DF0
+  .text:007B7F90
+  .text:007B8420
+  .text:00895940
+  scalar deleting destructor: 007B78F0h
+
+00989904h: possible vtable (180 methods)
+(SI)
+0000: item_powder_miscst
+0000:     item_powderst
+0000:         item_liquipowderst
+0000:             item_actualst
+0000:                 itemst
+ item_powder_miscst::`vftable'
+  referencing functions: 
+  .text:0057DBB0
+  .text:006DF150
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00989C1Ch: possible vtable (181 methods)
+(SI)
+0000: item_corpsest
+0000:     item_actualst
+0000:         itemst
+ item_corpsest::`vftable'
+  referencing functions: 
+  .text:005AF7E0
+  .text:005EEFE0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00989EF4h: possible vtable (181 methods)
+(SI)
+0000: item_corpsepiecest
+0000:     item_actualst
+0000:         itemst
+ item_corpsepiecest::`vftable'
+  referencing functions: 
+  .text:005AFAE0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+0098A1CCh: possible vtable (181 methods)
+(SI)
+0000: item_chainst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_chainst::`vftable'
+  referencing functions: 
+  .text:005AFB40
+  .text:006E0F10
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+0098A4A4h: possible vtable (180 methods)
+(SI)
+0000: item_cagest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_cagest::`vftable'
+  referencing functions: 
+  .text:005AFBD0
+  .text:006E1430
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+0098A778h: possible vtable (3 methods)
+(SI)
+0000: feature_alteration_spec_infost
+ feature_alteration_spec_infost::`vftable'
+  referencing functions: 
+  .text:005AFFE0
+  .text:005B0090
+  scalar deleting destructor: 005AFFE0h
+
+0098A788h: possible vtable (3 methods)
+(SI)
+0000: feature_alteration_spec_info_underworld_spike_level_infost
+0000:     feature_alteration_spec_infost
+ feature_alteration_spec_info_underworld_spike_level_infost::`vftable'
+  referencing functions: 
+  .text:005B0090
+  .text:005B4510
+  scalar deleting destructor: 005B00F0h
+  destructor: 005B0090h
+  constructor: 005B4510h
+
+0098A798h: possible vtable (6 methods)
+(SI)
+0000: feature_specinfost
+ feature_specinfost::`vftable'
+  referencing functions: 
+  .text:005B01D0
+  .text:005B0DF0
+  scalar deleting destructor: 005B0DF0h
+
+0098A7B4h: possible vtable (6 methods)
+(SI)
+0000: feature_specinfo_cave_underworld_spikest
+0000:     feature_specinfost
+ feature_specinfo_cave_underworld_spikest::`vftable'
+  referencing functions: 
+  .text:005B01D0
+  .text:005B08F0
+  scalar deleting destructor: 005B02F0h
+  destructor: 005B01D0h
+  constructor: 005B08F0h
+
+0098A7D0h: possible vtable (6 methods)
+(SI)
+0000: feature_specinfo_cave_lava_shaftst
+0000:     feature_specinfost
+ feature_specinfo_cave_lava_shaftst::`vftable'
+  referencing functions: 
+  .text:005B04B0
+  .text:006BCFE0
+  .text:007FBCD0
+  scalar deleting destructor: 005B0DF0h
+
+0098A7ECh: possible vtable (31 methods)
+(SI)
+0000: history_event_demon_releasedst
+0000:     history_eventst
+ history_event_demon_releasedst::`vftable'
+  referencing functions: 
+  .text:005B0670
+  .text:00661940
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+0098A8D8h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005BB8E0
+
+0098B378h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005CE1D0
+  .text:0066FB20
+
+0098E538h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005DF9D0
+
+0098E794h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E01F0 (3 times)
+
+0098E808h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E01F0
+
+0098E9B4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E01F0
+
+0098F9CCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E92F0
+
+0098F9D0h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E92F0
+
+0098FA68h: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E92F0
+
+0098FA6Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:005E92F0
+
+009918F4h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00614620
+
+009918FCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:00614620
+
+00992F90h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0064FFA0
+
+00992F9Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:0064FFA0
+
+0099301Ch: possible vtable (181 methods)
+(SI)
+0000: item_seedsst
+0000:     item_actualst
+0000:         itemst
+ item_seedsst::`vftable'
+  referencing functions: 
+  .text:005BC9C0
+  .text:006DF940
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009932F4h: possible vtable (181 methods)
+(SI)
+0000: item_skin_rawst
+0000:     item_actualst
+0000:         itemst
+ item_skin_rawst::`vftable'
+  referencing functions: 
+  .text:005BCB20
+  .text:006DFA80
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009935CCh: possible vtable (181 methods)
+(SI)
+0000: item_bonesst
+0000:     item_actualst
+0000:         itemst
+ item_bonesst::`vftable'
+  referencing functions: 
+  .text:005BCC20
+  .text:006DFCB0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009938A4h: possible vtable (181 methods)
+(SI)
+0000: item_skullst
+0000:     item_actualst
+0000:         itemst
+ item_skullst::`vftable'
+  referencing functions: 
+  .text:005BCD00
+  .text:006DFD50
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00993B7Ch: possible vtable (181 methods)
+(SI)
+0000: item_threadst
+0000:     item_actualst
+0000:         itemst
+ item_threadst::`vftable'
+  referencing functions: 
+  .text:005BD070
+  .text:0091BA30
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+00993E54h: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_abductedst
+0000:     history_eventst
+ history_event_hist_figure_abductedst::`vftable'
+  referencing functions: 
+  .text:005C10F0
+  .text:0065F710
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00993ED4h: possible vtable (31 methods)
+(SI)
+0000: history_event_first_contactst
+0000:     history_eventst
+ history_event_first_contactst::`vftable'
+  referencing functions: 
+  .text:005C1170
+  .text:00660390
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00993F54h: possible vtable (31 methods)
+(SI)
+0000: history_event_first_contact_failedst
+0000:     history_eventst
+ history_event_first_contact_failedst::`vftable'
+  referencing functions: 
+  .text:005C1210
+  .text:00660410
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00993FD4h: possible vtable (31 methods)
+(SI)
+0000: history_event_topicagreement_concludedst
+0000:     history_eventst
+ history_event_topicagreement_concludedst::`vftable'
+  referencing functions: 
+  .text:005C1310
+  .text:00660490
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00994054h: possible vtable (31 methods)
+(SI)
+0000: history_event_topicagreement_rejectedst
+0000:     history_eventst
+ history_event_topicagreement_rejectedst::`vftable'
+  referencing functions: 
+  .text:005C15D0
+  .text:00660510
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009940D4h: possible vtable (31 methods)
+(SI)
+0000: history_event_topicagreement_madest
+0000:     history_eventst
+ history_event_topicagreement_madest::`vftable'
+  referencing functions: 
+  .text:005C17D0
+  .text:00660590
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00994154h: possible vtable (31 methods)
+(SI)
+0000: history_event_diplomat_lostst
+0000:     history_eventst
+ history_event_diplomat_lostst::`vftable'
+  referencing functions: 
+  .text:005C18E0
+  .text:00660710
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009941D4h: possible vtable (31 methods)
+(SI)
+0000: history_event_agreements_voidedst
+0000:     history_eventst
+ history_event_agreements_voidedst::`vftable'
+  referencing functions: 
+  .text:005C19A0
+  .text:00660D00
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00994254h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_createdst
+0000:     history_eventst
+ history_event_artifact_createdst::`vftable'
+  referencing functions: 
+  .text:005C1A60
+  .text:00661310
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009942D4h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_lostst
+0000:     history_eventst
+ history_event_artifact_lostst::`vftable'
+  referencing functions: 
+  .text:005C1B00
+  .text:00661390
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00994354h: possible vtable (31 methods)
+(SI)
+0000: history_event_item_stolenst
+0000:     history_eventst
+ history_event_item_stolenst::`vftable'
+  referencing functions: 
+  .text:005C1EE0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009943D4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_export_graphical_mapst
+0000:     viewscreenst
+ viewscreen_export_graphical_mapst::`vftable'
+  referencing functions: 
+  .text:005DE7D0
+  .text:005DE9C0
+  scalar deleting destructor: 005DE8F0h
+  destructor: 005DE9C0h
+  constructor: 005DE7D0h
+
+00994404h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_export_regionst
+0000:     viewscreenst
+ viewscreen_export_regionst::`vftable'
+  referencing functions: 
+  .text:005DE910
+  .text:005DE990
+
+00994434h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_new_regionst
+0000:     viewscreenst
+ viewscreen_new_regionst::`vftable'
+  referencing functions: 
+  .text:005DEC10
+  .text:005DF0C0
+  scalar deleting destructor: 005DF0A0h
+  destructor: 005DF0C0h
+  constructor: 005DEC10h
+
+00994464h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_legendsst
+0000:     viewscreenst
+ viewscreen_legendsst::`vftable'
+  referencing functions: 
+  .text:005DF210
+  .text:005DF450
+  scalar deleting destructor: 005DF430h
+  destructor: 005DF450h
+  constructor: 005DF210h
+
+00994494h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_titlest
+0000:     viewscreenst
+ viewscreen_titlest::`vftable'
+  referencing functions: 
+  .text:005C72F0
+  .text:005DF9D0
+  scalar deleting destructor: 005C7620h
+  destructor: 005C72F0h
+  constructor: 005DF9D0h
+
+009944C4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_game_cleanerst
+0000:     viewscreenst
+ viewscreen_game_cleanerst::`vftable'
+  referencing functions: 
+  .text:00508F80
+  .text:005DF900
+  scalar deleting destructor: 004B0750h
+
+009944F4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_announcelistst
+0000:     viewscreenst
+ viewscreen_announcelistst::`vftable'
+  referencing functions: 
+  .text:005FA4B0
+  scalar deleting destructor: 004B0750h
+
+00994524h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_kitchenprefst
+0000:     viewscreenst
+ viewscreen_kitchenprefst::`vftable'
+  referencing functions: 
+  .text:00600BA0
+  scalar deleting destructor: 00600E60h
+  destructor: 00600E80h
+
+00994554h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_petst
+0000:     viewscreenst
+ viewscreen_petst::`vftable'
+  referencing functions: 
+  .text:00601BA0
+  scalar deleting destructor: 00602A10h
+  destructor: 00602A30h
+
+00994584h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_pricest
+0000:     viewscreenst
+ viewscreen_pricest::`vftable'
+  referencing functions: 
+  .text:00603F10
+  scalar deleting destructor: 004B0750h
+
+009945B4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_justicest
+0000:     viewscreenst
+ viewscreen_justicest::`vftable'
+  referencing functions: 
+  .text:00604120
+
+009945E4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_overallstatusst
+0000:     viewscreenst
+ viewscreen_overallstatusst::`vftable'
+  referencing functions: 
+  .text:00623900
+  scalar deleting destructor: 004B0750h
+
+00994614h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_storesst
+0000:     viewscreenst
+ viewscreen_storesst::`vftable'
+  referencing functions: 
+  .text:006464B0
+
+00994644h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_wagesst
+0000:     viewscreenst
+ viewscreen_wagesst::`vftable'
+  referencing functions: 
+  .text:006081C0
+  scalar deleting destructor: 004B0750h
+
+00994674h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_jobmanagementst
+0000:     viewscreenst
+ viewscreen_jobmanagementst::`vftable'
+  referencing functions: 
+  .text:0060AB70
+  scalar deleting destructor: 004B0750h
+
+009946A4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_createquotast
+0000:     viewscreenst
+ viewscreen_createquotast::`vftable'
+  referencing functions: 
+  .text:0060B730
+  .text:0060B860
+  scalar deleting destructor: 0060B840h
+  destructor: 0060B860h
+  constructor: 0060B730h
+
+009946D4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_unitjobsst
+0000:     viewscreenst
+ viewscreen_unitjobsst::`vftable'
+  referencing functions: 
+  .text:0060CAE0
+
+00994704h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_treasurelistst
+0000:     viewscreenst
+ viewscreen_treasurelistst::`vftable'
+  referencing functions: 
+  .text:0060EEF0
+  scalar deleting destructor: 004B0750h
+
+00994734h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_entityst
+0000:     viewscreenst
+ viewscreen_entityst::`vftable'
+  referencing functions: 
+  .text:0060F590
+  scalar deleting destructor: 0060FA80h
+  destructor: 0060FAA0h
+
+00994764h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_civlistst
+0000:     viewscreenst
+ viewscreen_civlistst::`vftable'
+  referencing functions: 
+  .text:00612500
+
+00994794h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_squadst
+0000:     viewscreenst
+ viewscreen_squadst::`vftable'
+  referencing functions: 
+  .text:00613400
+  scalar deleting destructor: 004B0750h
+
+009947C4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_commandchainst
+0000:     viewscreenst
+ viewscreen_commandchainst::`vftable'
+  referencing functions: 
+  .text:00614500
+
+009947F4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_buildinglistst
+0000:     viewscreenst
+ viewscreen_buildinglistst::`vftable'
+  referencing functions: 
+  .text:0062B6A0
+  scalar deleting destructor: 0062BC10h
+  destructor: 0062BC30h
+
+00994824h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_noblest
+0000:     viewscreenst
+ viewscreen_noblest::`vftable'
+  referencing functions: 
+  .text:00634B70
+  scalar deleting destructor: 004B0750h
+
+00994854h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_itemst
+0000:     viewscreenst
+ viewscreen_itemst::`vftable'
+  referencing functions: 
+  .text:0064A300
+
+00994884h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_buildingst
+0000:     viewscreenst
+ viewscreen_buildingst::`vftable'
+  referencing functions: 
+  .text:0062BCA0
+  scalar deleting destructor: 004B0750h
+
+009948B4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_jobst
+0000:     viewscreenst
+ viewscreen_jobst::`vftable'
+  referencing functions: 
+  .text:0064D7E0
+  scalar deleting destructor: 004B0750h
+
+009948E4h: possible vtable (23 methods)
+(SI)
+0000: layer_object_buttonst
+0000:     layer_objectst
+ layer_object_buttonst::`vftable'
+  referencing functions: 
+  .text:0062DFD0 (4 times)
+  .text:0062E590 (6 times)
+  .text:0062E940 (2 times)
+  .text:0062F030 (6 times)
+  .text:006C2350 (8 times)
+  .text:006C7EC0 (5 times)
+  .text:006C9120 (3 times)
+  .text:006C9470 (3 times)
+  .text:006C9670 (7 times)
+  .text:006C9B10 (8 times)
+  .text:006CD590 (6 times)
+  .text:0075B400 (9 times)
+
+00994944h: possible vtable (23 methods)
+(SI)
+0000: layer_object_listst
+0000:     layer_objectst
+ layer_object_listst::`vftable'
+  referencing functions: 
+  .text:0062DFD0 (2 times)
+  .text:0062E590 (2 times)
+  .text:0062E940
+  .text:0062F030 (3 times)
+  .text:006C2350 (3 times)
+  .text:006C7EC0
+  .text:006C9120
+  .text:006C9B10
+  .text:006CD590
+  .text:0075B400 (2 times)
+
+009949A4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layerst
+0000:     viewscreenst
+ viewscreen_layerst::`vftable'
+  referencing functions: 
+  .text:005C7880
+  .text:006CDCB0
+  scalar deleting destructor: 005C78E0h
+  destructor: 006CDCB0h
+  constructor: 005C7880h
+
+009949D4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_noblelistst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_noblelistst::`vftable'
+  referencing functions: 
+  .text:0062DCB0
+  .text:0062F030
+  scalar deleting destructor: 0062DFB0h
+  destructor: 0062DCB0h
+  constructor: 0062F030h
+
+00994A04h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_stone_restrictionst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_stone_restrictionst::`vftable'
+  referencing functions: 
+  .text:0062DB60
+  .text:0062DFD0
+  scalar deleting destructor: 0062DBF0h
+  destructor: 0062DB60h
+  constructor: 0062DFD0h
+
+00994A34h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_reactionst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_reactionst::`vftable'
+  referencing functions: 
+  .text:0062DC10
+  .text:0062E590
+  scalar deleting destructor: 0062DC10h
+
+00994A64h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_currencyst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_currencyst::`vftable'
+  referencing functions: 
+  .text:0062DC40
+  .text:0062E940
+  scalar deleting destructor: 0062DC90h
+  destructor: 0062DC40h
+  constructor: 0062E940h
+
+0099537Ch: possible vtable (1 methods)
+  referencing functions: 
+  .text:00885E80
+  .text:008A8670 (2 times)
+
+00995EACh: possible vtable (1 methods)
+  referencing functions: 
+  .text:0066B2D0
+  .text:0066DD40 (2 times)
+
+00997110h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0066E2C0
+  .text:0089EF50
+
+009979BCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:0066FB20
+  .text:00684970 (3 times)
+  .text:006EA840 (6 times)
+
+009980B0h: possible vtable (1 methods)
+(SI)
+0000: history_event_collectionst
+ history_event_collectionst::`vftable'
+  referencing functions: 
+  .text:00685EA0
+  .text:00685F60
+
+009980E4h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_battlest
+0000:     history_event_collectionst
+ history_event_collection_battlest::`vftable'
+  referencing functions: 
+  .text:006627B0
+
+00998118h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_duelst
+0000:     history_event_collectionst
+ history_event_collection_duelst::`vftable'
+  referencing functions: 
+  .text:00662980
+  .text:007B9A00
+
+0099814Ch: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_site_conqueredst
+0000:     history_event_collectionst
+ history_event_collection_site_conqueredst::`vftable'
+  referencing functions: 
+  .text:00662D90
+
+00998180h: possible vtable (1 methods)
+(SI)
+0000: history_event_collection_beast_attackst
+0000:     history_event_collectionst
+ history_event_collection_beast_attackst::`vftable'
+  referencing functions: 
+  .text:00663180
+
+009981B4h: possible vtable (31 methods)
+(SI)
+0000: history_eventst
+ history_eventst::`vftable'
+  referencing functions: 
+  .text:00663C50
+  .text:00663D50 (history_event_item_stolenst::~history_event_item_stolenst)
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+  constructor: 00663C50h
+
+00998234h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_field_battlest
+0000:     history_eventst
+ history_event_war_field_battlest::`vftable'
+  referencing functions: 
+  .text:0065D800
+  .text:007B9470
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009982B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_attacked_sitest
+0000:     history_eventst
+ history_event_war_attacked_sitest::`vftable'
+  referencing functions: 
+  .text:0065DAD0
+  .text:00751BB0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998334h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_destroyed_sitest
+0000:     history_eventst
+ history_event_war_destroyed_sitest::`vftable'
+  referencing functions: 
+  .text:0065DCA0
+  .text:007B94F0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009983B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_plundered_sitest
+0000:     history_eventst
+ history_event_war_plundered_sitest::`vftable'
+  referencing functions: 
+  .text:0065DD90
+  .text:007B9560
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998434h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_site_tribute_forcedst
+0000:     history_eventst
+ history_event_war_site_tribute_forcedst::`vftable'
+  referencing functions: 
+  .text:0065DF10
+  .text:007B95D0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009984B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_site_new_leaderst
+0000:     history_eventst
+ history_event_war_site_new_leaderst::`vftable'
+  referencing functions: 
+  .text:0065DFF0
+  .text:007B9640
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998534h: possible vtable (31 methods)
+(SI)
+0000: history_event_war_site_taken_overst
+0000:     history_eventst
+ history_event_war_site_taken_overst::`vftable'
+  referencing functions: 
+  .text:0065E1D0
+  .text:007B96C0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009985B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_hf_destroyed_sitest
+0000:     history_eventst
+ history_event_hf_destroyed_sitest::`vftable'
+  referencing functions: 
+  .text:0065E3F0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998634h: possible vtable (31 methods)
+(SI)
+0000: history_event_site_diedst
+0000:     history_eventst
+ history_event_site_diedst::`vftable'
+  referencing functions: 
+  .text:0065E4C0
+  .text:008D2370
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009986B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_site_abandonedst
+0000:     history_eventst
+ history_event_site_abandonedst::`vftable'
+  referencing functions: 
+  .text:0065E550
+  .text:008D23E0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998734h: possible vtable (31 methods)
+(SI)
+0000: history_event_hf_razed_buildingst
+0000:     history_eventst
+ history_event_hf_razed_buildingst::`vftable'
+  referencing functions: 
+  .text:0065E7E0
+  .text:007B9730
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009987B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_creature_devouredst
+0000:     history_eventst
+ history_event_creature_devouredst::`vftable'
+  referencing functions: 
+  .text:0065EA30
+  .text:007B97A0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998834h: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_woundedst
+0000:     history_eventst
+ history_event_hist_figure_woundedst::`vftable'
+  referencing functions: 
+  .text:0065EC70
+  .text:007B9810
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009988B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_simple_battle_eventst
+0000:     history_eventst
+ history_event_hist_figure_simple_battle_eventst::`vftable'
+  referencing functions: 
+  .text:0065F080
+
+00998934h: possible vtable (31 methods)
+(SI)
+0000: history_event_hist_figure_reunionst
+0000:     history_eventst
+ history_event_hist_figure_reunionst::`vftable'
+  referencing functions: 
+  .text:0065F620
+
+009989B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_add_hf_entity_linkst
+0000:     history_eventst
+ history_event_add_hf_entity_linkst::`vftable'
+  referencing functions: 
+  .text:0065F790
+  .text:0065F800
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998A34h: possible vtable (31 methods)
+(SI)
+0000: history_event_remove_hf_entity_linkst
+0000:     history_eventst
+ history_event_remove_hf_entity_linkst::`vftable'
+  referencing functions: 
+  .text:0065F890
+  .text:0065F900
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998AB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_change_hf_statest
+0000:     history_eventst
+ history_event_change_hf_statest::`vftable'
+  referencing functions: 
+  .text:0065F9A0
+  .text:0065FA20
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998B34h: possible vtable (31 methods)
+(SI)
+0000: history_event_change_hf_jobst
+0000:     history_eventst
+ history_event_change_hf_jobst::`vftable'
+  referencing functions: 
+  .text:0065FBE0
+  .text:0065FC60
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998BB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_add_hf_hf_linkst
+0000:     history_eventst
+ history_event_add_hf_hf_linkst::`vftable'
+  referencing functions: 
+  .text:0065FE00
+  .text:0065FE70
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998C34h: possible vtable (31 methods)
+(SI)
+0000: history_event_remove_hf_hf_linkst
+0000:     history_eventst
+ history_event_remove_hf_hf_linkst::`vftable'
+  referencing functions: 
+  .text:0065FF00
+  .text:0065FF70
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998CB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_add_hf_site_linkst
+0000:     history_eventst
+ history_event_add_hf_site_linkst::`vftable'
+  referencing functions: 
+  .text:00660000
+  .text:00660070
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998D34h: possible vtable (31 methods)
+(SI)
+0000: history_event_remove_hf_site_linkst
+0000:     history_eventst
+ history_event_remove_hf_site_linkst::`vftable'
+  referencing functions: 
+  .text:00660210
+  .text:00660280
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998DB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_body_abusedst
+0000:     history_eventst
+ history_event_body_abusedst::`vftable'
+  referencing functions: 
+  .text:00660C20
+
+00998E34h: possible vtable (31 methods)
+(SI)
+0000: history_event_merchantst
+0000:     history_eventst
+ history_event_merchantst::`vftable'
+  referencing functions: 
+  .text:00661110
+
+00998EB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_hiddenst
+0000:     history_eventst
+ history_event_artifact_hiddenst::`vftable'
+  referencing functions: 
+  .text:006611F0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998F34h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_possessedst
+0000:     history_eventst
+ history_event_artifact_possessedst::`vftable'
+  referencing functions: 
+  .text:00661280
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00998FB4h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_foundst
+0000:     history_eventst
+ history_event_artifact_foundst::`vftable'
+  referencing functions: 
+  .text:00661410
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00999034h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_recoveredst
+0000:     history_eventst
+ history_event_artifact_recoveredst::`vftable'
+  referencing functions: 
+  .text:00661510
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009990B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_artifact_droppedst
+0000:     history_eventst
+ history_event_artifact_droppedst::`vftable'
+  referencing functions: 
+  .text:00661730
+
+00999134h: possible vtable (31 methods)
+(SI)
+0000: history_event_demon_encasedst
+0000:     history_eventst
+ history_event_demon_encasedst::`vftable'
+  referencing functions: 
+  .text:00661810
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009991B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_itemst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_itemst::`vftable'
+  referencing functions: 
+  .text:00661BE0
+  .text:006E3710
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00999234h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_dye_itemst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_dye_itemst::`vftable'
+  referencing functions: 
+  .text:00661F40
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009992B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_item_improvementst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_item_improvementst::`vftable'
+  referencing functions: 
+  .text:006621D0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+00999334h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_foodst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_foodst::`vftable'
+  referencing functions: 
+  .text:00662220
+  .text:0073A8C0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009993B4h: possible vtable (31 methods)
+(SI)
+0000: history_event_masterpiece_created_engravingst
+0000:     history_event_masterpiece_createdst
+0000:         history_eventst
+ history_event_masterpiece_created_engravingst::`vftable'
+  referencing functions: 
+  .text:00662340
+  .text:008D24B0
+  scalar deleting destructor: 00523BE0h
+  destructor: 00663D50h
+
+009A5730h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0069BD10
+
+009A5AA0h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0069C6B0
+  .text:0069D000
+
+009A6C90h: possible vtable (1 methods)
+  referencing functions: 
+  .text:006C9B10 (9 times)
+  .text:0083E240
+
+009A7BDCh: possible vtable (1 methods)
+  referencing functions: 
+  .text:006D6050
+
+009A7CF4h: possible vtable (7 methods)
+(SI)
+0000: active_script_var_unitst
+0000:     active_script_varst
+ active_script_var_unitst::`vftable'
+  referencing functions: 
+  .text:006A2690
+  .text:00833C70
+
+009A7D14h: possible vtable (7 methods)
+(SI)
+0000: active_script_var_longst
+0000:     active_script_varst
+ active_script_var_longst::`vftable'
+  referencing functions: 
+  .text:006A2690
+  .text:00833D50
+
+009A7D34h: possible vtable (5 methods)
+(SI)
+0000: interface_button_buildingst
+0000:     interface_buttonst
+ interface_button_buildingst::`vftable'
+  referencing functions: 
+  .text:006C1300
+  scalar deleting destructor: 006C1470h
+
+009A7D4Ch: possible vtable (5 methods)
+(SI)
+0000: interface_button_constructionst
+0000:     interface_buttonst
+ interface_button_constructionst::`vftable'
+  referencing functions: 
+  .text:006C1380
+  scalar deleting destructor: 006C1470h
+
+009A7D64h: possible vtable (5 methods)
+(SI)
+0000: interface_button_construction_category_selectorst
+0000:     interface_button_constructionst
+0000:         interface_buttonst
+ interface_button_construction_category_selectorst::`vftable'
+  referencing functions: 
+  .text:00692B00
+  scalar deleting destructor: 006C1470h
+
+009A7D7Ch: possible vtable (5 methods)
+(SI)
+0000: interface_button_construction_building_selectorst
+0000:     interface_button_constructionst
+0000:         interface_buttonst
+ interface_button_construction_building_selectorst::`vftable'
+  referencing functions: 
+  .text:00692B60
+  scalar deleting destructor: 006C1470h
+
+009A7D94h: possible vtable (5 methods)
+(SI)
+0000: interface_button_construction_donest
+0000:     interface_button_constructionst
+0000:         interface_buttonst
+ interface_button_construction_donest::`vftable'
+  referencing functions: 
+  .text:00692BF0
+  scalar deleting destructor: 006C1470h
+
+009A7DACh: possible vtable (5 methods)
+(SI)
+0000: interface_button_buttonst
+0000:     interface_buttonst
+ interface_button_buttonst::`vftable'
+  referencing functions: 
+  .text:006C1400
+  scalar deleting destructor: 006C1470h
+
+009A7DC4h: possible vtable (5 methods)
+(SI)
+0000: interface_button_button_designate_selectst
+0000:     interface_button_buttonst
+0000:         interface_buttonst
+ interface_button_button_designate_selectst::`vftable'
+  referencing functions: 
+  .text:00692D50
+  scalar deleting destructor: 006C1470h
+
+009A7DDCh: possible vtable (5 methods)
+(SI)
+0000: interface_button_button_donest
+0000:     interface_button_buttonst
+0000:         interface_buttonst
+ interface_button_button_donest::`vftable'
+  referencing functions: 
+  .text:00692DB0
+  scalar deleting destructor: 006C1470h
+
+009A7DF4h: possible vtable (5 methods)
+(SI)
+0000: interface_button_button_open_bitem_designationst
+0000:     interface_button_buttonst
+0000:         interface_buttonst
+ interface_button_button_open_bitem_designationst::`vftable'
+  referencing functions: 
+  .text:00692E10
+  scalar deleting destructor: 006C1470h
+
+009A7E0Ch: possible vtable (5 methods)
+(SI)
+0000: interface_button_button_open_traffic_designationst
+0000:     interface_button_buttonst
+0000:         interface_buttonst
+ interface_button_button_open_traffic_designationst::`vftable'
+  referencing functions: 
+  .text:00692E90
+  scalar deleting destructor: 006C1470h
+
+009A7E24h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_optionst
+0000:     viewscreenst
+ viewscreen_optionst::`vftable'
+  referencing functions: 
+  .text:0069DE00
+  scalar deleting destructor: 004B0750h
+
+009A7E54h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_loadgamest
+0000:     viewscreenst
+ viewscreen_loadgamest::`vftable'
+  referencing functions: 
+  .text:006BF620
+  .text:006BF6C0
+  scalar deleting destructor: 006BF6A0h
+  destructor: 006BF6C0h
+  constructor: 006BF620h
+
+009A7E84h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_savegamest
+0000:     viewscreenst
+ viewscreen_savegamest::`vftable'
+  referencing functions: 
+  .text:006AF480
+
+009A7EB4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_keybindingsst
+0000:     viewscreenst
+ viewscreen_keybindingsst::`vftable'
+  referencing functions: 
+  .text:006AF770
+
+009A7EE4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_customize_unitst
+0000:     viewscreenst
+ viewscreen_customize_unitst::`vftable'
+  referencing functions: 
+  .text:00692F10
+  .text:006B5860
+  scalar deleting destructor: 00692F60h
+  destructor: 00692F10h
+  constructor: 006B5860h
+
+009A7F14h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_unitst
+0000:     viewscreenst
+ viewscreen_unitst::`vftable'
+  referencing functions: 
+  .text:00692F80
+  .text:006B5770
+
+009A7F44h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_workshop_profilest
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_workshop_profilest::`vftable'
+  referencing functions: 
+  .text:00692FC0
+  .text:006C9120
+
+009A7F74h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_unit_relationshipst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_unit_relationshipst::`vftable'
+  referencing functions: 
+  .text:00693010
+  .text:006C7EC0
+  scalar deleting destructor: 006930D0h
+  destructor: 00693010h
+  constructor: 006C7EC0h
+
+009A7FA4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_musicsoundst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_musicsoundst::`vftable'
+  referencing functions: 
+  .text:006930F0
+  .text:006C9470
+  scalar deleting destructor: 006930F0h
+
+009A7FD4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_export_play_mapst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_export_play_mapst::`vftable'
+  referencing functions: 
+  .text:00693120
+  .text:006CD590
+  scalar deleting destructor: 006931A0h
+  destructor: 00693120h
+  constructor: 006CD590h
+
+009A8004h: possible vtable (9 methods)
+(SI)
+0000: world_gen_param_valuest
+0000:     world_gen_param_basest
+ world_gen_param_valuest::`vftable'
+  referencing functions: 
+  .text:006CD450
+
+009A802Ch: possible vtable (9 methods)
+(SI)
+0000: world_gen_param_memberst
+0000:     world_gen_param_valuest
+0000:         world_gen_param_basest
+ world_gen_param_memberst::`vftable'
+  referencing functions: 
+  .text:006CD3F0
+
+009A8054h: possible vtable (9 methods)
+(SI)
+0000: world_gen_param_charst
+0000:     world_gen_param_valuest
+0000:         world_gen_param_basest
+ world_gen_param_charst::`vftable'
+  referencing functions: 
+  .text:006C9B10 (3 times)
+
+009A807Ch: possible vtable (9 methods)
+(SI)
+0000: world_gen_param_seedst
+0000:     world_gen_param_basest
+ world_gen_param_seedst::`vftable'
+  referencing functions: 
+  .text:006C9B10 (3 times)
+
+009A80A4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_world_gen_paramst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_world_gen_paramst::`vftable'
+  referencing functions: 
+  .text:00693240
+  .text:006C9B10
+  scalar deleting destructor: 006932B0h
+  destructor: 00693240h
+  constructor: 006C9B10h
+
+009A80D4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_world_gen_param_presetst
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_world_gen_param_presetst::`vftable'
+  referencing functions: 
+  .text:006932D0
+  .text:006C9670
+
+009A8104h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_stockpilest
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_stockpilest::`vftable'
+  referencing functions: 
+  .text:00693320
+  .text:006C2350
+  scalar deleting destructor: 006933C0h
+  destructor: 00693320h
+  constructor: 006C2350h
+
+009A8134h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_movieplayerst
+0000:     viewscreenst
+ viewscreen_movieplayerst::`vftable'
+  referencing functions: 
+  .text:006933F0
+  .text:006BB870
+  scalar deleting destructor: 00693470h
+  destructor: 006933F0h
+  constructor: 006BB870h
+
+009A8164h: possible vtable (5 methods)
+(SI)
+0000: interface_button_button_light_up_selectorst<short>
+0000:     interface_button_buttonst
+0000:         interface_buttonst
+ interface_button_button_light_up_selectorst<short>::`vftable'
+  referencing functions: 
+  .text:006D8820
+
+009A8194h: possible vtable (1 methods)
+  referencing functions: 
+  .text:006EA840
+  .text:0089EF50 (5 times)
+
+009A86C4h: possible vtable (179 methods)
+(SI)
+0000: itemst
+ itemst::`vftable'
+  referencing functions: 
+  .text:006E37A0
+  .text:006E7000
+  scalar deleting destructor: 006E3840h
+  destructor: 006E7000h
+  constructor: 006E37A0h
+
+009A8994h: possible vtable (14 methods)
+(SI)
+0000: general_ref_coinbatchst
+0000:     general_refst
+ general_ref_coinbatchst::`vftable'
+  referencing functions: 
+  .text:006DD120
+  .text:006F3D10 (2 times)
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009A89D0h: possible vtable (9 methods)
+(SI)
+0000: itemimprovementst
+ itemimprovementst::`vftable'
+  referencing functions: 
+  .text:006DDCD0
+  scalar deleting destructor: 006DDCD0h
+
+009A89F8h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_art_imagest
+0000:     itemimprovementst
+ itemimprovement_art_imagest::`vftable'
+  referencing functions: 
+  .text:006DD520
+  .text:006DD620
+  scalar deleting destructor: 006DDCD0h
+
+009A8A20h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_coveredst
+0000:     itemimprovementst
+ itemimprovement_coveredst::`vftable'
+  referencing functions: 
+  .text:006DD650
+  .text:006DD6C0
+  scalar deleting destructor: 006DDCD0h
+
+009A8A48h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_rings_hangingst
+0000:     itemimprovementst
+ itemimprovement_rings_hangingst::`vftable'
+  referencing functions: 
+  .text:006DD6F0
+  .text:006DD760
+  scalar deleting destructor: 006DDCD0h
+
+009A8A70h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_bandsst
+0000:     itemimprovementst
+ itemimprovement_bandsst::`vftable'
+  referencing functions: 
+  .text:006DD790
+  .text:006DD830
+  scalar deleting destructor: 006DDCD0h
+
+009A8A98h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_spikesst
+0000:     itemimprovementst
+ itemimprovement_spikesst::`vftable'
+  referencing functions: 
+  .text:006DD860
+  .text:006DD8D0
+  scalar deleting destructor: 006DDCD0h
+
+009A8AC0h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_itemspecificst
+0000:     itemimprovementst
+ itemimprovement_itemspecificst::`vftable'
+  referencing functions: 
+  .text:006DD900
+  .text:006DD9D0
+  scalar deleting destructor: 006DDCD0h
+
+009A8AE8h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_threadst
+0000:     itemimprovementst
+ itemimprovement_threadst::`vftable'
+  referencing functions: 
+  .text:006DDA00
+  .text:006DDBF0
+  scalar deleting destructor: 006DDCD0h
+
+009A8B10h: possible vtable (9 methods)
+(SI)
+0000: itemimprovement_clothst
+0000:     itemimprovementst
+ itemimprovement_clothst::`vftable'
+  referencing functions: 
+  .text:006DDC30
+  .text:006DDCA0
+  scalar deleting destructor: 006DDCD0h
+
+009A8B38h: possible vtable (10 methods)
+(SI)
+0000: itemimprovement_sewn_imagest
+0000:     itemimprovementst
+ itemimprovement_sewn_imagest::`vftable'
+  referencing functions: 
+  .text:006DDFA0
+  scalar deleting destructor: 006DDCD0h
+
+009A8B64h: possible vtable (181 methods)
+(SI)
+0000: item_barst
+0000:     item_actualst
+0000:         itemst
+ item_barst::`vftable'
+  referencing functions: 
+  .text:006DE200
+  .text:0074A0B0
+  .text:0074A6C0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A8E3Ch: possible vtable (181 methods)
+(SI)
+0000: item_smallgemst
+0000:     item_actualst
+0000:         itemst
+ item_smallgemst::`vftable'
+  referencing functions: 
+  .text:006DE250
+  .text:006DE2F0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A9114h: possible vtable (181 methods)
+(SI)
+0000: item_blocksst
+0000:     item_actualst
+0000:         itemst
+ item_blocksst::`vftable'
+  referencing functions: 
+  .text:006DE3D0
+  .text:006DE470
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A93ECh: possible vtable (181 methods)
+(SI)
+0000: item_roughst
+0000:     item_actualst
+0000:         itemst
+ item_roughst::`vftable'
+  referencing functions: 
+  .text:006DE5B0
+  .text:006DE650
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A96C4h: possible vtable (181 methods)
+(SI)
+0000: item_stonest
+0000:     item_actualst
+0000:         itemst
+ item_stonest::`vftable'
+  referencing functions: 
+  .text:006DE730
+  .text:006DE7D0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A999Ch: possible vtable (181 methods)
+(SI)
+0000: item_rockst
+0000:     item_actualst
+0000:         itemst
+ item_rockst::`vftable'
+  referencing functions: 
+  .text:006DE8E0
+  .text:006DE980
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A9C74h: possible vtable (181 methods)
+(SI)
+0000: item_woodst
+0000:     item_actualst
+0000:         itemst
+ item_woodst::`vftable'
+  referencing functions: 
+  .text:006DEA80
+  .text:006DEB20
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009A9F4Ch: possible vtable (181 methods)
+(SI)
+0000: item_extractst
+0000:     item_liquidst
+0000:         item_liquipowderst
+0000:             item_actualst
+0000:                 itemst
+ item_extractst::`vftable'
+  referencing functions: 
+  .text:006DEC90
+  .text:006DED30
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AA224h: possible vtable (181 methods)
+(SI)
+0000: item_potionst
+0000:     item_liquidst
+0000:         item_liquipowderst
+0000:             item_actualst
+0000:                 itemst
+ item_potionst::`vftable'
+  referencing functions: 
+  .text:006DEE20
+  .text:006DEEC0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AA4FCh: possible vtable (181 methods)
+(SI)
+0000: item_drinkst
+0000:     item_liquidst
+0000:         item_liquipowderst
+0000:             item_actualst
+0000:                 itemst
+ item_drinkst::`vftable'
+  referencing functions: 
+  .text:006DEFB0
+  .text:006DF050
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AA7D4h: possible vtable (181 methods)
+(SI)
+0000: item_fish_rawst
+0000:     item_actualst
+0000:         itemst
+ item_fish_rawst::`vftable'
+  referencing functions: 
+  .text:006DF530
+  .text:006DF5D0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AAAACh: possible vtable (181 methods)
+(SI)
+0000: item_petst
+0000:     item_critterst
+0000:         item_actualst
+0000:             itemst
+ item_petst::`vftable'
+  referencing functions: 
+  .text:006DF7B0
+  .text:006DF850
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AAD84h: possible vtable (181 methods)
+(SI)
+0000: item_skin_tannedst
+0000:     item_actualst
+0000:         itemst
+ item_skin_tannedst::`vftable'
+  referencing functions: 
+  .text:006DFB20
+  .text:006DFBC0
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AB05Ch: possible vtable (181 methods)
+(SI)
+0000: item_shellst
+0000:     item_actualst
+0000:         itemst
+ item_shellst::`vftable'
+  referencing functions: 
+  .text:006DFDF0
+  .text:006DFE90
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AB334h: possible vtable (181 methods)
+(SI)
+0000: item_leavesst
+0000:     item_actualst
+0000:         itemst
+ item_leavesst::`vftable'
+  referencing functions: 
+  .text:006DFFB0
+  .text:006E0050
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AB60Ch: possible vtable (181 methods)
+(SI)
+0000: item_ballistaarrowheadst
+0000:     item_actualst
+0000:         itemst
+ item_ballistaarrowheadst::`vftable'
+  referencing functions: 
+  .text:006E01A0
+  .text:006E0240
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009AB8E4h: possible vtable (181 methods)
+(SI)
+0000: item_cheesest
+0000:     item_actualst
+0000:         itemst
+ item_cheesest::`vftable'
+  referencing functions: 
+  .text:006E0390
+  .text:006E0430
+  scalar deleting destructor: 006DE590h
+  destructor: 006E6F10h
+
+009ABBBCh: possible vtable (181 methods)
+(SI)
+0000: item_foodst
+0000:     item_craftedst
+0000:         item_actualst
+0000:             itemst
+ item_foodst::`vftable'
+  referencing functions: 
+  .text:006E0930
+  .text:006E6E30
+  scalar deleting destructor: 006E09A0h
+  destructor: 006E6E30h
+  constructor: 006E0930h
+
+009ABE94h: possible vtable (181 methods)
+(SI)
+0000: item_clothst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_clothst::`vftable'
+  referencing functions: 
+  .text:006E09C0
+  .text:006E0A40
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AC16Ch: possible vtable (181 methods)
+(SI)
+0000: item_floodgatest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_floodgatest::`vftable'
+  referencing functions: 
+  .text:006E0B60
+  .text:006E0BC0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AC444h: possible vtable (181 methods)
+(SI)
+0000: item_hatch_coverst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_hatch_coverst::`vftable'
+  referencing functions: 
+  .text:006E0C50
+  .text:006E0CB0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AC71Ch: possible vtable (181 methods)
+(SI)
+0000: item_gratest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_gratest::`vftable'
+  referencing functions: 
+  .text:006E0D50
+  .text:006E0DB0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AC9F4h: possible vtable (181 methods)
+(SI)
+0000: item_gobletst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_gobletst::`vftable'
+  referencing functions: 
+  .text:006E0FD0
+  .text:006E1030
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009ACCCCh: possible vtable (181 methods)
+(SI)
+0000: item_instrumentst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_instrumentst::`vftable'
+  referencing functions: 
+  .text:006E10C0
+  .text:006E1140
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009ACFA4h: possible vtable (181 methods)
+(SI)
+0000: item_toyst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_toyst::`vftable'
+  referencing functions: 
+  .text:006E1200
+  .text:006E1280
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AD27Ch: possible vtable (181 methods)
+(SI)
+0000: item_windowst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_windowst::`vftable'
+  referencing functions: 
+  .text:006E1330
+  .text:006E1390
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AD554h: possible vtable (181 methods)
+(SI)
+0000: item_bucketst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_bucketst::`vftable'
+  referencing functions: 
+  .text:006E1510
+  .text:006E1570
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AD82Ch: possible vtable (181 methods)
+(SI)
+0000: item_animaltrapst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_animaltrapst::`vftable'
+  referencing functions: 
+  .text:006E1610
+  .text:006E1670
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009ADB04h: possible vtable (181 methods)
+(SI)
+0000: item_coffinst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_coffinst::`vftable'
+  referencing functions: 
+  .text:006E1770
+  .text:006E17D0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009ADDDCh: possible vtable (181 methods)
+(SI)
+0000: item_statuest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_statuest::`vftable'
+  referencing functions: 
+  .text:006E1880
+  .text:006E18E0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AE0B4h: possible vtable (181 methods)
+(SI)
+0000: item_quernst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_quernst::`vftable'
+  referencing functions: 
+  .text:006E1970
+  .text:006E19D0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AE38Ch: possible vtable (181 methods)
+(SI)
+0000: item_millstonest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_millstonest::`vftable'
+  referencing functions: 
+  .text:006E1A70
+  .text:006E1AD0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AE664h: possible vtable (151 methods)
+(SI)
+0000: item_binst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_binst::`vftable'
+  referencing functions: 
+  .text:006E1EE0
+  .text:006E1F60
+
+009AE93Ch: possible vtable (181 methods)
+(SI)
+0000: item_armorstandst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_armorstandst::`vftable'
+  referencing functions: 
+  .text:006E2050
+  .text:006E20B0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AEC14h: possible vtable (181 methods)
+(SI)
+0000: item_weaponrackst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_weaponrackst::`vftable'
+  referencing functions: 
+  .text:006E2150
+  .text:006E21B0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AEEECh: possible vtable (181 methods)
+(SI)
+0000: item_cabinetst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_cabinetst::`vftable'
+  referencing functions: 
+  .text:006E2260
+  .text:006E22C0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AF1C4h: possible vtable (181 methods)
+(SI)
+0000: item_figurinest
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_figurinest::`vftable'
+  referencing functions: 
+  .text:006E2360
+  .text:006E23C0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AF49Ch: possible vtable (181 methods)
+(SI)
+0000: item_amuletst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_amuletst::`vftable'
+  referencing functions: 
+  .text:006E2460
+  .text:006E24C0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AF774h: possible vtable (181 methods)
+(SI)
+0000: item_scepterst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_scepterst::`vftable'
+  referencing functions: 
+  .text:006E2550
+  .text:006E25B0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AFA4Ch: possible vtable (181 methods)
+(SI)
+0000: item_crownst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_crownst::`vftable'
+  referencing functions: 
+  .text:006E26C0
+  .text:006E2720
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AFD24h: possible vtable (181 methods)
+(SI)
+0000: item_ringst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_ringst::`vftable'
+  referencing functions: 
+  .text:006E27B0
+  .text:006E2810
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009AFFFCh: possible vtable (181 methods)
+(SI)
+0000: item_earringst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_earringst::`vftable'
+  referencing functions: 
+  .text:006E28A0
+  .text:006E2900
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B02D4h: possible vtable (181 methods)
+(SI)
+0000: item_braceletst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_braceletst::`vftable'
+  referencing functions: 
+  .text:006E29A0
+  .text:006E2A00
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B05ACh: possible vtable (181 methods)
+(SI)
+0000: item_gemst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_gemst::`vftable'
+  referencing functions: 
+  .text:006E2A90
+  .text:006E2AF0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B0884h: possible vtable (181 methods)
+(SI)
+0000: item_anvilst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_anvilst::`vftable'
+  referencing functions: 
+  .text:006E2B80
+  .text:006E2BE0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B0B5Ch: possible vtable (181 methods)
+(SI)
+0000: item_totemst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_totemst::`vftable'
+  referencing functions: 
+  .text:006E2C90
+  .text:006E2CF0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B0E34h: possible vtable (181 methods)
+(SI)
+0000: item_catapultpartsst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_catapultpartsst::`vftable'
+  referencing functions: 
+  .text:006E2ED0
+  .text:006E2F30
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B110Ch: possible vtable (181 methods)
+(SI)
+0000: item_ballistapartsst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_ballistapartsst::`vftable'
+  referencing functions: 
+  .text:006E2FD0
+  .text:006E3030
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B13E4h: possible vtable (181 methods)
+(SI)
+0000: item_siegeammost
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_siegeammost::`vftable'
+  referencing functions: 
+  .text:006E30E0
+  .text:006E3160
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B16BCh: possible vtable (181 methods)
+(SI)
+0000: item_pipe_sectionst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_pipe_sectionst::`vftable'
+  referencing functions: 
+  .text:006E3270
+  .text:006E32D0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B1994h: possible vtable (181 methods)
+(SI)
+0000: item_trappartsst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_trappartsst::`vftable'
+  referencing functions: 
+  .text:006E3370
+  .text:006E33D0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B1C6Ch: possible vtable (180 methods)
+(SI)
+0000: item_trapcompst
+0000:     item_constructedst
+0000:         item_craftedst
+0000:             item_actualst
+0000:                 itemst
+ item_trapcompst::`vftable'
+  referencing functions: 
+  .text:006E3470
+  .text:006E34F0
+  scalar deleting destructor: 006E2240h
+  destructor: 006E6D60h
+
+009B2458h: possible vtable (3 methods)
+(SI)
+0000: itemdefst
+ itemdefst::`vftable'
+  referencing functions: 
+  .text:00715CC0
+  .text:00715D50
+  scalar deleting destructor: 00715D30h
+  destructor: 00715D50h
+  constructor: 00715CC0h
+
+009B2468h: possible vtable (3 methods)
+(SI)
+0000: itemdef_weaponst
+0000:     itemdefst
+ itemdef_weaponst::`vftable'
+  referencing functions: 
+  .text:00715DE0
+  .text:00715F60
+  scalar deleting destructor: 00715EF0h
+  destructor: 00715F60h
+  constructor: 00715DE0h
+
+009B2478h: possible vtable (3 methods)
+(SI)
+0000: itemdef_trapcompst
+0000:     itemdefst
+ itemdef_trapcompst::`vftable'
+  referencing functions: 
+  .text:007160C0
+  .text:007161E0
+  scalar deleting destructor: 00716170h
+  destructor: 007161E0h
+  constructor: 007160C0h
+
+009B2488h: possible vtable (3 methods)
+(SI)
+0000: itemdef_toyst
+0000:     itemdefst
+ itemdef_toyst::`vftable'
+  referencing functions: 
+  .text:00716300
+  .text:00716410
+  scalar deleting destructor: 007163A0h
+  destructor: 00716410h
+  constructor: 00716300h
+
+009B2498h: possible vtable (3 methods)
+(SI)
+0000: itemdef_instrumentst
+0000:     itemdefst
+ itemdef_instrumentst::`vftable'
+  referencing functions: 
+  .text:00716530
+  .text:00716640
+  scalar deleting destructor: 007165D0h
+  destructor: 00716640h
+  constructor: 00716530h
+
+009B24A8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_armorst
+0000:     itemdefst
+ itemdef_armorst::`vftable'
+  referencing functions: 
+  .text:007167E0
+  .text:00716960
+  scalar deleting destructor: 007168F0h
+  destructor: 00716960h
+  constructor: 007167E0h
+
+009B24B8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_ammost
+0000:     itemdefst
+ itemdef_ammost::`vftable'
+  referencing functions: 
+  .text:00716AE0
+  .text:00716BF0
+  scalar deleting destructor: 00716B80h
+  destructor: 00716BF0h
+  constructor: 00716AE0h
+
+009B24C8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_siegeammost
+0000:     itemdefst
+ itemdef_siegeammost::`vftable'
+  referencing functions: 
+  .text:00716D10
+  .text:00716E00
+  scalar deleting destructor: 00716D90h
+  destructor: 00716E00h
+  constructor: 00716D10h
+
+009B24D8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_glovesst
+0000:     itemdefst
+ itemdef_glovesst::`vftable'
+  referencing functions: 
+  .text:00716F20
+  .text:00717050
+  scalar deleting destructor: 00716FE0h
+  destructor: 00717050h
+  constructor: 00716F20h
+
+009B24E8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_shoesst
+0000:     itemdefst
+ itemdef_shoesst::`vftable'
+  referencing functions: 
+  .text:00717180
+  .text:007172B0
+  scalar deleting destructor: 00717240h
+  destructor: 007172B0h
+  constructor: 00717180h
+
+009B24F8h: possible vtable (3 methods)
+(SI)
+0000: itemdef_shieldst
+0000:     itemdefst
+ itemdef_shieldst::`vftable'
+  referencing functions: 
+  .text:007173E0
+  .text:007174E0
+  scalar deleting destructor: 00717470h
+  destructor: 007174E0h
+  constructor: 007173E0h
+
+009B2508h: possible vtable (3 methods)
+(SI)
+0000: itemdef_helmst
+0000:     itemdefst
+ itemdef_helmst::`vftable'
+  referencing functions: 
+  .text:007175E0
+  .text:00717710
+  scalar deleting destructor: 007176A0h
+  destructor: 00717710h
+  constructor: 007175E0h
+
+009B2518h: possible vtable (3 methods)
+(SI)
+0000: itemdef_pantsst
+0000:     itemdefst
+ itemdef_pantsst::`vftable'
+  referencing functions: 
+  .text:00717840
+  .text:007179B0
+  scalar deleting destructor: 00717940h
+  destructor: 007179B0h
+  constructor: 00717840h
+
+009B2528h: possible vtable (3 methods)
+(SI)
+0000: itemdef_foodst
+0000:     itemdefst
+ itemdef_foodst::`vftable'
+  referencing functions: 
+  .text:00717B30
+  .text:00717C10
+  scalar deleting destructor: 00717BA0h
+  destructor: 00717C10h
+  constructor: 00717B30h
+
+009B3198h: possible vtable (5 methods)
+(SI)
+0000: machinest
+ machinest::`vftable'
+  referencing functions: 
+  .text:0072D290
+  .text:0072D330
+  .text:0072DB80
+  scalar deleting destructor: 0072D310h
+  destructor: 0072D330h
+
+009B31B0h: possible vtable (5 methods)
+(SI)
+0000: machine_standardst
+0000:     machinest
+ machine_standardst::`vftable'
+  referencing functions: 
+  .text:0072CE10
+  .text:0072CE70
+  .text:0072DB80 (5 times)
+  scalar deleting destructor: 0072D310h
+  destructor: 0072D330h
+
+009B3220h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0072FB60
+
+009B3284h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0072FB60
+
+009B3390h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00731450 (2 times)
+
+009B3394h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00731450 (2 times)
+
+009B3AB8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_artifactst
+0000:     general_refst
+ general_ref_artifactst::`vftable'
+  referencing functions: 
+  .text:0073A480
+  .text:0074B230
+  .text:007B7F90
+  .text:007B8420
+  .text:008DB0A0
+  scalar deleting destructor: 007B78F0h
+
+009B3AF4h: possible vtable (14 methods)
+(SI)
+0000: general_ref_item_typest
+0000:     general_refst
+ general_ref_item_typest::`vftable'
+  referencing functions: 
+  .text:0073A570
+  .text:0074B230
+  .text:007B7F90
+  .text:007B8420
+  .text:008DB0A0
+  scalar deleting destructor: 007B78F0h
+
+009B5984h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_textviewerst
+0000:     viewscreenst
+ viewscreen_textviewerst::`vftable'
+  referencing functions: 
+  .text:00751F80
+  .text:007520A0
+  scalar deleting destructor: 00752200h
+  destructor: 007520A0h
+  constructor: 00751F80h
+
+009B59B4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_tradelistst
+0000:     viewscreenst
+ viewscreen_tradelistst::`vftable'
+  referencing functions: 
+  .text:0075FEE0
+
+009B59E4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_tradegoodsst
+0000:     viewscreenst
+ viewscreen_tradegoodsst::`vftable'
+  referencing functions: 
+  .text:007640F0
+
+009B5A14h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_barterst
+0000:     viewscreenst
+ viewscreen_barterst::`vftable'
+  referencing functions: 
+  .text:00760530
+
+009B5A44h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_meetingst
+0000:     viewscreenst
+ viewscreen_meetingst::`vftable'
+  referencing functions: 
+  .text:0076D9B0
+  .text:0076DA10
+
+009B5A74h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_topicmeetingst
+0000:     viewscreenst
+ viewscreen_topicmeetingst::`vftable'
+  referencing functions: 
+  .text:0076DA60
+  scalar deleting destructor: 004B0750h
+
+009B5AA4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_topicmeeting_takerequestsst
+0000:     viewscreenst
+ viewscreen_topicmeeting_takerequestsst::`vftable'
+  referencing functions: 
+  .text:0076DB40
+  .text:0076DE40
+
+009B5AD4h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_tradeagreementst
+0000:     viewscreenst
+ viewscreen_tradeagreementst::`vftable'
+  referencing functions: 
+  .text:0076DF20
+  .text:0076E110
+
+009B5B04h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_requestagreementst
+0000:     viewscreenst
+ viewscreen_requestagreementst::`vftable'
+  referencing functions: 
+  .text:0076E1E0
+  scalar deleting destructor: 004B0750h
+
+009B5B34h: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_assigntradest
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_assigntradest::`vftable'
+  referencing functions: 
+  .text:0075B400
+  .text:0075BF10
+  scalar deleting destructor: 0075BEF0h
+  destructor: 0075BF10h
+  constructor: 0075B400h
+
+009B6DE8h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0078BF90
+
+009B7F84h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0078BF90 (2 times)
+  .text:0083E240
+
+009B91F8h: possible vtable (1 methods)
+  referencing functions: 
+  .text:007B1270
+
+009B9220h: possible vtable (8 methods)
+(SI)
+0000: proj_magicst
+0000:     projst
+ proj_magicst::`vftable'
+  referencing functions: 
+  .text:007B00E0
+  .text:0085C9F0
+
+009B92DCh: possible vtable (4 methods)
+(SI)
+0000: reaction_reagent_itemst
+0000:     reaction_reagentst
+ reaction_reagent_itemst::`vftable'
+  referencing functions: 
+  .text:007B51B0
+
+009B92F0h: possible vtable (4 methods)
+(SI)
+0000: reaction_reagent_metal_orest
+0000:     reaction_reagentst
+ reaction_reagent_metal_orest::`vftable'
+  referencing functions: 
+  .text:007B51B0
+
+009B9304h: possible vtable (4 methods)
+(SI)
+0000: reaction_reagent_classst
+0000:     reaction_reagentst
+ reaction_reagent_classst::`vftable'
+  referencing functions: 
+  .text:007B51B0
+
+009B9318h: possible vtable (3 methods)
+(SI)
+0000: reaction_product_itemst
+0000:     reaction_productst
+ reaction_product_itemst::`vftable'
+  referencing functions: 
+  .text:007B51B0
+
+009B9328h: possible vtable (14 methods)
+(SI)
+0000: general_ref_is_artifactst
+0000:     general_ref_artifactst
+0000:         general_refst
+ general_ref_is_artifactst::`vftable'
+  referencing functions: 
+  .text:005F7A80
+  .text:007B78C0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9364h: possible vtable (14 methods)
+(SI)
+0000: general_ref_nemesisst
+0000:     general_refst
+ general_ref_nemesisst::`vftable'
+  referencing functions: 
+  .text:007B7920
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B93A0h: possible vtable (14 methods)
+(SI)
+0000: general_ref_is_nemesisst
+0000:     general_ref_nemesisst
+0000:         general_refst
+ general_ref_is_nemesisst::`vftable'
+  referencing functions: 
+  .text:004AFCD0
+  .text:0074EC90
+  .text:007B7950
+  .text:007B7F90
+  .text:007B8420
+  .text:008A9450
+  scalar deleting destructor: 007B78F0h
+
+009B93DCh: possible vtable (14 methods)
+(SI)
+0000: general_ref_unitst
+0000:     general_refst
+ general_ref_unitst::`vftable'
+  referencing functions: 
+  .text:007B7980
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9418h: possible vtable (14 methods)
+(SI)
+0000: general_ref_contains_unitst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_contains_unitst::`vftable'
+  referencing functions: 
+  .text:007B79B0
+  .text:007B7F90
+  .text:007B8420
+  .text:0088B310
+  scalar deleting destructor: 007B78F0h
+
+009B9454h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_traineest
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_traineest::`vftable'
+  referencing functions: 
+  .text:00597B90
+  .text:007B79E0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9490h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_cageest
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_cageest::`vftable'
+  referencing functions: 
+  .text:0044D520 (2 times)
+  .text:00452FF0
+  .text:007B7A20
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B94CCh: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_beateest
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_beateest::`vftable'
+  referencing functions: 
+  .text:007B7A50
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9508h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_foodreceiverst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_foodreceiverst::`vftable'
+  referencing functions: 
+  .text:007B7A80
+  .text:007B7F90
+  .text:007B8420
+  .text:008904F0
+  scalar deleting destructor: 007B78F0h
+
+009B9544h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_kidnapeest
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_kidnapeest::`vftable'
+  referencing functions: 
+  .text:007B7AC0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9580h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_patientst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_patientst::`vftable'
+  referencing functions: 
+  .text:007B7AF0
+  .text:007B7F90
+  .text:007B8420
+  .text:0088FB50
+  scalar deleting destructor: 007B78F0h
+
+009B95BCh: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_infantst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_infantst::`vftable'
+  referencing functions: 
+  .text:007B7B30
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B95F8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_slaughtereest
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_slaughtereest::`vftable'
+  referencing functions: 
+  .text:007B7B60
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9634h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_itemownerst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_itemownerst::`vftable'
+  referencing functions: 
+  .text:00556890
+  .text:005EC3C0
+  .text:006F2450
+  .text:006FD7F0
+  .text:00705030
+  .text:0076B070 (2 times)
+  .text:007B7B90
+  .text:007B7F90
+  .text:007B8420
+  .text:008B9570
+  scalar deleting destructor: 007B78F0h
+
+009B9670h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_tradebringerst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_tradebringerst::`vftable'
+  referencing functions: 
+  .text:006F24B0
+  .text:007B7BC0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B96ACh: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_holderst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_holderst::`vftable'
+  referencing functions: 
+  .text:007B7BF0
+  .text:007B7F90
+  .text:007B8420
+  .text:0085E9F0
+  scalar deleting destructor: 007B78F0h
+
+009B96E8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_unit_workerst
+0000:     general_ref_unitst
+0000:         general_refst
+ general_ref_unit_workerst::`vftable'
+  referencing functions: 
+  .text:007B7C20
+  .text:007B7F90
+  .text:007B8420
+  .text:0085E7B0
+  scalar deleting destructor: 007B78F0h
+
+009B9724h: possible vtable (14 methods)
+(SI)
+0000: general_ref_itemst
+0000:     general_refst
+ general_ref_itemst::`vftable'
+  referencing functions: 
+  .text:007B7C60
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9760h: possible vtable (14 methods)
+(SI)
+0000: general_ref_contains_itemst
+0000:     general_ref_itemst
+0000:         general_refst
+ general_ref_contains_itemst::`vftable'
+  referencing functions: 
+  .text:006EEEF0
+  .text:007B7C90
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B979Ch: possible vtable (14 methods)
+(SI)
+0000: general_ref_contained_in_itemst
+0000:     general_ref_itemst
+0000:         general_refst
+ general_ref_contained_in_itemst::`vftable'
+  referencing functions: 
+  .text:006EEEF0
+  .text:007B7CD0
+  .text:007B7F90
+  .text:007B8420
+  .text:0088B310
+  scalar deleting destructor: 007B78F0h
+
+009B97D8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_projectilest
+0000:     general_refst
+ general_ref_projectilest::`vftable'
+  referencing functions: 
+  .text:004504C0
+  .text:00450F80
+  .text:0061F080
+  .text:007B7D50
+  .text:007B7F90
+  .text:007B8420
+  .text:0085F930
+  .text:0087FB40
+  .text:00880110
+  scalar deleting destructor: 007B78F0h
+
+009B9814h: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_civzone_assignedst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_civzone_assignedst::`vftable'
+  referencing functions: 
+  .text:0045CB70
+  .text:0045CBD0
+  .text:007B7D90
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9850h: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_triggerst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_triggerst::`vftable'
+  referencing functions: 
+  .text:0059F5D0
+  .text:007B7DC0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B988Ch: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_triggertargetst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_triggertargetst::`vftable'
+  referencing functions: 
+  .text:0059F5D0
+  .text:007B7DF0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B98C8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_chainst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_chainst::`vftable'
+  referencing functions: 
+  .text:007B7E20
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9904h: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_cagedst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_cagedst::`vftable'
+  referencing functions: 
+  .text:004569B0
+  .text:007B7E50
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B9940h: possible vtable (14 methods)
+(SI)
+0000: general_ref_building_holderst
+0000:     general_ref_buildingst
+0000:         general_refst
+ general_ref_building_holderst::`vftable'
+  referencing functions: 
+  .text:00441BE0
+  .text:00441C80
+  .text:004537B0
+  .text:0045FDC0
+  .text:00514770
+  .text:00597B90 (2 times)
+  .text:006A2C20
+  .text:007B7E80
+  .text:007B7F90
+  .text:007B8420
+  .text:0088FB50
+  scalar deleting destructor: 007B78F0h
+
+009B997Ch: possible vtable (14 methods)
+(SI)
+0000: general_ref_entityst
+0000:     general_refst
+ general_ref_entityst::`vftable'
+  referencing functions: 
+  .text:007B7EB0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B99B8h: possible vtable (14 methods)
+(SI)
+0000: general_ref_entity_stolenst
+0000:     general_ref_entityst
+0000:         general_refst
+ general_ref_entity_stolenst::`vftable'
+  referencing functions: 
+  .text:006FD7F0
+  .text:00705030
+  .text:007B7EF0
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009B99F4h: possible vtable (14 methods)
+(SI)
+0000: general_ref_entity_offeredst
+0000:     general_ref_entityst
+0000:         general_refst
+ general_ref_entity_offeredst::`vftable'
+  referencing functions: 
+  .text:006FD7F0
+  .text:00705030
+  .text:007B7F20
+  .text:007B7F90
+  .text:007B8420
+  .text:00898260 (2 times)
+  .text:008986E0
+  scalar deleting destructor: 007B78F0h
+
+009B9A30h: possible vtable (14 methods)
+(SI)
+0000: general_ref_entity_itemownerst
+0000:     general_ref_entityst
+0000:         general_refst
+ general_ref_entity_itemownerst::`vftable'
+  referencing functions: 
+  .text:006F9A40 (2 times)
+  .text:006FD7F0
+  .text:00705030
+  .text:007B7F60
+  .text:007B7F90
+  .text:007B8420
+  scalar deleting destructor: 007B78F0h
+
+009BB4ACh: possible vtable (1 methods)
+(SI)
+0000: script_var_unitst
+0000:     script_varst
+ script_var_unitst::`vftable'
+  referencing functions: 
+  .text:00833E40
+
+009BB4B4h: possible vtable (1 methods)
+(SI)
+0000: script_var_longst
+0000:     script_varst
+ script_var_longst::`vftable'
+  referencing functions: 
+  .text:00833F30
+
+009BB4BCh: possible vtable (4 methods)
+(SI)
+0000: script_stepst
+ script_stepst::`vftable'
+  referencing functions: 
+  .text:00834020
+  .text:008343A0
+  .text:00834430
+  .text:00834570
+  .text:00834760
+  .text:008348F0
+  .text:008350D0
+  scalar deleting destructor: 00834430h
+
+009BB4D0h: possible vtable (4 methods)
+(SI)
+0000: script_step_conditionalst
+0000:     script_stepst
+ script_step_conditionalst::`vftable'
+  referencing functions: 
+  .text:00833FC0
+
+009BB4E4h: possible vtable (4 methods)
+(SI)
+0000: script_step_simpleactionst
+0000:     script_stepst
+ script_step_simpleactionst::`vftable'
+  referencing functions: 
+  .text:008341A0
+  scalar deleting destructor: 00834550h
+  destructor: 00834570h
+
+009BB4F8h: possible vtable (4 methods)
+(SI)
+0000: script_step_setvarst
+0000:     script_stepst
+ script_step_setvarst::`vftable'
+  referencing functions: 
+  .text:008342B0
+  scalar deleting destructor: 00834380h
+  destructor: 008343A0h
+
+009BB50Ch: possible vtable (4 methods)
+(SI)
+0000: script_step_topicdiscussionst
+0000:     script_stepst
+ script_step_topicdiscussionst::`vftable'
+  referencing functions: 
+  .text:008350D0
+  scalar deleting destructor: 00834430h
+
+009BB520h: possible vtable (4 methods)
+(SI)
+0000: script_step_constructtopiclistst
+0000:     script_stepst
+ script_step_constructtopiclistst::`vftable'
+  referencing functions: 
+  .text:008350D0
+  scalar deleting destructor: 00834430h
+
+009BB534h: possible vtable (4 methods)
+(SI)
+0000: script_step_discussst
+0000:     script_stepst
+ script_step_discussst::`vftable'
+  referencing functions: 
+  .text:008350D0
+  scalar deleting destructor: 00834430h
+
+009BB548h: possible vtable (4 methods)
+(SI)
+0000: script_step_textviewerst
+0000:     script_stepst
+ script_step_textviewerst::`vftable'
+  referencing functions: 
+  .text:008344C0
+  scalar deleting destructor: 00834550h
+  destructor: 00834570h
+
+009BB55Ch: possible vtable (4 methods)
+(SI)
+0000: script_step_diphistoryst
+0000:     script_stepst
+ script_step_diphistoryst::`vftable'
+  referencing functions: 
+  .text:008350D0
+  scalar deleting destructor: 00834430h
+
+009BB570h: possible vtable (4 methods)
+(SI)
+0000: script_step_dipeventst
+0000:     script_step_eventst
+0000:         script_stepst
+ script_step_dipeventst::`vftable'
+  referencing functions: 
+  .text:00834640
+  scalar deleting destructor: 00834730h
+  destructor: 00834760h
+
+009BB584h: possible vtable (4 methods)
+(SI)
+0000: script_step_invasionst
+0000:     script_step_eventst
+0000:         script_stepst
+ script_step_invasionst::`vftable'
+  referencing functions: 
+  .text:00834880
+
+009BB814h: possible vtable (1 methods)
+  referencing functions: 
+  .text:0083E240
+  .text:00862AA0
+
+009BC19Ch: possible vtable (11 methods)
+(SI)
+0000: viewscreen_choose_start_sitest
+0000:     viewscreenst
+ viewscreen_choose_start_sitest::`vftable'
+  referencing functions: 
+  .text:0084ED80
+  .text:00854920
+  scalar deleting destructor: 0084FD20h
+  destructor: 00854920h
+  constructor: 0084ED80h
+
+009BC1CCh: possible vtable (11 methods)
+(SI)
+0000: viewscreen_setupdwarfgamest
+0000:     viewscreenst
+ viewscreen_setupdwarfgamest::`vftable'
+  referencing functions: 
+  .text:00852990
+  .text:00854B00
+  scalar deleting destructor: 008545C0h
+  destructor: 00854B00h
+  constructor: 00852990h
+
+009BC1FCh: possible vtable (11 methods)
+(SI)
+0000: viewscreen_layer_choose_language_namest
+0000:     viewscreen_layerst
+0000:         viewscreenst
+ viewscreen_layer_choose_language_namest::`vftable'
+  referencing functions: 
+  .text:0084FD80
+  .text:00854A30
+  scalar deleting destructor: 00850270h
+  destructor: 00854A30h
+  constructor: 0084FD80h
+
+009BDB84h: possible vtable (1 methods)
+  referencing functions: 
+  .text:00881710
+
+009BDCB0h: possible vtable (1 methods)
+  referencing functions: 
+  .text:008833A0
+
+009BDD74h: possible vtable (1 methods)
+  referencing functions: 
+  .text:008833A0
+  .text:00885E80
+
+009C3C08h: possible vtable (3 methods)
+(SI)
+0000: vegst
+ vegst::`vftable'
+  referencing functions: 
+  .text:008CCFF0
+  .text:008CD0A0
+
+009C4478h: possible vtable (1 methods)
+  referencing functions: 
+  .text:008EADF0
+
+009C4B8Ch: possible vtable (5 methods)
+(SI)
+0000: world_construction_squarest
+ world_construction_squarest::`vftable'
+  referencing functions: 
+  .text:00922240
+  .text:009222C0
+  scalar deleting destructor: 00922330h
+  destructor: 00922240h
+  constructor: 009222C0h
+
+009C4BA4h: possible vtable (5 methods)
+(SI)
+0000: world_construction_square_roadst
+0000:     world_construction_squarest
+ world_construction_square_roadst::`vftable'
+  referencing functions: 
+  .text:00523100
+  .text:00922350
+  scalar deleting destructor: 00922350h
+
+009C4BBCh: possible vtable (5 methods)
+(SI)
+0000: world_construction_square_tunnelst
+0000:     world_construction_squarest
+ world_construction_square_tunnelst::`vftable'
+  referencing functions: 
+  .text:00523170
+  .text:00570720
+  .text:00922380
+  scalar deleting destructor: 00922380h
+
+009C4BD4h: possible vtable (5 methods)
+(SI)
+0000: world_construction_square_bridgest
+0000:     world_construction_squarest
+ world_construction_square_bridgest::`vftable'
+  referencing functions: 
+  .text:005231D0
+  .text:009223B0
+  scalar deleting destructor: 009223B0h
+
+009C4BECh: possible vtable (5 methods)
+(SI)
+0000: world_construction_square_wallst
+0000:     world_construction_squarest
+ world_construction_square_wallst::`vftable'
+  referencing functions: 
+  .text:009223E0
+  .text:00922450
+  scalar deleting destructor: 00922450h
+
+009C4C04h: possible vtable (5 methods)
+(SI)
+0000: world_constructionst
+ world_constructionst::`vftable'
+  referencing functions: 
+  .text:00922540
+  .text:00922590
+  .text:009225F0
+  .text:00922660
+  .text:00922740
+  .text:009227B0
+
+009C4C1Ch: possible vtable (5 methods)
+(SI)
+0000: world_construction_roadst
+0000:     world_constructionst
+ world_construction_roadst::`vftable'
+  referencing functions: 
+  .text:009225F0
+  .text:00922BD0
+  scalar deleting destructor: 00922640h
+  destructor: 009225F0h
+  constructor: 00922BD0h
+
+009C4C34h: possible vtable (5 methods)
+(SI)
+0000: world_construction_tunnelst
+0000:     world_constructionst
+ world_construction_tunnelst::`vftable'
+  referencing functions: 
+  .text:00922660
+  .text:00922C30
+  scalar deleting destructor: 009226B0h
+  destructor: 00922660h
+  constructor: 00922C30h
+
+009C4C4Ch: possible vtable (5 methods)
+(SI)
+0000: world_construction_wallst
+0000:     world_constructionst
+ world_construction_wallst::`vftable'
+  referencing functions: 
+  .text:00922740
+  .text:00922D80
+  scalar deleting destructor: 00922790h
+  destructor: 00922740h
+  constructor: 00922D80h
+
+009C4C64h: possible vtable (5 methods)
+(SI)
+0000: world_construction_bridgest
+0000:     world_constructionst
+ world_construction_bridgest::`vftable'
+  referencing functions: 
+  .text:009227B0
+  .text:00922C90
+  scalar deleting destructor: 00922800h
+  destructor: 009227B0h
+  constructor: 00922C90h
+
+009C4E68h: possible vtable (3 methods)
+  referencing functions: 
+  .text:00928B27 (3 times) ()
+

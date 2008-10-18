@@ -80,6 +80,7 @@ use Lifevis::constants;
 use Lifevis::df_internals;
 use Lifevis::models;
 use Lifevis::ProcessConnection;
+use Lifevis::Vtables;
 
 use threads;
 use threads::shared;
@@ -112,6 +113,7 @@ my @item_ids   = get_df_item_id_data();
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
 my @ramps      = get_ramp_bitmasks();
+my %vtables = get_vtables();
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
@@ -579,15 +581,20 @@ sub building_update_loop {
             next if ( $rz > $zcount + 1 );
             _ReadMemory( $df_proc_handle, $building + 8, 2, $buf );
             my $ry = unpack( "S", $buf );
+            _ReadMemory( $df_proc_handle, $building, 4, $buf );
+            my $vtable = unpack( "L", $buf );
 
             # update record of current creature
-            $buildings{$building}[c_x] = $rx;
-            $buildings{$building}[c_y] = $ry;
-            $buildings{$building}[c_z] = $rz;
+            $buildings{$building}[b_x] = $rx;
+            $buildings{$building}[b_y] = $ry;
+            $buildings{$building}[b_z] = $rz;
+            $buildings{$building}[b_vtable_const] = $vtable;
+            $buildings{$building}[b_vtable_id] = $vtables{$vtable};
+            warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
 
             # get old and new cell location and compare
-            my $old_x = $buildings{$building}[cell_x];
-            my $old_y = $buildings{$building}[cell_y];
+            my $old_x = $buildings{$building}[b_cell_x];
+            my $old_y = $buildings{$building}[b_cell_y];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
             if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
@@ -608,8 +615,8 @@ sub building_update_loop {
 
                 # add entry to new cell and update cell coordinates
                 push @{ $cells[$bx][$by][building_list] }, $building;
-                $buildings{$building}[cell_x] = $bx;
-                $buildings{$building}[cell_y] = $by;
+                $buildings{$building}[b_cell_x] = $bx;
+                $buildings{$building}[b_cell_y] = $by;
             }
         }
     }
@@ -668,6 +675,8 @@ sub item_update_loop {
             my $ry = unpack( "S", $buf );
             _ReadMemory( $df_proc_handle, $item_address + 0, 4, $buf );
             my $type = unpack( "L", $buf );
+            _ReadMemory( $df_proc_handle, $item_address, 4, $buf );
+            my $vtable = unpack( "L", $buf );
 
             #say $proc->hexdump( $item, 0x88 ),"\n ";
 
@@ -678,6 +687,9 @@ sub item_update_loop {
             $items[$id][i_type]     = $type;
             $items[$id][i_state]    = $state;
             $items[$id][i_address]  = $item_address;
+            $items[$id][i_vtable_const] = $vtable;
+            $items[$id][i_vtable_id] = $vtables{$vtable};
+            warn sprintf "UNKNOWN ITEM VTABLE: %x\n", $vtable unless $items[$id][i_vtable_id];
             $item_present[$id]      = 1;
             $item_present_temp[$id] = 1;
 
@@ -1511,10 +1523,10 @@ sub render_models {
                     next if !defined $building_id;
                     next unless $building_present{$building_id};
 
-                    my $x = $buildings{$building_id}[c_x];
-                    my $z = $buildings{$building_id}[c_z];
+                    my $x = $buildings{$building_id}[b_x];
+                    my $z = $buildings{$building_id}[b_z];
                     next if $z > $ceiling_slice;
-                    my $y = $buildings{$building_id}[c_y];
+                    my $y = $buildings{$building_id}[b_y];
                     glTranslatef( $x, $z, $y );
                     glCallList( $building_display_lists[0] );
                     glTranslatef( -$x, -$z, -$y );
@@ -1886,12 +1898,12 @@ sub process_special_key_press {
             }
         }
         for my $building ( keys %buildings ) {
-            next if !defined $buildings{$building}[c_x];
-            next if !defined $buildings{$building}[c_y];
-            next if !defined $buildings{$building}[c_z];
-            if (   $buildings{$building}[c_x] == $xmouse
-                && $buildings{$building}[c_y] == $ymouse
-                && $buildings{$building}[c_z] == $zmouse )
+            next if !defined $buildings{$building}[b_x];
+            next if !defined $buildings{$building}[b_y];
+            next if !defined $buildings{$building}[b_z];
+            if (   $buildings{$building}[b_x] == $xmouse
+                && $buildings{$building}[b_y] == $ymouse
+                && $buildings{$building}[b_z] == $zmouse )
             {
                 my $hex_dump = $proc->hexdump( $building, 0xD8 );
                 print $OUT "Building:\n$hex_dump\n\n";
