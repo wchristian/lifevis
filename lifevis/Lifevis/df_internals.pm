@@ -3,7 +3,7 @@ use strict;
 
 use base 'Exporter';
 
-our @EXPORT = ( qw( get_df_tile_type_data get_df_item_id_data get_ramp_bitmasks ) );
+our @EXPORT = ( qw( get_df_tile_type_data get_df_building_visuals get_ramp_bitmasks ) );
 
 # TODO: Make auto-converter from ods to this file.
 
@@ -316,17 +316,13 @@ sub get_df_tile_type_data {
 }
 
 
-my @item_ids;
-    
-$item_ids[0] = "Barrel";
-$item_ids[2] = "Anvil";
-$item_ids[8] = "Maple logs";
-$item_ids[10] = "Tower-cap logs";
-$item_ids[12] = "Bag";
-$item_ids[16] = "Alder logs";
+my %building_visuals;
+$building_visuals{default}             = ["Wall",red];
+$building_visuals{building_doorst}     = ["Building_Door",wood];
+$building_visuals{building_workshopst} = ["Building_Workshop",metal];
 
-sub get_df_item_id_data {
-    return @item_ids;
+sub get_df_building_visuals {
+    return %building_visuals;
 }
 
 

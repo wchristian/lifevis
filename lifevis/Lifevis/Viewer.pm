@@ -109,7 +109,7 @@ my $full_loop_completed;
 my $memory_use;
 $memory_use = 0;
 
-my @item_ids   = get_df_item_id_data();
+my %building_visuals   = get_df_building_visuals();
 my @TILE_TYPES = get_df_tile_type_data();
 my %DRAW_MODEL = get_model_subs();
 my @ramps      = get_ramp_bitmasks();
@@ -168,7 +168,7 @@ my @cache_bucket;
 
 my @texture_ID;
 my @creature_display_lists;
-my @building_display_lists;
+my %building_display_lists;
 my @item_display_lists;
 my @tiles;
 
@@ -191,10 +191,10 @@ my $mouse_dist = 40;
 
 my ( %sin_cache, %cos_cache );
 
-my $rotating;
+my $rotating = 0;
 my $changing_ceiling;
 my $ceiling_slice;
-my $ceiling_locked;
+my $ceiling_locked = 0;
 my $view_range_changed;
 
 my $memory_needs_clears = 0;
@@ -1004,14 +1004,16 @@ sub generate_creature_display_lists {
 }
 
 sub generate_building_display_lists {
-    my $dl = glGenLists(1);
-    push @building_display_lists, $dl;
-    glNewList( $dl, GL_COMPILE );
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[metal] );
-    glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Wall}->( 0, 0.05, 0, 1, 10000, 0, 0, 0, 0, 0, 0 );
-    glEnd();
-    glEndList();
+    for my $building_visual (keys %building_visuals) {
+        my $dl = glGenLists(1);
+        $building_display_lists{$building_visual} = $dl;
+        glNewList( $dl, GL_COMPILE );
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$building_visual}[1] ] );
+        glBegin(GL_TRIANGLES);
+        $DRAW_MODEL{ $building_visuals{$building_visual}[0] }->( 0, 0.05, 0, 1, 200, 0, 0, 0, 0, 0, 0 );
+        glEnd();
+        glEndList();
+    }
 }
 
 sub generate_item_display_lists {
@@ -1528,7 +1530,13 @@ sub render_models {
                     next if $z > $ceiling_slice;
                     my $y = $buildings{$building_id}[b_y];
                     glTranslatef( $x, $z, $y );
-                    glCallList( $building_display_lists[0] );
+                    if ( $building_display_lists{ $buildings{$building_id}[b_vtable_id] } ) {
+                        glCallList( $building_display_lists{ $buildings{$building_id}[b_vtable_id] } );
+                    }
+                    else {
+                        glCallList( $building_display_lists{default} );
+                        
+                    }
                     glTranslatef( -$x, -$z, -$y );
                 }
             }
@@ -1688,10 +1696,14 @@ sub render_ui {
     glVertex3f( $c{window_width},      $c{window_height} - 20.0, 0.0 );
     glEnd();
 
-    glColor4f( 1, 1, 0.2, 0.75 );
-
+    glColor4f( 0.2, 0.2, 0.2, 0.75 );
+    glColor4f( 1, 1, 0.2, 0.75 ) if ( $c{view_range} > 0 );
     glRasterPos2i( $c{window_width} - 36, $c{window_height} - 6 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, "-" );
+    
+    glColor4f( 0.2, 0.2, 0.2, 0.75 );
+    my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
+    glColor4f( 1, 1, 0.2, 0.75 ) if ( $c{view_range} < $size / 2 );
     glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, "+" );
 
@@ -1771,7 +1783,9 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 45.0, $width / $height, 0.1, 700.0 );
+    my $far_clip = 33*(1+(2*$c{view_range}));
+    $far_clip = 100 if $far_clip < 100;
+    gluPerspective( 45.0, $width / $height, 1, $far_clip );
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -1796,7 +1810,7 @@ sub build_textures {
     print 'loading textures..';
 
     # Generate a texture index, then bind it for future operations.
-    @texture_ID = glGenTextures_p(28);
+    @texture_ID = glGenTextures_p(30);
 
     create_texture( 'grass',                      grass );
     create_texture( 'stone',                      stone );
@@ -1826,6 +1840,8 @@ sub build_textures {
     create_texture( 'minstone_detailed',          minstone_detailed );
     create_texture( 'ui',                         ui );
     create_texture( 'items',                      items );
+    create_texture( 'wood',                       wood );
+    create_texture( 'red',                       red );
 
 #glBindTexture(GL_TEXTURE_2D, $texture_ID[grass]);       # select mipmapped texture
 #glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);    # Some pretty standard settings for wrapping and filtering.
@@ -1972,9 +1988,12 @@ sub process_mouse_click {
             && $y > $c{window_height} - 20
             && $y < $c{window_height} )
         {
-            --$c{view_range} if $c{view_range} > 0;
-            $redraw_needed      = 1;
-            $view_range_changed = 1;
+            if ($c{view_range} > 0) {
+                --$c{view_range};
+                resize_scene($c{window_width},$c{window_height});
+                $redraw_needed      = 1;
+                $view_range_changed = 1;
+            }
         }
         elsif ($x > $c{window_width} - 42
             && $x < $c{window_width} - 20
@@ -1997,9 +2016,13 @@ sub process_mouse_click {
             && $y < $c{window_height} )
         {
             my $size = ( $xcount > $ycount ) ? $xcount : $ycount;
-            ++$c{view_range} if ( $c{view_range} < $size / 2 );
-            $redraw_needed      = 1;
-            $view_range_changed = 1;
+            
+            if ( $c{view_range} < $size / 2 ) {
+                ++$c{view_range};
+                resize_scene($c{window_width},$c{window_height});
+                $redraw_needed      = 1;
+                $view_range_changed = 1;
+            }
         }
         elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}

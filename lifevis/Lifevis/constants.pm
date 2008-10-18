@@ -13,7 +13,7 @@ our @EXPORT = ( qw(
  grass stone cursor obsidian unknown minstone pool water soil tree shrub
  sapling creature grassb boulder shrub_dead tree_dead sapling_dead
  constructed_floor_detailed constructed_wall grass_dry lava test metal
- stone_detailed minstone_detailed ui items
+ stone_detailed minstone_detailed ui items wood red
  
  BUILDING_OCCUPANCY_NONE BUILDING_OCCUPANCY_CONST BUILDING_OCCUPANCY_NO_BLOCK
  BUILDING_OCCUPANCY_BLOCK_FLOOR BUILDING_OCCUPANCY_BLOCK
@@ -65,7 +65,7 @@ use enum qw(
  grass stone cursor obsidian unknown minstone pool water soil tree shrub
  sapling creature grassb boulder shrub_dead tree_dead sapling_dead 
  constructed_floor_detailed constructed_wall grass_dry lava test metal
- stone_detailed minstone_detailed ui items
+ stone_detailed minstone_detailed ui items wood red
 );
 
 use enum qw(

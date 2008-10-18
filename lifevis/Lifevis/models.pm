@@ -3840,6 +3840,304 @@ if ( $north == EMPTY || $north == RAMP_TOP ) {
 
 
 
+$DRAW_MODEL{'Building_Door'} = sub {
+        my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
+        my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
+        OpenGL::glColor3f($brightness, $brightness, $brightness);
+
+    OpenGL::glNormal3f( 0,-1,0 );# bottom face
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0,0.44444444); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,1); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(1,0.55555556); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,1); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,1); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(1,0.55555556); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(1,0.44444444); OpenGL::glVertex3f(0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0,0.44444444); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0,0.55555556); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,0.05+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(0.6,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.6,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.5,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.6,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(1,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.9,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+
+    OpenGL::glNormal3f( 0,1,0 );# top face
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(-5.5511151e-017,0.44444444); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,-5.5511151e-017); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,0.55555556); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,-5.5511151e-017); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.55555556,-5.5511151e-017); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.44444444); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,0.55555556); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.44444444); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,0.44444444); OpenGL::glVertex3f(0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.55555556,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.55555556,0.55555556); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(-5.5511151e-017,0.44444444); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.44444444,0.55555556); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(-5.5511151e-017,0.55555556); OpenGL::glVertex3f(-0.45+$x,0.5+$y,-0.05+$z);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(0.6,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.6,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.5,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.9,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.1,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.6,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,0.05+$z);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.5,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.4,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.4,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.9,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,0.45+$z);
+    OpenGL::glTexCoord2f(0.1,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.4,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.45+$z);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(0.5,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.4,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.4,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,-2.7755576e-017); OpenGL::glVertex3f(0.45+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.4,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.1,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0,-2.7755576e-017); OpenGL::glVertex3f(0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.1,-2.7755576e-017); OpenGL::glVertex3f(-0.05+$x,-0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0,1); OpenGL::glVertex3f(0.05+$x,0.5+$y,-0.45+$z);
+    OpenGL::glTexCoord2f(0.9,1); OpenGL::glVertex3f(-0.45+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.5,1); OpenGL::glVertex3f(-0.05+$x,0.5+$y,-0.05+$z);
+    OpenGL::glTexCoord2f(0.9,-2.7755576e-017); OpenGL::glVertex3f(-0.45+$x,-0.5+$y,-0.05+$z);
+};
+
+
+
+$DRAW_MODEL{'Building_Workshop'} = sub {
+        my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
+        my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
+        OpenGL::glColor3f($brightness, $brightness, $brightness);
+
+    OpenGL::glNormal3f( 0,0,1 );# south face
+    OpenGL::glTexCoord2f(-1,0.45); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,0.45); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(-1,0.55); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(-1,0.55); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,0.45); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,0.55); OpenGL::glVertex3f(2.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.25); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.75); OpenGL::glVertex3f(-0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.25); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(9.9920072e-016,0.25); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(9.9920072e-016,0.25); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1.4432899e-015,0.75); OpenGL::glVertex3f(1.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.25); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+
+    OpenGL::glNormal3f( 0,-1,0 );# bottom face
+    OpenGL::glTexCoord2f(2,-1); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,-1); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(-1,-1); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,-0.5+$z);
+
+    OpenGL::glNormal3f( -1,0,0 );# west face
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(2,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,0.8); OpenGL::glVertex3f(-0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.8); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.5,0.25); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-0.5,0.75); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-0.5,0.25); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5,0.75); OpenGL::glVertex3f(1.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-0.5,0.75); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5,0.25); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.8); OpenGL::glVertex3f(-0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(3.3306691e-016,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+
+    OpenGL::glNormal3f( 0,1,0 );# top face
+    OpenGL::glTexCoord2f(-1,-1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2.3314684e-015,2.8865799e-015); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-1,2.4424907e-015); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,-1); OpenGL::glVertex3f(2.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2.3314684e-015,2.8865799e-015); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-1,-1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(-1,2); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.6653345e-015,1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,2); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.6653345e-015,1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(-1,2); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(2,8.8817842e-016); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1.9984014e-015); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,-1); OpenGL::glVertex3f(2.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1,2); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.6653345e-015,1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,1.9984014e-015); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1.9984014e-015); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2.3314684e-015,2.8865799e-015); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,-1); OpenGL::glVertex3f(2.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2.3314684e-015,2.8865799e-015); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1.9984014e-015); OpenGL::glVertex3f(1.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1.6653345e-015,1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,-0.5); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(6.6613381e-016,1.5); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(8.8817842e-016,-0.5); OpenGL::glVertex3f(1.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1.5); OpenGL::glVertex3f(2.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(6.6613381e-016,1.5); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1,-0.5); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1.110223e-015); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,1); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,1.110223e-015); OpenGL::glVertex3f(-0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,1); OpenGL::glVertex3f(0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,1); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,1.110223e-015); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+
+    OpenGL::glNormal3f( 1,0,0 );# east face
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1.3322676e-015,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-1,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,2.5+$z);
+    OpenGL::glTexCoord2f(2,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.3322676e-015,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.3322676e-015,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,2.5+$z);
+    OpenGL::glTexCoord2f(1.3322676e-015,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.9984014e-015,0.8); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(4.4408921e-016,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,0.8); OpenGL::glVertex3f(2.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.9984014e-015,0.8); OpenGL::glVertex3f(2.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(2,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,1.5+$z);
+    OpenGL::glTexCoord2f(1,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+
+    OpenGL::glNormal3f( 0,0,-1 );# north face
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5543122e-015,0.3); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(2,0.3); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5543122e-015,0.3); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(2,0.2); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(8.8817842e-016,0.8); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.8); OpenGL::glVertex3f(2.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.2); OpenGL::glVertex3f(2.5+$x,-0.5+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5543122e-015,0.3); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1,0.25); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(6.6613381e-016,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(6.6613381e-016,0.25); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1,0.75); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(1.110223e-015,0.75); OpenGL::glVertex3f(0.5+$x,0.1+$y,0.5+$z);
+    OpenGL::glTexCoord2f(8.8817842e-016,0.8); OpenGL::glVertex3f(1.5+$x,0.1+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(-1,0.3); OpenGL::glVertex3f(2.5+$x,-0.4+$y,-0.5+$z);
+    OpenGL::glTexCoord2f(1.5543122e-015,0.3); OpenGL::glVertex3f(1.5+$x,-0.4+$y,-0.5+$z);
+};
+
+
+
 $DRAW_MODEL{'Creature'} = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         my $brightness = ((($y/($ZCOUNT-15)) * $brightness_modificator)*.7)+.15;
