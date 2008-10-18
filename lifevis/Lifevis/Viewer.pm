@@ -1529,6 +1529,8 @@ sub render_models {
                     my $z = $buildings{$building_id}[b_z];
                     next if $z > $ceiling_slice;
                     my $y = $buildings{$building_id}[b_y];
+                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
+                    glColor3f($brightness, $brightness, $brightness);
                     glTranslatef( $x, $z, $y );
                     if ( $building_display_lists{ $buildings{$building_id}[b_vtable_id] } ) {
                         glCallList( $building_display_lists{ $buildings{$building_id}[b_vtable_id] } );

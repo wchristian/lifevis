@@ -314,7 +314,7 @@ sub get_df_tile_type_data {
 }
 
 my %building_visuals;
-$building_visuals{default}             = [ "Wall",              red ];
+$building_visuals{default}             = [ "Building_Default",  red ];
 $building_visuals{building_doorst}     = [ "Building_Door",     wood ];
 $building_visuals{building_workshopst} = [ "Building_Workshop", metal ];
 

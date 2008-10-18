@@ -180,8 +180,8 @@ sub generateModel {
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
-        my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
-        OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);";
+        my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;";
+        $model .= "OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);" unless $input =~ /Building/;
 
         my @old = ( 999, 999, 999 );
         for my $nid ( 0 .. $#normals ) {
