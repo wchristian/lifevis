@@ -112,6 +112,7 @@ $memory_use = 0;
 my %building_visuals = get_df_building_visuals();
 my @TILE_TYPES       = get_df_tile_type_data();
 my %DRAW_MODEL       = get_model_subs();
+my %model_display_lists;
 my @ramps            = get_ramp_bitmasks();
 my %vtables          = get_vtables();
 my $config_loaded;
@@ -220,7 +221,7 @@ my $buil_loop;
 
 my $item_delay_counter;
 my $item_loop;
-my $force_rt;
+my $force_rt = 0;
 
 my @offsets;
 my $df_proc_handle;
@@ -382,7 +383,8 @@ sub run {
     $loc_loop = new Coro \&location_update_loop;
     $loc_loop->ready;
     cede();
-
+    
+    generate_landscape_display_lists();
     $land_loop = new Coro \&landscape_update_loop;
     $land_loop->ready;
 
@@ -984,6 +986,18 @@ sub memory_control_loop {
     }
 }
 
+sub generate_landscape_display_lists {
+    for my $model ( keys %DRAW_MODEL ) {
+        my $dl = glGenLists(1);
+        glNewList( $dl, GL_COMPILE );
+        glBegin(GL_TRIANGLES);
+        $DRAW_MODEL{$model}->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
+        glEnd();
+        glEndList();
+        $model_display_lists{$model} = $dl;
+    }
+}
+
 sub generate_creature_display_lists {
     my $dl = glGenLists(1);
     push @creature_display_lists, $dl;
@@ -1047,7 +1061,6 @@ sub generate_display_list {
     for my $texture ( 0 .. $#texture_ID ) {    # cycle through textures
 
         glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );    # set texture
-        glBegin(GL_TRIANGLES);
         my $tile       = $tiles[$z][type];                        # get pointers to current layer
         my $tile_below = $tiles[ $z - 1 ][type];                  # as well as to layer above and below
         my $tile_above = $tiles[ $z + 1 ][type];
@@ -1092,61 +1105,29 @@ sub generate_display_list {
                             && $TILE_TYPES[$type_above][base_visual] != EMPTY );
                     }
                 }
-
-                given ( $TILE_TYPES[$type][base_visual] ) {
-                    when (WALL) {
-                        $DRAW_MODEL{Wall}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (PILLAR) {
-                        $DRAW_MODEL{Pillar}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (FORTIF) {
-                        $DRAW_MODEL{Fortif}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (FLOOR) {
-                        $DRAW_MODEL{Floor}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (TREE) {
-                        $DRAW_MODEL{Tree}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (SHRUB) {
-                        $DRAW_MODEL{Shrub}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (BOULDER) {
-                        $DRAW_MODEL{Boulder}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (SAPLING) {
-                        $DRAW_MODEL{Sapling}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (STAIR) {
-                        $DRAW_MODEL{Stairs}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (STAIR_UP) {
-                        $DRAW_MODEL{Stair_Up}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
-                    }
-
-                    when (STAIR_DOWN) {
-                        $DRAW_MODEL{Stair_Down}
-                          ->( $rx, $z, $ry, 1, $brightness_mod, $north, $west, $south, $east, $below, EMPTY );
+                
+                my @const_model_map;
+                $const_model_map[WALL] = "Wall";
+                $const_model_map[PILLAR] = "Pillar";
+                $const_model_map[FORTIF] = "Fortif";
+                $const_model_map[TREE] = "Tree";
+                $const_model_map[SHRUB] = "Shrub";
+                $const_model_map[BOULDER] = "Boulder";
+                $const_model_map[SAPLING] = "Sapling";
+                $const_model_map[STAIR] = "Stairs";
+                $const_model_map[STAIR_UP] = "Stair_Up";
+                $const_model_map[STAIR_DOWN] = "Stair_Down";
+                $const_model_map[FLOOR] = "Floor";
+                
+                my $base_visual = $TILE_TYPES[$type][base_visual];
+                
+                given ( $base_visual ) {
+                    when ([WALL,PILLAR,FORTIF,TREE,SHRUB,BOULDER,SAPLING,STAIR,STAIR_UP,STAIR_DOWN,FLOOR]) {
+                        my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
+                        glColor3f($brightness, $brightness, $brightness);
+                        glTranslatef($rx, $z, $ry);
+                        glCallList($model_display_lists{$const_model_map[$base_visual]});
+                        glTranslatef(-$rx, -$z, -$ry);
                     }
 
                     when (RAMP) {
@@ -1185,7 +1166,12 @@ sub generate_display_list {
                                 my $func = $ramps[$ramp_type]{func};
                                 croak "Need following ramp model: $func"
                                   if !defined $DRAW_MODEL{$func};
-                                $DRAW_MODEL{$func}->( $rx, $z, $ry, 1, $brightness_mod );
+                                  
+                                my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
+                                glColor3f($brightness, $brightness, $brightness);
+                                glTranslatef($rx, $z, $ry);
+                                glCallList($model_display_lists{$func});
+                                glTranslatef(-$rx, -$z, -$ry);
                                 last;
                             }
                         }
@@ -1193,7 +1179,6 @@ sub generate_display_list {
                 }
             }
         }
-        glEnd();
     }
     glEndList();
 
@@ -1323,6 +1308,10 @@ sub initialize_opengl {
     #glMaterialfv_p( GL_FRONT_AND_BACK, GL_SPECULAR, 1, 1, 1, 1);
     #glMaterialfv_p(GL_FRONT_AND_BACK, GL_SHININESS, 127);
     glEnable(GL_COLOR_MATERIAL);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     return;
 }
 
@@ -1401,6 +1390,192 @@ sub idle_tasks {
     return;
 }
 
+
+sub varraytest {
+    
+    my $dl = glGenLists(1);
+
+my @verts = (
+
+    -0.6,-0.5,0.5,
+    -0.6,-0.5,-0.5,
+     0.6,-0.5,0.5,
+     0.6,-0.5,0.5,
+    -0.6,-0.5,-0.5,
+     0.6,-0.5,-0.5,
+     
+    -0.5,-0.5,0.5,
+    0.5,-0.5,0.5,
+    -0.5,0.5,0.5,
+    -0.5,0.5,0.5,
+    0.5,-0.5,0.5,
+    0.5,0.5,0.5,
+
+
+    -0.5,0.5,0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,-0.5,0.5,
+    -0.5,0.5,-0.5,
+    -0.5,-0.5,-0.5,
+    -0.5,0.5,0.5,
+
+
+    -0.5,0.5,0.5,
+    0.5,0.5,-0.5,
+    -0.5,0.5,-0.5,
+    0.5,0.5,0.5,
+    0.5,0.5,-0.5,
+    -0.5,0.5,0.5,
+
+
+    0.5,-0.5,0.5,
+    0.5,0.5,-0.5,
+    0.5,0.5,0.5,
+    0.5,-0.5,-0.5,
+    0.5,0.5,-0.5,
+    0.5,-0.5,0.5,
+
+
+    -0.5,-0.5,-0.5,
+    0.5,0.5,-0.5,
+    0.5,-0.5,-0.5,
+    -0.5,0.5,-0.5,
+    0.5,0.5,-0.5,
+    -0.5,-0.5,-0.5
+);
+my $verts = OpenGL::Array->new_list( GL_FLOAT, @verts );
+
+
+
+# Could calc norms on the fly
+my @norms = (
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    0,-1,0,
+    
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+    0,1,0,
+);
+my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
+
+my @texcoords = (
+    0,0,
+    1,0,
+    0,1,
+    
+    0,1,
+    1,0,
+    1,1,
+    
+    1,0,
+    1,1,
+    0,0,
+    
+    0,0,
+    1,1,
+    0,1,
+    
+    1,1,
+    0,0,
+    1,0,
+    
+    0,1,
+    0,0,
+    1,1,
+    
+    0,0,
+    1,1,
+    0,1,
+    
+    1,0,
+    1,1,
+    0,0,
+    
+    0,0,
+    1,1,
+    0,1,
+    
+    1,0,
+    1,1,
+    0,0,
+    
+    1,0,
+    0,1,
+    0,0,
+    
+    1,1,
+    0,1,
+    1,0,
+);
+my $texcoords = OpenGL::Array->new_list( GL_FLOAT, @texcoords );
+
+my @indices = ( 0 .. 36 );
+my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
+
+    #glEnableClientState(GL_VERTEX_ARRAY);
+    #glEnableClientState(GL_NORMAL_ARRAY);
+    #glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    
+    
+    glVertexPointer_p( 3, $verts );
+    glNormalPointer_p( $norms );
+    glTexCoordPointer_p( 2, $texcoords );
+    
+    
+    glNewList( $dl, GL_COMPILE );
+    glTranslatef( 3, 3, 3 );
+    for ( my $i = 0 ; $i < scalar(@indices) ; $i += 3 ) {
+        glDrawArrays( GL_TRIANGLES, $i, 3 );
+    }
+    glTranslatef( -3, -3, -3 );
+    glEndList();
+    
+    #glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    #glDisableClientState(GL_NORMAL_ARRAY);
+    #glDisableClientState(GL_VERTEX_ARRAY);
+    
+    glColor3f( 1.5, 0.5, 0.5 );    # Basic polygon color
+        
+    glCallList($dl);
+}
+
+
 # ------
 # Routine which actually does the drawing
 
@@ -1432,16 +1607,20 @@ sub render_scene {
         # Clear the color and depth buffers.
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-        glColor3f( 1, 1, 1 );    # Basic polygon color
+        glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
 
+        glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
+        varraytest();
+        
         render_models();
-
+        
         # draw visible cursor
         glDisable(GL_LIGHTING);
         glLineWidth(2);
         glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
         glPolygonMode( GL_FRONT, GL_LINE );
         glBegin(GL_QUADS);
+        glColor3f(1, 1, 1);
         $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1000 );
         glEnd();
         glPolygonMode( GL_FRONT, GL_FILL );
@@ -1504,6 +1683,8 @@ sub render_models {
                     my $z = $creatures{$creature_id}[c_z];
                     next if $z > $ceiling_slice;
                     my $y = $creatures{$creature_id}[c_y];
+                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
+                    glColor3f($brightness, $brightness, $brightness);
                     glTranslatef( $x, $z, $y );
                     given ( $creatures{$creature_id}[race] ) {
                         when (166) {
@@ -1556,6 +1737,8 @@ sub render_models {
                     next if $z > $ceiling_slice;
                     my $y = $items[$item_id][i_y];
 
+                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
+                    glColor3f($brightness, $brightness, $brightness);
                     glTranslatef( $x, $z, $y );
                     glCallList( $item_display_lists[0] );
                     glTranslatef( -$x, -$z, -$y );
@@ -1729,8 +1912,8 @@ sub render_ui {
     for my $slice ( 0 .. $zcount ) {
         if ( $slice == $ceiling_slice ) {
             glColor4f( 1, 1, 0, 1 );
-
-            glRasterPos2i( $c{window_width} - 17, $c{window_height} - 22 - ( 0.95 * $height_mod * ( $slice + 1 ) ) );
+            my $height = ($height_mod * $slice) - ($height_mod * ( $slice + 1 ));
+            glRasterPos2i( $c{window_width} - 17, $c{window_height} - 22 - ($height/2) - $height_mod * ( $slice + 1 ) );
             glutBitmapString( GLUT_BITMAP_HELVETICA_12, $slice );
         }
     }

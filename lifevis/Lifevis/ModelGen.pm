@@ -40,6 +40,7 @@ sub run {
     open my $OUT, ">", 'Lifevis\models.pm' or die( "horribly: " . $! );
     print $OUT "package Lifevis::models;
     use strict;
+    use OpenGL qw / :all /;
     
     use base 'Exporter';
     
@@ -69,6 +70,7 @@ sub run {
     close $OUT;
 }
 
+# this function takes 3 vertices as input and calculates their normal, thus generating the normal for one triangle face
 sub calcFaceNormal {
     my $v1 = V( $_[0]->[0], $_[0]->[1], $_[0]->[2] );
     my $v2 = V( $_[1]->[0], $_[1]->[1], $_[1]->[2] );
@@ -90,6 +92,7 @@ sub calcFaceNormal {
     return $normal;
 }
 
+# this function rotates a given 2-dimensional vector by 90°, it's used to perform the rotations for models like the ramps
 sub rotate_vector {
     my ( $x, $z ) = @_;
     my $xnew = cos( -1 * pip2 ) * ($x) - sin( -1 * pip2 ) * $z;
@@ -97,6 +100,7 @@ sub rotate_vector {
     return ( $xnew, $znew );
 }
 
+# this function generates the code to draw one model
 sub generateModel {
     my ($input) = @_;
 
@@ -111,10 +115,12 @@ sub generateModel {
     open my $DAT, "<", "models/$input.obj" or die( "horribly: " . $! );
     @raw_data = <$DAT>;
     close $DAT;
-
+    
+    # get number of rotations if not 1
     my $rotations = 1;
     $rotations = $1 if ( $input =~ s/(\d)$// );
-
+    
+    # cycle through input .obj file and extract the vertex coords and uv coords for those vertices
     for my $line (@raw_data) {
         if ( $line =~ m/^v (.*?) (.*?) (.*?)$/ ) {
             $vertices[ $#vertices + 1 ][0] = ( $1 + 0 );
@@ -138,8 +144,11 @@ sub generateModel {
             $uvs[$#uvs][1] = ( $2 + 0 );
         }
     }
-
+    
+    # loop through model rotations
     for my $rotation ( 1 .. $rotations ) {
+        
+        # delete old normals, then cycle through faces and calculate normals for this rotation
         undef @normals;
         for my $id (@faces) {
             my $normal_is_new = 1;
@@ -180,16 +189,22 @@ sub generateModel {
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
-        my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;";
-        $model .= "OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);" unless $input =~ /Building/;
+        #my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
+        OpenGL::glBegin(GL_TRIANGLES);";
+        #$model .= "OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);" unless $input =~ /Building/;
 
         my @old = ( 999, 999, 999 );
+        # cycle through the face normals so the faces get grouped by their direction
         for my $nid ( 0 .. $#normals ) {
             my $vec;
             my $close = 0;
+            
+            # cycle through all faces in the model and skip the ones who aren't on the current normal
             for my $fid ( 0 .. $#faces ) {
                 next if ( $faces[$fid]{normal} != $nid );
-
+                
+                # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
+                # also does glNormal call to set current normal
                 if ( $old[0] != $normals[$nid][0] || $old[1] != $normals[$nid][1] || $old[2] != $normals[$nid][2] ) {
                     $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
                     if ( $input =~ m/Wall/ && defined $side{$vec} ) {
@@ -213,19 +228,21 @@ sub generateModel {
                     undef $vec if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ );
                 }
 
-                my $max_verts = 2;
+                # switch to quad mode for the cursor model
+                my $max_verts = 3;
                 if ( $input =~ m/Cursor/ ) {
-                    $max_verts = 3;
+                    $max_verts = 4;
                 }
-
-                for my $vid ( 0 .. $max_verts ) {
+                
+                # cycle through vertices and generate UV and position calls
+                for my $vid (  0 .. ($max_verts-1) ) {
                     my $uv   = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
                     $model .=
 "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
                 }
-                $vec = "$old[0],$old[1],$old[2]"
-                  if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && defined $old[0] );
+                
+                # set old normal for next loop
                 @old = ( $normals[$nid][0], $normals[$nid][1], $normals[$nid][2] );
             }
             if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && $close ) {
@@ -234,8 +251,10 @@ sub generateModel {
             }
         }
 
-        $model .= "\n};";
-
+        $model .= "glEnd();
+        \n};";
+        
+        # rotate model for next loop
         for my $vid ( 0 .. $#vertices ) {
             ( $vertices[$vid][0], $vertices[$vid][2] ) = rotate_vector( $vertices[$vid][0], $vertices[$vid][2] );
         }
