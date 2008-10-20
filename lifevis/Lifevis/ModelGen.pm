@@ -150,83 +150,80 @@ sub generateModel {
         
         # delete old normals, then cycle through faces and calculate normals for this rotation
         undef @normals;
-        for my $id (@faces) {
+        for my $face (@faces) {
             my $normal_is_new = 1;
             my $existing_normal;
-
-            my $normal = calcFaceNormal(
-                $vertices[ $id->{verts}[0]{coords} ],
-                $vertices[ $id->{verts}[1]{coords} ],
-                $vertices[ $id->{verts}[2]{coords} ]
+            
+            # calc normal for current face
+            my $current_normal = calcFaceNormal(
+                $vertices[ $face->{verts}[0]{coords} ],
+                $vertices[ $face->{verts}[1]{coords} ],
+                $vertices[ $face->{verts}[2]{coords} ]
             );
-
-            if ( $#normals != -1 ) {
+            
+            # if we already have previous normals, see if any match the current one
+            if ( $#normals > -1 ) {
                 for my $nid ( 0 .. $#normals ) {
-                    if (   $normal->[0] == $normals[$nid][0]
-                        && $normal->[1] == $normals[$nid][1]
-                        && $normal->[2] == $normals[$nid][2] )
+                    if (   $current_normal->[0] == $normals[$nid][0]
+                        && $current_normal->[1] == $normals[$nid][1]
+                        && $current_normal->[2] == $normals[$nid][2] )
                     {
+                        # if so, note down which one, and stop the loop with a note that this is not a new one
                         $existing_normal = $nid;
                         $normal_is_new   = 0;
                         last;
                     }
                 }
             }
-
+            
+            # store normal id in face data, either by appending at end of normals array or by storing existing id
             if ($normal_is_new) {
                 $normals[ $#normals + 1 ] = calcFaceNormal(
-                    $vertices[ $id->{verts}[0]{coords} ],
-                    $vertices[ $id->{verts}[1]{coords} ],
-                    $vertices[ $id->{verts}[2]{coords} ]
+                    $vertices[ $face->{verts}[0]{coords} ],
+                    $vertices[ $face->{verts}[1]{coords} ],
+                    $vertices[ $face->{verts}[2]{coords} ]
                 );
-                $id->{normal} = $#normals;
+                $face->{normal} = $#normals;
             }
             else {
-                $id->{normal} = $existing_normal;
+                $face->{normal} = $existing_normal;
             }
         }
-
+        
+        # set up start of model sub-routine
         $rotation = '' if ( $rotations == 1 );
         $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
-        #my \$brightness = (((\$y/(\$ZCOUNT-15)) * \$brightness_modificator)*.7)+.15;
         OpenGL::glBegin(GL_TRIANGLES);";
-        #$model .= "OpenGL::glColor3f(\$brightness, \$brightness, \$brightness);" unless $input =~ /Building/;
 
-        my @old = ( 999, 999, 999 );
         # cycle through the face normals so the faces get grouped by their direction
         for my $nid ( 0 .. $#normals ) {
-            my $vec;
             my $close = 0;
+            
+            # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
+            my $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
+            if ( defined $side{$vec} ) {
+                if ( $input =~ m/Wall/ ) {
+                    $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
+                }
+                if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree)/ ) {
+                    if ( $side{$vec} eq 'bottom' ) {
+                        $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
+                    }
+                    else {
+                        $model .= "\n\nif ( \$$side{$vec} == EMPTY || \$$side{$vec} == RAMP_TOP ) {";
+                    }
+                }
+                $close = 1;
+            }
+
+            # glNormal call to set normal for current faces and add comment for debugging
+            $model .= "\n\n    OpenGL::glNormal3f( $vec );";
+            $model .= "# $side{$vec} face" if defined $side{$vec};
             
             # cycle through all faces in the model and skip the ones who aren't on the current normal
             for my $fid ( 0 .. $#faces ) {
                 next if ( $faces[$fid]{normal} != $nid );
-                
-                # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
-                # also does glNormal call to set current normal
-                if ( $old[0] != $normals[$nid][0] || $old[1] != $normals[$nid][1] || $old[2] != $normals[$nid][2] ) {
-                    $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
-                    if ( $input =~ m/Wall/ && defined $side{$vec} ) {
-                        $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
-                        $close = 1;
-                    }
-                    if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree)/ && defined $side{$vec} ) {
-                        if ( $side{$vec} eq 'bottom' ) {
-                            $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
-                        }
-                        else {
-                            $model .= "\n\nif ( \$$side{$vec} == EMPTY || \$$side{$vec} == RAMP_TOP ) {";
-
-                        }
-                        $close = 1;
-                    }
-
-                    $model .= "\n\n    OpenGL::glNormal3f( $vec );";
-                    $model .= "# $side{$vec} face" if defined $side{$vec};
-                    undef @old if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ );
-                    undef $vec if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ );
-                }
 
                 # switch to quad mode for the cursor model
                 my $max_verts = 3;
@@ -238,21 +235,18 @@ sub generateModel {
                 for my $vid (  0 .. ($max_verts-1) ) {
                     my $uv   = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
-                    $model .=
-"\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
+                    $model .= "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
                 }
-                
-                # set old normal for next loop
-                @old = ( $normals[$nid][0], $normals[$nid][1], $normals[$nid][2] );
             }
+            
+            # close skip condition if we opened one
             if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && $close ) {
                 $model .= "\n}";
-
             }
         }
-
-        $model .= "glEnd();
-        \n};";
+        
+        # close up model subroutine
+        $model .= "\n\n    glEnd();\n};";
         
         # rotate model for next loop
         for my $vid ( 0 .. $#vertices ) {
