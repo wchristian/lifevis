@@ -1,6 +1,9 @@
 package Lifevis::ModelGen;
 use 5.010;
 use strict;
+use lib '.';
+use lib '..';
+use Lifevis::constants;
 
 my %side = (
     "0,0,1"                                  => "south",
@@ -143,7 +146,7 @@ sub generateModel {
     # loop through model rotations
     for my $rotation ( 1 .. $rotations ) {
         
-        # delete old normals, then cycle through faces and calculate normals for this rotation
+        # delete old normals, then cycle through faces and calculate face normals for this rotation
         undef @normals;
         for my $face (@faces) {
             my $normal_is_new = 1;
@@ -185,36 +188,23 @@ sub generateModel {
             }
         }
         
+        
         # set up start of model sub-routine
         $rotation = '' if ( $rotations == 1 );
-        $model .= "\n\n\$DRAW_MODEL{'$input$rotation'}[main] = sub {
-        my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
-        OpenGL::glBegin(GL_TRIANGLES);";
-
+        
+        my %subs;
+        
         # cycle through the face normals so the faces get grouped by their direction
         for my $nid ( 0 .. $#normals ) {
             my $close = 0;
             
-            # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
+            my $sub_content;
+            
             my $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
-            if ( defined $side{$vec} ) {
-                if ( $input =~ m/Wall/ ) {
-                    $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
-                }
-                if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree)/ ) {
-                    if ( $side{$vec} eq 'bottom' ) {
-                        $model .= "\n\nif ( \$$side{$vec} != WALL ) {";
-                    }
-                    else {
-                        $model .= "\n\nif ( \$$side{$vec} == EMPTY || \$$side{$vec} == RAMP_TOP ) {";
-                    }
-                }
-                $close = 1;
-            }
 
             # glNormal call to set normal for current faces and add comment for debugging
-            $model .= "\n\n    OpenGL::glNormal3f( $vec );";
-            $model .= "# $side{$vec} face" if defined $side{$vec};
+            $sub_content .= "\n\n    OpenGL::glNormal3f( $vec );";
+            $sub_content .= "# $side{$vec} face" if defined $side{$vec};
             
             # cycle through all faces in the model and skip the ones who aren't on the current normal
             for my $fid ( 0 .. $#faces ) {
@@ -230,8 +220,16 @@ sub generateModel {
                 for my $vid (  0 .. ($max_verts-1) ) {
                     my $uv   = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
-                    $model .= "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
+                    $sub_content .= "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
                 }
+            }
+            
+            # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
+            if ( defined $side{$vec} ) {
+                $subs{$side{$vec}} .= $sub_content;
+            }
+            else {
+                $subs{main} .= $sub_content;
             }
             
             # close skip condition if we opened one
@@ -240,8 +238,22 @@ sub generateModel {
             }
         }
         
+        for my $part ( keys %subs ) {
+            
+            # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
+            $model .= "\n\n\$DRAW_MODEL{'$input$rotation'}[$part] = sub {
+            my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;\n";
+            if ( $input =~ m/Cursor/ ) {
+                $model .= "OpenGL::glBegin(GL_QUADS);";
+            }
+            else {
+                $model .= "OpenGL::glBegin(GL_TRIANGLES);";
+            }
+            $model .= $subs{$part};
+            $model .= "\n\n    glEnd();\n};";
+        }
+        
         # close up model subroutine
-        $model .= "\n\n    glEnd();\n};";
         
         # rotate model for next loop
         for my $vid ( 0 .. $#vertices ) {
