@@ -998,6 +998,7 @@ sub generate_display_list {
     my $dl;
     my $type;
     my $type_below;
+    my $type_above;
     my $brightness_mod;
 
     if ( $cache[$id][ $z + 2 ] ) {
@@ -1030,14 +1031,16 @@ sub generate_display_list {
                   if $TILE_TYPES[$type][base_texture] !=
                       $texture;    # skip if tile type texture doesn't match current texture
                 $type_below     = $tile_below->[$rx][$ry];
+                $type_above     = $tile_above->[$rx][$ry];
                 $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
-                my ( $below, $north, $south, $west, $east ) = ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
+                my ( $above, $below, $north, $south, $west, $east ) = ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
                 my ( $northeast, $southeast, $southwest, $northwest ) = ( EMPTY, EMPTY, EMPTY, EMPTY );
                 my $x_mod = $rx % 16;
                 my $y_mod = $ry % 16;
 
                 $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
+                $above = $TILE_TYPES[$type_above][base_visual] if $type_above;
 
                 $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
                   if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
@@ -1050,11 +1053,7 @@ sub generate_display_list {
 
                 given ( $TILE_TYPES[$type][base_visual] ) {
                     when ( [ FLOOR, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, PILLAR, FORTIF ] ) {
-                        my $type_above = $tile_above->[$rx][$ry];
-
-                        $brightness_mod *= 0.75
-                          if ( defined $type_above
-                            && $TILE_TYPES[$type_above][base_visual] != EMPTY );
+                        $brightness_mod *= 0.75 if ( defined $type_above && $above != EMPTY );
                     }
                 }
                 
@@ -1080,6 +1079,18 @@ sub generate_display_list {
                         glTranslatef($rx, $z, $ry);
                         
                         for my $part ( 0..$#{ $DRAW_MODEL{$const_model_map[$base_visual]} } ) {
+                            next if ( ($base_visual == WALL) && ($part == east) && ($east == WALL) );
+                            next if ( ($base_visual == WALL) && ($part == west) && ($west == WALL) );
+                            next if ( ($base_visual == WALL) && ($part == north) && ($north == WALL) );
+                            next if ( ($base_visual == WALL) && ($part == south) && ($south == WALL) );
+                            
+                            next if ( ($base_visual != STAIR) && ($base_visual != STAIR_DOWN) && ($part == bottom) && ($below == WALL) );
+                            
+                            next if ( ($base_visual != WALL) && ($part == east) && ($east != EMPTY) && ($east != RAMP_TOP) );
+                            next if ( ($base_visual != WALL) && ($part == west) && ($west != EMPTY) && ($west != RAMP_TOP) );
+                            next if ( ($base_visual != WALL) && ($part == north) && ($north != EMPTY) && ($north != RAMP_TOP) );
+                            next if ( ($base_visual != WALL) && ($part == south) && ($south != EMPTY) && ($south != RAMP_TOP) );
+                            
                             next if !defined $model_display_lists{$const_model_map[$base_visual]}[$part];
                             glCallList($model_display_lists{$const_model_map[$base_visual]}[$part]);
                         }
@@ -1351,191 +1362,6 @@ sub idle_tasks {
 }
 
 
-sub varraytest {
-    
-    my $dl = glGenLists(1);
-
-my @verts = (
-
-    -0.6,-0.5,0.5,
-    -0.6,-0.5,-0.5,
-     0.6,-0.5,0.5,
-     0.6,-0.5,0.5,
-    -0.6,-0.5,-0.5,
-     0.6,-0.5,-0.5,
-     
-    -0.5,-0.5,0.5,
-    0.5,-0.5,0.5,
-    -0.5,0.5,0.5,
-    -0.5,0.5,0.5,
-    0.5,-0.5,0.5,
-    0.5,0.5,0.5,
-
-
-    -0.5,0.5,0.5,
-    -0.5,-0.5,-0.5,
-    -0.5,-0.5,0.5,
-    -0.5,0.5,-0.5,
-    -0.5,-0.5,-0.5,
-    -0.5,0.5,0.5,
-
-
-    -0.5,0.5,0.5,
-    0.5,0.5,-0.5,
-    -0.5,0.5,-0.5,
-    0.5,0.5,0.5,
-    0.5,0.5,-0.5,
-    -0.5,0.5,0.5,
-
-
-    0.5,-0.5,0.5,
-    0.5,0.5,-0.5,
-    0.5,0.5,0.5,
-    0.5,-0.5,-0.5,
-    0.5,0.5,-0.5,
-    0.5,-0.5,0.5,
-
-
-    -0.5,-0.5,-0.5,
-    0.5,0.5,-0.5,
-    0.5,-0.5,-0.5,
-    -0.5,0.5,-0.5,
-    0.5,0.5,-0.5,
-    -0.5,-0.5,-0.5
-);
-my $verts = OpenGL::Array->new_list( GL_FLOAT, @verts );
-
-
-
-# Could calc norms on the fly
-my @norms = (
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    0,-1,0,
-    
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-    0,1,0,
-);
-my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
-
-my @texcoords = (
-    0,0,
-    1,0,
-    0,1,
-    
-    0,1,
-    1,0,
-    1,1,
-    
-    1,0,
-    1,1,
-    0,0,
-    
-    0,0,
-    1,1,
-    0,1,
-    
-    1,1,
-    0,0,
-    1,0,
-    
-    0,1,
-    0,0,
-    1,1,
-    
-    0,0,
-    1,1,
-    0,1,
-    
-    1,0,
-    1,1,
-    0,0,
-    
-    0,0,
-    1,1,
-    0,1,
-    
-    1,0,
-    1,1,
-    0,0,
-    
-    1,0,
-    0,1,
-    0,0,
-    
-    1,1,
-    0,1,
-    1,0,
-);
-my $texcoords = OpenGL::Array->new_list( GL_FLOAT, @texcoords );
-
-my @indices = ( 0 .. 36 );
-my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
-
-    #glEnableClientState(GL_VERTEX_ARRAY);
-    #glEnableClientState(GL_NORMAL_ARRAY);
-    #glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    
-    
-    
-    glVertexPointer_p( 3, $verts );
-    glNormalPointer_p( $norms );
-    glTexCoordPointer_p( 2, $texcoords );
-    
-    
-    glNewList( $dl, GL_COMPILE );
-    glTranslatef( 3, 3, 3 );
-    for ( my $i = 0 ; $i < scalar(@indices) ; $i += 3 ) {
-        glDrawArrays( GL_TRIANGLES, $i, 3 );
-    }
-    glTranslatef( -3, -3, -3 );
-    glEndList();
-    
-    #glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    #glDisableClientState(GL_NORMAL_ARRAY);
-    #glDisableClientState(GL_VERTEX_ARRAY);
-    
-    glColor3f( 1.5, 0.5, 0.5 );    # Basic polygon color
-        
-    glCallList($dl);
-}
-
-
 # ------
 # Routine which actually does the drawing
 
@@ -1568,9 +1394,6 @@ sub render_scene {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
-
-        glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
-        varraytest();
         
         render_models();
         

@@ -15,7 +15,7 @@ use Lifevis::constants;
 
 my @light_variance = ( 0.9, 0.85, 0.82, 0.8 );
 
-$TILE_TYPES[1]   = [ RAMP,       unknown,           0.9 ];                  #   MAPTILE_RAMPSPACE,
+$TILE_TYPES[1]   = [ RAMP_TOP,   unknown,           0.9 ];                  #   MAPTILE_RAMPSPACE,
 $TILE_TYPES[2]   = [ WALL,       pool,              0.9 ];                  #   MAPTILE_POOL,
 $TILE_TYPES[19]  = [ FLOOR,      unknown,           0.9 ];                  #   MAPTILE_DRIFTWOOD_STACK,
 $TILE_TYPES[24]  = [ TREE,       tree,              0.9 ];                  #   MAPTILE_TREE,

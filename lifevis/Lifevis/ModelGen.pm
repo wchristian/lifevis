@@ -254,8 +254,6 @@ sub generateModel {
             $model .= "glEndList();\nreturn \$dl;\n};\n\n";
         }
         
-        # close up model subroutine
-        
         # rotate model for next loop
         for my $vid ( 0 .. $#vertices ) {
             ( $vertices[$vid][0], $vertices[$vid][2] ) = rotate_vector( $vertices[$vid][0], $vertices[$vid][2] );
