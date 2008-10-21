@@ -242,7 +242,9 @@ sub generateModel {
             
             # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
             $model .= "\n\n\$DRAW_MODEL{'$input$rotation'}[$part] = sub {
-            my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;\n";
+            my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
+            my \$dl = glGenLists(1);
+            glNewList( \$dl, GL_COMPILE );\n";
             if ( $input =~ m/Cursor/ ) {
                 $model .= "OpenGL::glBegin(GL_QUADS);";
             }
@@ -250,7 +252,7 @@ sub generateModel {
                 $model .= "OpenGL::glBegin(GL_TRIANGLES);";
             }
             $model .= $subs{$part};
-            $model .= "\n\n    glEnd();\n};";
+            $model .= "\n\n    glEnd();\nglEndList();\nreturn \$dl;\n};";
         }
         
         # close up model subroutine

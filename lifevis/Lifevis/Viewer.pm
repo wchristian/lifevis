@@ -384,16 +384,14 @@ sub run {
     $loc_loop->ready;
     cede();
     
-    generate_landscape_display_lists();
+    generate_model_display_lists();
     $land_loop = new Coro \&landscape_update_loop;
     $land_loop->ready;
 
-    generate_creature_display_lists();
     $creature_loop = new Coro \&creature_update_loop;
 
     $buil_loop = new Coro \&building_update_loop;
 
-    generate_item_display_lists();
     $item_loop = new Coro \&item_update_loop;
 
     $memory_loop = new Coro \&memory_control_loop;
@@ -985,50 +983,14 @@ sub memory_control_loop {
     }
 }
 
-sub generate_landscape_display_lists {
+sub generate_model_display_lists {
     for my $model ( keys %DRAW_MODEL ) {
         for my $part ( 0..$#{ $DRAW_MODEL{$model} } ) {
             next if !defined $DRAW_MODEL{$model}[$part];
-            my $dl = glGenLists(1);
-            glNewList( $dl, GL_COMPILE );
-            glBegin(GL_TRIANGLES);
-            say $model," ",$part;
-            $DRAW_MODEL{$model}[$part]->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
-            glEnd();
-            glEndList();
+            my $dl = $DRAW_MODEL{$model}[$part]->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
             $model_display_lists{$model}[$part] = $dl;
         }
     }
-}
-
-sub generate_creature_display_lists {
-    my $dl = glGenLists(1);
-    push @creature_display_lists, $dl;
-    glNewList( $dl, GL_COMPILE );
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
-    glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Creature}[main]->( 0, 0, 0, 1, 1 );
-    glEnd();
-    glEndList();
-    $dl = glGenLists(1);
-    push @creature_display_lists, $dl;
-    glNewList( $dl, GL_COMPILE );
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
-    glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Creature2}[main]->( 0, 0, 0, 1, 1 );
-    glEnd();
-    glEndList();
-}
-
-sub generate_item_display_lists {
-    my $dl = glGenLists(1);
-    push @item_display_lists, $dl;
-    glNewList( $dl, GL_COMPILE );
-    glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
-    glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Items}[main]->( 0, 0.1, 0, 1, 10000 );
-    glEnd();
-    glEndList();
 }
 
 sub generate_display_list {
@@ -1165,7 +1127,10 @@ sub generate_display_list {
                                 my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
                                 glColor3f($brightness, $brightness, $brightness);
                                 glTranslatef($rx, $z, $ry);
-                                glCallList($model_display_lists{$func}[main]);
+                                for my $part ( 0..$#{ $DRAW_MODEL{$func} } ) {
+                                    next if !defined $model_display_lists{$func}[$part];
+                                    glCallList($model_display_lists{$func}[$part]);
+                                }
                                 glTranslatef(-$rx, -$z, -$ry);
                                 last;
                             }
@@ -1614,13 +1579,13 @@ sub render_scene {
         glLineWidth(2);
         glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
         glPolygonMode( GL_FRONT, GL_LINE );
-        glBegin(GL_QUADS);
         glColor3f(1, 1, 1);
+        glTranslatef( $x_pos, $y_pos, $z_pos );
         for my $part ( 0..$#{ $DRAW_MODEL{Cursor} } ) {
-            next if !defined $DRAW_MODEL{Cursor}[$part];
-            $DRAW_MODEL{Cursor}[$part]->( $x_pos, $y_pos, $z_pos, 1, 1000 );
+            next if !defined $model_display_lists{Cursor}[$part];
+            glCallList($model_display_lists{Cursor}[$part]);
         }
-        glEnd();
+        glTranslatef( -$x_pos, -$y_pos, -$z_pos );
         glPolygonMode( GL_FRONT, GL_FILL );
         glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
 
@@ -1684,13 +1649,20 @@ sub render_models {
                     my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
                     glColor3f($brightness, $brightness, $brightness);
                     glTranslatef( $x, $z, $y );
+                    my $model_name;
                     given ( $creatures{$creature_id}[race] ) {
                         when (166) {
-                            glCallList( $creature_display_lists[0] );
+                            $model_name = "Creature";
                         }
                         default {
-                            glCallList( $creature_display_lists[1] );
+                            $model_name = "Creature2";
                         }
+                    }
+                    
+                    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
+                        next if !defined $model_display_lists{$model_name}[$part];
+                        glCallList($model_display_lists{$model_name}[$part]);
                     }
                     glTranslatef( -$x, -$z, -$y );
                 }
@@ -1713,21 +1685,13 @@ sub render_models {
                     glTranslatef( $x, $z, $y );
                     
                     my $vtable_id = $buildings{$building_id}[b_vtable_id];
+                    $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
                     my $model_name = $building_visuals{$vtable_id}[0];
                     
-                    if ( defined $model_name && $DRAW_MODEL{ $model_name } ) {
-                        glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
-                        for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
-                            next if !defined $model_display_lists{$model_name}[$part];
-                            glCallList($model_display_lists{$model_name}[$part]);
-                        }
-                    }
-                    else {
-                        glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{default}[1] ] );
-                        for my $part ( 0..$#{ $DRAW_MODEL{$building_visuals{default}[0]} } ) {
-                            next if !defined $model_display_lists{$building_visuals{default}[0]}[$part];
-                            glCallList($model_display_lists{$building_visuals{default}[0]}[$part]);
-                        }
+                    glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
+                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
+                        next if !defined $model_display_lists{$model_name}[$part];
+                        glCallList($model_display_lists{$model_name}[$part]);
                     }
                     glTranslatef( -$x, -$z, -$y );
                 }
@@ -1749,7 +1713,19 @@ sub render_models {
                     my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
                     glColor3f($brightness, $brightness, $brightness);
                     glTranslatef( $x, $z, $y );
-                    glCallList( $item_display_lists[0] );
+                    my $model_name;
+                    given ( $item_id ) {
+                        default {
+                            $model_name = "Items";
+                        }
+                    }
+                    
+                    glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
+                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
+                        next if !defined $model_display_lists{$model_name}[$part];
+                        glCallList($model_display_lists{$model_name}[$part]);
+                    }
+                    
                     glTranslatef( -$x, -$z, -$y );
                 }
             }
