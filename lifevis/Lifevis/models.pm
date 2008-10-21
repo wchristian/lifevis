@@ -18,7 +18,7 @@ package Lifevis::models;
 
 
 
-$DRAW_MODEL{'1D1'} = sub {
+$DRAW_MODEL{'1D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -75,7 +75,7 @@ $DRAW_MODEL{'1D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1D2'} = sub {
+$DRAW_MODEL{'1D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -132,7 +132,7 @@ $DRAW_MODEL{'1D2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1D3'} = sub {
+$DRAW_MODEL{'1D3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -189,7 +189,7 @@ $DRAW_MODEL{'1D3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1D4'} = sub {
+$DRAW_MODEL{'1D4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -248,7 +248,7 @@ $DRAW_MODEL{'1D4'} = sub {
 
 
 
-$DRAW_MODEL{'1D_1D1'} = sub {
+$DRAW_MODEL{'1D_1D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -305,7 +305,7 @@ $DRAW_MODEL{'1D_1D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1D_1D2'} = sub {
+$DRAW_MODEL{'1D_1D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -364,7 +364,7 @@ $DRAW_MODEL{'1D_1D2'} = sub {
 
 
 
-$DRAW_MODEL{'1S1'} = sub {
+$DRAW_MODEL{'1S1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -392,7 +392,7 @@ $DRAW_MODEL{'1S1'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -419,7 +419,7 @@ $DRAW_MODEL{'1S1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S2'} = sub {
+$DRAW_MODEL{'1S2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -447,7 +447,7 @@ $DRAW_MODEL{'1S2'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -474,7 +474,7 @@ $DRAW_MODEL{'1S2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S3'} = sub {
+$DRAW_MODEL{'1S3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -502,7 +502,7 @@ $DRAW_MODEL{'1S3'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -529,7 +529,7 @@ $DRAW_MODEL{'1S3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S4'} = sub {
+$DRAW_MODEL{'1S4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -557,7 +557,7 @@ $DRAW_MODEL{'1S4'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -586,7 +586,7 @@ $DRAW_MODEL{'1S4'} = sub {
 
 
 
-$DRAW_MODEL{'1S_1DL1'} = sub {
+$DRAW_MODEL{'1S_1DL1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -617,7 +617,7 @@ $DRAW_MODEL{'1S_1DL1'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.38890873,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
@@ -630,7 +630,7 @@ $DRAW_MODEL{'1S_1DL1'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -643,7 +643,7 @@ $DRAW_MODEL{'1S_1DL1'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -657,7 +657,7 @@ $DRAW_MODEL{'1S_1DL1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DL2'} = sub {
+$DRAW_MODEL{'1S_1DL2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -688,7 +688,7 @@ $DRAW_MODEL{'1S_1DL2'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.38890873,0); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
@@ -701,7 +701,7 @@ $DRAW_MODEL{'1S_1DL2'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -714,7 +714,7 @@ $DRAW_MODEL{'1S_1DL2'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -728,7 +728,7 @@ $DRAW_MODEL{'1S_1DL2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DL3'} = sub {
+$DRAW_MODEL{'1S_1DL3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -759,7 +759,7 @@ $DRAW_MODEL{'1S_1DL3'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(0.5+$x,0.1+$y,6.12303176911189e-017+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.38890873,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,6.12303176911189e-017+$z);
@@ -772,7 +772,7 @@ $DRAW_MODEL{'1S_1DL3'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -785,7 +785,7 @@ $DRAW_MODEL{'1S_1DL3'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -799,7 +799,7 @@ $DRAW_MODEL{'1S_1DL3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DL4'} = sub {
+$DRAW_MODEL{'1S_1DL4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -830,7 +830,7 @@ $DRAW_MODEL{'1S_1DL4'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(9.18454765366783e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.38890873,0); OpenGL::glVertex3f(9.18454765366783e-017+$x,0.1+$y,-0.5+$z);
@@ -843,7 +843,7 @@ $DRAW_MODEL{'1S_1DL4'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.38890873,0.55); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -856,7 +856,7 @@ $DRAW_MODEL{'1S_1DL4'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,1.41421356); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -872,7 +872,7 @@ $DRAW_MODEL{'1S_1DL4'} = sub {
 
 
 
-$DRAW_MODEL{'1S_1DR1'} = sub {
+$DRAW_MODEL{'1S_1DR1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -903,7 +903,7 @@ $DRAW_MODEL{'1S_1DR1'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0.1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(1.00237868,0.70878876); OpenGL::glVertex3f(0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.41757752); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -935,7 +935,7 @@ $DRAW_MODEL{'1S_1DR1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DR2'} = sub {
+$DRAW_MODEL{'1S_1DR2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -966,7 +966,7 @@ $DRAW_MODEL{'1S_1DR2'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(1.00237868,0.70878876); OpenGL::glVertex3f(3.06151588455594e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.41757752); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -998,7 +998,7 @@ $DRAW_MODEL{'1S_1DR2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DR3'} = sub {
+$DRAW_MODEL{'1S_1DR3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1029,7 +1029,7 @@ $DRAW_MODEL{'1S_1DR3'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1.00237868,0.70878876); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-6.12303176911189e-017+$z);
     OpenGL::glTexCoord2f(0,1.41757752); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -1061,7 +1061,7 @@ $DRAW_MODEL{'1S_1DR3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1DR4'} = sub {
+$DRAW_MODEL{'1S_1DR4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1092,7 +1092,7 @@ $DRAW_MODEL{'1S_1DR4'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0.1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1.00237868,0.70878876); OpenGL::glVertex3f(-9.18454765366783e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.41757752); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -1126,7 +1126,7 @@ $DRAW_MODEL{'1S_1DR4'} = sub {
 
 
 
-$DRAW_MODEL{'1S_1S1'} = sub {
+$DRAW_MODEL{'1S_1S1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1157,7 +1157,7 @@ $DRAW_MODEL{'1S_1S1'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
@@ -1184,7 +1184,7 @@ $DRAW_MODEL{'1S_1S1'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -1195,7 +1195,7 @@ $DRAW_MODEL{'1S_1S1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_1S2'} = sub {
+$DRAW_MODEL{'1S_1S2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1226,7 +1226,7 @@ $DRAW_MODEL{'1S_1S2'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(3.06151588455594e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
@@ -1253,7 +1253,7 @@ $DRAW_MODEL{'1S_1S2'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -1266,7 +1266,7 @@ $DRAW_MODEL{'1S_1S2'} = sub {
 
 
 
-$DRAW_MODEL{'1S_2D1'} = sub {
+$DRAW_MODEL{'1S_2D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1321,7 +1321,7 @@ $DRAW_MODEL{'1S_2D1'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,0+$z);
@@ -1342,7 +1342,7 @@ $DRAW_MODEL{'1S_2D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_2D2'} = sub {
+$DRAW_MODEL{'1S_2D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1397,7 +1397,7 @@ $DRAW_MODEL{'1S_2D2'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(3.06151588455594e-017+$x,0.1+$y,-0.5+$z);
@@ -1418,7 +1418,7 @@ $DRAW_MODEL{'1S_2D2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_2D3'} = sub {
+$DRAW_MODEL{'1S_2D3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1473,7 +1473,7 @@ $DRAW_MODEL{'1S_2D3'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-6.12303176911189e-017+$z);
@@ -1494,7 +1494,7 @@ $DRAW_MODEL{'1S_2D3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'1S_2D4'} = sub {
+$DRAW_MODEL{'1S_2D4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1549,7 +1549,7 @@ $DRAW_MODEL{'1S_2D4'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-9.18454765366783e-017+$x,0.1+$y,0.5+$z);
@@ -1572,7 +1572,7 @@ $DRAW_MODEL{'1S_2D4'} = sub {
 
 
 
-$DRAW_MODEL{'2D1'} = sub {
+$DRAW_MODEL{'2D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1647,7 +1647,7 @@ $DRAW_MODEL{'2D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2D2'} = sub {
+$DRAW_MODEL{'2D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1722,7 +1722,7 @@ $DRAW_MODEL{'2D2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2D3'} = sub {
+$DRAW_MODEL{'2D3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1797,7 +1797,7 @@ $DRAW_MODEL{'2D3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2D4'} = sub {
+$DRAW_MODEL{'2D4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1874,7 +1874,7 @@ $DRAW_MODEL{'2D4'} = sub {
 
 
 
-$DRAW_MODEL{'2S1'} = sub {
+$DRAW_MODEL{'2S1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1931,7 +1931,7 @@ $DRAW_MODEL{'2S1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S2'} = sub {
+$DRAW_MODEL{'2S2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -1988,7 +1988,7 @@ $DRAW_MODEL{'2S2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S3'} = sub {
+$DRAW_MODEL{'2S3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2045,7 +2045,7 @@ $DRAW_MODEL{'2S3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S4'} = sub {
+$DRAW_MODEL{'2S4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2104,7 +2104,7 @@ $DRAW_MODEL{'2S4'} = sub {
 
 
 
-$DRAW_MODEL{'2S_1D1'} = sub {
+$DRAW_MODEL{'2S_1D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2175,7 +2175,7 @@ $DRAW_MODEL{'2S_1D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S_1D2'} = sub {
+$DRAW_MODEL{'2S_1D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2248,7 +2248,7 @@ $DRAW_MODEL{'2S_1D2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S_1D3'} = sub {
+$DRAW_MODEL{'2S_1D3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2321,7 +2321,7 @@ $DRAW_MODEL{'2S_1D3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'2S_1D4'} = sub {
+$DRAW_MODEL{'2S_1D4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2396,7 +2396,7 @@ $DRAW_MODEL{'2S_1D4'} = sub {
 
 
 
-$DRAW_MODEL{'3D1'} = sub {
+$DRAW_MODEL{'3D1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2430,7 +2430,7 @@ $DRAW_MODEL{'3D1'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,-0.5+$z);
@@ -2438,7 +2438,7 @@ $DRAW_MODEL{'3D1'} = sub {
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.4); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
@@ -2462,12 +2462,12 @@ $DRAW_MODEL{'3D1'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -2475,7 +2475,7 @@ $DRAW_MODEL{'3D1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3D2'} = sub {
+$DRAW_MODEL{'3D2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2509,7 +2509,7 @@ $DRAW_MODEL{'3D2'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-3.06151588455594e-017+$z);
@@ -2517,7 +2517,7 @@ $DRAW_MODEL{'3D2'} = sub {
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.4); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
@@ -2541,12 +2541,12 @@ $DRAW_MODEL{'3D2'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-3.06151588455594e-017+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(-3.06151588455594e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -2554,7 +2554,7 @@ $DRAW_MODEL{'3D2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3D3'} = sub {
+$DRAW_MODEL{'3D3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2588,7 +2588,7 @@ $DRAW_MODEL{'3D3'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(0.5+$x,0.1+$y,6.12303176911189e-017+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(-6.12303176911189e-017+$x,0.1+$y,0.5+$z);
@@ -2596,7 +2596,7 @@ $DRAW_MODEL{'3D3'} = sub {
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.4); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,6.12303176911189e-017+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
@@ -2620,12 +2620,12 @@ $DRAW_MODEL{'3D3'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-6.12303176911189e-017+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,6.12303176911189e-017+$z);
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -2633,7 +2633,7 @@ $DRAW_MODEL{'3D3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3D4'} = sub {
+$DRAW_MODEL{'3D4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2667,7 +2667,7 @@ $DRAW_MODEL{'3D4'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(9.18454765366783e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,9.18454765366783e-017+$z);
@@ -2675,7 +2675,7 @@ $DRAW_MODEL{'3D4'} = sub {
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,1.4); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(9.18454765366783e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
@@ -2699,12 +2699,12 @@ $DRAW_MODEL{'3D4'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,9.18454765366783e-017+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0.7); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(9.18454765366783e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.7); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -2714,7 +2714,7 @@ $DRAW_MODEL{'3D4'} = sub {
 
 
 
-$DRAW_MODEL{'3S1'} = sub {
+$DRAW_MODEL{'3S1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2745,7 +2745,7 @@ $DRAW_MODEL{'3S1'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(0+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0+$x,0.1+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -2761,7 +2761,7 @@ $DRAW_MODEL{'3S1'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0+$x,0.1+$y,0.5+$z);
@@ -2777,7 +2777,7 @@ $DRAW_MODEL{'3S1'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -2785,7 +2785,7 @@ $DRAW_MODEL{'3S1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3S2'} = sub {
+$DRAW_MODEL{'3S2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2816,7 +2816,7 @@ $DRAW_MODEL{'3S2'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(0.5+$x,0.1+$y,3.06151588455594e-017+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,3.06151588455594e-017+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -2832,7 +2832,7 @@ $DRAW_MODEL{'3S2'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,0.1+$y,3.06151588455594e-017+$z);
@@ -2848,7 +2848,7 @@ $DRAW_MODEL{'3S2'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
@@ -2856,7 +2856,7 @@ $DRAW_MODEL{'3S2'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3S3'} = sub {
+$DRAW_MODEL{'3S3'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2887,7 +2887,7 @@ $DRAW_MODEL{'3S3'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(6.12303176911189e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(6.12303176911189e-017+$x,0.1+$y,-0.5+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -2903,7 +2903,7 @@ $DRAW_MODEL{'3S3'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(6.12303176911189e-017+$x,0.1+$y,-0.5+$z);
@@ -2919,7 +2919,7 @@ $DRAW_MODEL{'3S3'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -2927,7 +2927,7 @@ $DRAW_MODEL{'3S3'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'3S4'} = sub {
+$DRAW_MODEL{'3S4'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -2958,7 +2958,7 @@ $DRAW_MODEL{'3S4'} = sub {
     OpenGL::glTexCoord2f(0.5,0.6); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-9.18454765366783e-017+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-9.18454765366783e-017+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
@@ -2974,7 +2974,7 @@ $DRAW_MODEL{'3S4'} = sub {
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,0.1+$y,-9.18454765366783e-017+$z);
@@ -2990,7 +2990,7 @@ $DRAW_MODEL{'3S4'} = sub {
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,0.5+$z);
     OpenGL::glTexCoord2f(1,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -3000,7 +3000,7 @@ $DRAW_MODEL{'3S4'} = sub {
 
 
 
-$DRAW_MODEL{'4D'} = sub {
+$DRAW_MODEL{'4D'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -3089,7 +3089,7 @@ $DRAW_MODEL{'4D'} = sub {
 
 
 
-$DRAW_MODEL{'4S'} = sub {
+$DRAW_MODEL{'4S'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -3108,12 +3108,12 @@ $DRAW_MODEL{'4S'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,0.5+$z);
@@ -3128,12 +3128,12 @@ $DRAW_MODEL{'4S'} = sub {
     OpenGL::glTexCoord2f(0,1.1); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(-0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(0,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(1,0.70710678); OpenGL::glVertex3f(0.5+$x,0.6+$y,0.5+$z);
@@ -3143,7 +3143,7 @@ $DRAW_MODEL{'4S'} = sub {
 
 
 
-$DRAW_MODEL{'Bldg_No_Block'} = sub {
+$DRAW_MODEL{'Bldg_No_Block'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -3236,7 +3236,7 @@ $DRAW_MODEL{'Bldg_No_Block'} = sub {
 
 
 
-$DRAW_MODEL{'Boulder'} = sub {
+$DRAW_MODEL{'Boulder'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -3889,7 +3889,7 @@ if ( $north == EMPTY || $north == RAMP_TOP ) {
 
 
 
-$DRAW_MODEL{'Building_Default'} = sub {
+$DRAW_MODEL{'Building_Default'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -3946,7 +3946,7 @@ $DRAW_MODEL{'Building_Default'} = sub {
 
 
 
-$DRAW_MODEL{'Building_Door'} = sub {
+$DRAW_MODEL{'Building_Door'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -4099,7 +4099,7 @@ $DRAW_MODEL{'Building_Door'} = sub {
 
 
 
-$DRAW_MODEL{'Building_Workshop'} = sub {
+$DRAW_MODEL{'Building_Workshop'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -4246,7 +4246,7 @@ $DRAW_MODEL{'Building_Workshop'} = sub {
 
 
 
-$DRAW_MODEL{'Creature'} = sub {
+$DRAW_MODEL{'Creature'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -7605,7 +7605,7 @@ $DRAW_MODEL{'Creature'} = sub {
 
 
 
-$DRAW_MODEL{'Creature1'} = sub {
+$DRAW_MODEL{'Creature1'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -8468,7 +8468,7 @@ $DRAW_MODEL{'Creature1'} = sub {
     glEnd();
 };
 
-$DRAW_MODEL{'Creature2'} = sub {
+$DRAW_MODEL{'Creature2'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -9351,7 +9351,7 @@ $DRAW_MODEL{'Creature2'} = sub {
 
 
 
-$DRAW_MODEL{'Cursor'} = sub {
+$DRAW_MODEL{'Cursor'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -9424,7 +9424,7 @@ $DRAW_MODEL{'Cursor'} = sub {
 
 
 
-$DRAW_MODEL{'Floor'} = sub {
+$DRAW_MODEL{'Floor'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -9499,7 +9499,7 @@ if ( $north == EMPTY || $north == RAMP_TOP ) {
 
 
 
-$DRAW_MODEL{'Fortif'} = sub {
+$DRAW_MODEL{'Fortif'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -9964,7 +9964,7 @@ $DRAW_MODEL{'Fortif'} = sub {
 
 
 
-$DRAW_MODEL{'Items'} = sub {
+$DRAW_MODEL{'Items'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -10073,7 +10073,7 @@ $DRAW_MODEL{'Items'} = sub {
 
 
 
-$DRAW_MODEL{'N'} = sub {
+$DRAW_MODEL{'N'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -10092,12 +10092,12 @@ $DRAW_MODEL{'N'} = sub {
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );# top west face
+    OpenGL::glNormal3f( -0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );# top south face
+    OpenGL::glNormal3f( 0,0.707106781186547,0.707106781186547 );
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,0.5+$z);
@@ -10112,12 +10112,12 @@ $DRAW_MODEL{'N'} = sub {
     OpenGL::glTexCoord2f(0,0.1); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.5+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );# top north face
+    OpenGL::glNormal3f( 0,0.707106781186547,-0.707106781186547 );
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(-0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
 
-    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );# top east face
+    OpenGL::glNormal3f( 0.707106781186547,0.707106781186547,0 );
     OpenGL::glTexCoord2f(1,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,-0.5+$z);
     OpenGL::glTexCoord2f(0.5,0.70710678); OpenGL::glVertex3f(0+$x,0.1+$y,0+$z);
     OpenGL::glTexCoord2f(0,0); OpenGL::glVertex3f(0.5+$x,-0.4+$y,0.5+$z);
@@ -10127,7 +10127,7 @@ $DRAW_MODEL{'N'} = sub {
 
 
 
-$DRAW_MODEL{'Pillar'} = sub {
+$DRAW_MODEL{'Pillar'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -10482,7 +10482,7 @@ $DRAW_MODEL{'Pillar'} = sub {
 
 
 
-$DRAW_MODEL{'Sapling'} = sub {
+$DRAW_MODEL{'Sapling'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -11971,7 +11971,7 @@ if ( $north == EMPTY || $north == RAMP_TOP ) {
 
 
 
-$DRAW_MODEL{'Shrub'} = sub {
+$DRAW_MODEL{'Shrub'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -12405,7 +12405,7 @@ if ( $top == EMPTY || $top == RAMP_TOP ) {
 
 
 
-$DRAW_MODEL{'Stair_Down'} = sub {
+$DRAW_MODEL{'Stair_Down'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -12528,7 +12528,7 @@ $DRAW_MODEL{'Stair_Down'} = sub {
 
 
 
-$DRAW_MODEL{'Stair_Up'} = sub {
+$DRAW_MODEL{'Stair_Up'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -12751,7 +12751,7 @@ $DRAW_MODEL{'Stair_Up'} = sub {
 
 
 
-$DRAW_MODEL{'Stairs'} = sub {
+$DRAW_MODEL{'Stairs'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -12966,7 +12966,7 @@ $DRAW_MODEL{'Stairs'} = sub {
 
 
 
-$DRAW_MODEL{'Tree'} = sub {
+$DRAW_MODEL{'Tree'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 
@@ -14451,7 +14451,7 @@ if ( $north == EMPTY || $north == RAMP_TOP ) {
 
 
 
-$DRAW_MODEL{'Wall'} = sub {
+$DRAW_MODEL{'Wall'}[main] = sub {
         my ($x, $y, $z, $s, $brightness_modificator, $north, $west, $south, $east, $bottom, $top) = @_;
         OpenGL::glBegin(GL_TRIANGLES);
 

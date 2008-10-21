@@ -9,11 +9,6 @@ my %side = (
     "0,1,0"                                  => "top",
     "1,0,0"                                  => "east",
     "0,0,-1"                                 => "north",
-    "0.707106781186547,0.707106781186547,0"  => "top east",
-    "0,0.707106781186547,0.707106781186547"  => "top south",
-    "-0.707106781186547,0.707106781186547,0" => "top west",
-    "0,0.707106781186547,-0.707106781186547" => "top north",
-
 );
 
 __PACKAGE__->run(@ARGV) unless caller();
@@ -192,7 +187,7 @@ sub generateModel {
         
         # set up start of model sub-routine
         $rotation = '' if ( $rotations == 1 );
-        $model .= "\n\n\$DRAW_MODEL{'$input$rotation'} = sub {
+        $model .= "\n\n\$DRAW_MODEL{'$input$rotation'}[main] = sub {
         my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
         OpenGL::glBegin(GL_TRIANGLES);";
 

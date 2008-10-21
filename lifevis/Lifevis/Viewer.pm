@@ -988,13 +988,15 @@ sub memory_control_loop {
 
 sub generate_landscape_display_lists {
     for my $model ( keys %DRAW_MODEL ) {
-        my $dl = glGenLists(1);
-        glNewList( $dl, GL_COMPILE );
-        glBegin(GL_TRIANGLES);
-        $DRAW_MODEL{$model}->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
-        glEnd();
-        glEndList();
-        $model_display_lists{$model} = $dl;
+        for my $part ( 0..$#{ $DRAW_MODEL{$model} } ) {
+            my $dl = glGenLists(1);
+            glNewList( $dl, GL_COMPILE );
+            glBegin(GL_TRIANGLES);
+            $DRAW_MODEL{$model}[$part]->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
+            glEnd();
+            glEndList();
+            $model_display_lists{$model}[$part] = $dl;
+        }
     }
 }
 
@@ -1004,7 +1006,7 @@ sub generate_creature_display_lists {
     glNewList( $dl, GL_COMPILE );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
     glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Creature}->( 0, 0, 0, 1, 1 );
+    $DRAW_MODEL{Creature}[main]->( 0, 0, 0, 1, 1 );
     glEnd();
     glEndList();
     $dl = glGenLists(1);
@@ -1012,7 +1014,7 @@ sub generate_creature_display_lists {
     glNewList( $dl, GL_COMPILE );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
     glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Creature2}->( 0, 0, 0, 1, 1 );
+    $DRAW_MODEL{Creature2}[main]->( 0, 0, 0, 1, 1 );
     glEnd();
     glEndList();
 }
@@ -1024,7 +1026,7 @@ sub generate_building_display_lists {
         glNewList( $dl, GL_COMPILE );
         glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$building_visual}[1] ] );
         glBegin(GL_TRIANGLES);
-        $DRAW_MODEL{ $building_visuals{$building_visual}[0] }->( 0, 0.05, 0, 1, 200, 0, 0, 0, 0, 0, 0 );
+        $DRAW_MODEL{ $building_visuals{$building_visual}[0] }[main]->( 0, 0.05, 0, 1, 200, 0, 0, 0, 0, 0, 0 );
         glEnd();
         glEndList();
     }
@@ -1036,7 +1038,7 @@ sub generate_item_display_lists {
     glNewList( $dl, GL_COMPILE );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
     glBegin(GL_TRIANGLES);
-    $DRAW_MODEL{Items}->( 0, 0.1, 0, 1, 10000 );
+    $DRAW_MODEL{Items}[main]->( 0, 0.1, 0, 1, 10000 );
     glEnd();
     glEndList();
 }
@@ -1126,7 +1128,7 @@ sub generate_display_list {
                         my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
                         glColor3f($brightness, $brightness, $brightness);
                         glTranslatef($rx, $z, $ry);
-                        glCallList($model_display_lists{$const_model_map[$base_visual]});
+                        glCallList($model_display_lists{$const_model_map[$base_visual]}[main]);
                         glTranslatef(-$rx, -$z, -$ry);
                     }
 
@@ -1165,12 +1167,12 @@ sub generate_display_list {
                             if ( $bit_comparison == $mask ) {
                                 my $func = $ramps[$ramp_type]{func};
                                 croak "Need following ramp model: $func"
-                                  if !defined $DRAW_MODEL{$func};
+                                  if !defined $DRAW_MODEL{$func}[main];
                                   
                                 my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
                                 glColor3f($brightness, $brightness, $brightness);
                                 glTranslatef($rx, $z, $ry);
-                                glCallList($model_display_lists{$func});
+                                glCallList($model_display_lists{$func}[main]);
                                 glTranslatef(-$rx, -$z, -$ry);
                                 last;
                             }
@@ -1621,7 +1623,7 @@ sub render_scene {
         glPolygonMode( GL_FRONT, GL_LINE );
         glBegin(GL_QUADS);
         glColor3f(1, 1, 1);
-        $DRAW_MODEL{Cursor}->( $x_pos, $y_pos, $z_pos, 1, 1000 );
+        $DRAW_MODEL{Cursor}[main]->( $x_pos, $y_pos, $z_pos, 1, 1000 );
         glEnd();
         glPolygonMode( GL_FRONT, GL_FILL );
         glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
