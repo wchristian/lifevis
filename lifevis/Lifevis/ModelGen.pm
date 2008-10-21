@@ -199,60 +199,59 @@ sub generateModel {
             my $close = 0;
             
             my $sub_content;
+            my $verts;
+            my $texcoords;
+            my $norms;
+            my $target;
+            my $vert_sum;
+
+            # switch to quad mode for the cursor model
+            my $max_verts = 3;
+            if ( $input =~ m/Cursor/ ) {
+                $max_verts = 4;
+            }
             
             my $vec = "$normals[$nid][0],$normals[$nid][1],$normals[$nid][2]";
-
-            # glNormal call to set normal for current faces and add comment for debugging
-            $sub_content .= "\n\n    OpenGL::glNormal3f( $vec );";
-            $sub_content .= "# $side{$vec} face" if defined $side{$vec};
             
-            # cycle through all faces in the model and skip the ones who aren't on the current normal
+            # cycle through all faces in the model and skip the ones which aren't on the current normal
             for my $fid ( 0 .. $#faces ) {
                 next if ( $faces[$fid]{normal} != $nid );
-
-                # switch to quad mode for the cursor model
-                my $max_verts = 3;
-                if ( $input =~ m/Cursor/ ) {
-                    $max_verts = 4;
-                }
                 
                 # cycle through vertices and generate UV and position calls
                 for my $vid (  0 .. ($max_verts-1) ) {
                     my $uv   = $faces[$fid]{verts}[$vid]{uv};
                     my $vert = $faces[$fid]{verts}[$vid]{coords};
-                    $sub_content .= "\n    OpenGL::glTexCoord2f($uvs[$uv][0],$uvs[$uv][1]); OpenGL::glVertex3f($vertices[$vert][0]+\$x,$vertices[$vert][1]+\$y,$vertices[$vert][2]+\$z);";
+                    $verts .= join (',',@{$vertices[$vert]}) . ",   ";
+                    $texcoords .= join (',',@{$uvs[$uv]}) . ",   ";
+                    $norms .= "$vec,   ";
+                    $vert_sum++;
                 }
             }
             
-            # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
-            if ( defined $side{$vec} ) {
-                $subs{$side{$vec}} .= $sub_content;
-            }
-            else {
-                $subs{main} .= $sub_content;
-            }
+            $target = 'main';
+            $target = $side{$vec} if ( defined $side{$vec} );
             
-            # close skip condition if we opened one
-            if ( $input =~ m/(Floor|Boulder|Sapling|Shrub|Tree|Wall)/ && $close ) {
-                $model .= "\n}";
-            }
+            $subs{$target}{verts} .= $verts;
+            $subs{$target}{texcoords} .= $texcoords;
+            $subs{$target}{norms} .= $norms;
+            $subs{$target}{verts_per_face} = $max_verts;
+            $subs{$target}{vertex_count} += $vert_sum;
         }
         
         for my $part ( keys %subs ) {
+            my $render_mode = 'GL_TRIANGLES';
+            $render_mode = 'GL_QUADS' if $subs{$part}{verts_per_face} == 4;
             
             # add skip conditions if it's a pre-defined normal and if the current normal is different from the last one
-            $model .= "\n\n\$DRAW_MODEL{'$input$rotation'}[$part] = sub {
-            my (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;
-            my \$dl = glGenLists(1);
-            glNewList( \$dl, GL_COMPILE );\n";
-            if ( $input =~ m/Cursor/ ) {
-                $model .= "OpenGL::glBegin(GL_QUADS);";
-            }
-            else {
-                $model .= "OpenGL::glBegin(GL_TRIANGLES);";
-            }
-            $model .= $subs{$part};
-            $model .= "\n\n    glEnd();\nglEndList();\nreturn \$dl;\n};";
+            $model .= "\$DRAW_MODEL{'$input$rotation'}[$part] = sub {\nmy (\$x, \$y, \$z, \$s, \$brightness_modificator, \$north, \$west, \$south, \$east, \$bottom, \$top) = \@_;\n\n";
+            $model .= "my \@verts = (".$subs{$part}{verts}.");\nmy \$verts = OpenGL::Array->new_list( GL_FLOAT, \@verts );\n\n"; 
+            $model .= "my \@texcoords = (".$subs{$part}{texcoords}.");\nmy \$texcoords = OpenGL::Array->new_list( GL_FLOAT, \@texcoords );\n\n"; 
+            $model .= "my \@norms = (".$subs{$part}{norms}.");\nmy \$norms = OpenGL::Array->new_list( GL_FLOAT, \@norms );\n\n";
+            $model .= "my \@indices = ( 0 .. " . $subs{$part}{vertex_count} . " );\nmy \$indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, \@indices );\n\n";
+            $model .= "glVertexPointer_p( 3, \$verts );\nglNormalPointer_p( \$norms );\nglTexCoordPointer_p( 2, \$texcoords );\n\n";
+            $model .= "my \$dl = glGenLists(1);\nglNewList( \$dl, GL_COMPILE );\n";
+            $model .= "glDrawArrays( $render_mode, 0, " . $subs{$part}{vertex_count} . " );\n";
+            $model .= "glEndList();\nreturn \$dl;\n};\n\n";
         }
         
         # close up model subroutine
