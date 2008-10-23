@@ -78,7 +78,6 @@ use lib '.';
 use lib '..';
 use Lifevis::constants;
 use Lifevis::df_internals;
-use Lifevis::models;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
 
@@ -111,7 +110,7 @@ $memory_use = 0;
 
 my %building_visuals = get_df_building_visuals();
 my @TILE_TYPES       = get_df_tile_type_data();
-my %DRAW_MODEL       = get_model_subs();
+my %DRAW_MODEL;
 my %model_display_lists;
 my @ramps            = get_ramp_bitmasks();
 my %vtables          = get_vtables();
@@ -298,6 +297,8 @@ sub run {
     check_for_new_version() if $c{update_checks};
 
     use OpenGL qw/ :all /;
+    use Lifevis::models;
+    %DRAW_MODEL = get_model_subs();
 
     # Some global variables.
 
@@ -1440,7 +1441,9 @@ sub render_scene {
 }
 
 sub render_models {
-
+    my @landscape_displaylists;
+    
+    
     # cycle through cells in range around cursor to render
     for my $bx ( $min_x_range .. $max_x_range ) {
         for my $by ( $min_y_range .. $max_y_range ) {
@@ -1453,7 +1456,7 @@ sub render_models {
             my $slices = $cache[$cache_ptr];
             for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
                 next if $slice > $ceiling_slice + 2;
-                glCallList( $slices->[$slice] ) if $slices->[$slice];
+                push @landscape_displaylists, $slices->[$slice] if $slices->[$slice];
             }
 
             # draw creatures
@@ -1554,6 +1557,8 @@ sub render_models {
             }
         }
     }
+    
+    glCallLists_p (@landscape_displaylists);
 
     return;
 }
