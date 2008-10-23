@@ -102,6 +102,7 @@ use Win32::Process::Memory;
 use Image::Magick;
 use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw( :FUNC );
+use Math::Vec qw(:terse);
 
 my $full_loop_completed;
 
@@ -1781,9 +1782,34 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    my $far_clip = 33 * ( 1 + ( 2 * $c{view_range} ) );
-    $far_clip = 100 if $far_clip < 100;
-    gluPerspective( 45.0, $width / $height, 1, $far_clip );
+    
+    my $cam_target = V($x_pos,$y_pos,$z_pos);
+    my $cam_off = V($x_off,$y_off,$z_off);
+    my $cam_pos = $cam_target + $cam_off;
+    my $cam_normal = $cam_off*-1;
+    
+    my @x = ($min_x_range*16,($max_x_range*16)+15);
+    my @y = ($min_y_range*16,($max_y_range*16)+15);
+    my @z = (0,$zcount);
+    
+    my $dist_min = 999999;
+    my $dist_max = -999999;
+    
+    for my $x (@x) {   
+        for my $y (@y) {
+            for my $z (@z) {
+                my $target = V($x,$z,$y);
+                my $dist = ( $cam_normal * ($target-$cam_pos) ) / abs($cam_normal);
+                $dist_min = $dist if $dist < $dist_min;
+                $dist_max = $dist if $dist > $dist_max;
+            }   
+        }
+    }
+    
+    $dist_min -= .75;
+    $dist_min = 1 if $dist_min < 1;
+    
+    gluPerspective( 45.0, $width / $height, $dist_min, $dist_max );
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -2101,6 +2127,8 @@ sub process_active_mouse_motion {
 
     }
 
+    resize_scene( $c{window_width}, $c{window_height} );
+    
     $last_mouse_x = $x;
     $last_mouse_y = $y;
     reposition_camera();
