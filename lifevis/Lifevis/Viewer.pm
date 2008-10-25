@@ -188,7 +188,8 @@ my $next_render_time = 0;
 my $middle_mouse = 0;
 my $last_mouse_x;
 my $last_mouse_y;
-my $mouse_dist = 40;
+my $mouse_dist = 100;
+my $cam_angle = 45;
 
 my ( %sin_cache, %cos_cache );
 
@@ -1809,7 +1810,7 @@ sub resize_scene {
     $dist_min -= .75;
     $dist_min = 1 if $dist_min < 1;
     
-    gluPerspective( 45.0, $width / $height, $dist_min, $dist_max );
+    gluPerspective( $cam_angle, $width / $height, $dist_min, $dist_max );
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -2121,9 +2122,16 @@ sub process_active_mouse_motion {
           if ( ( $x_rot + $diff ) > -89 and ( $x_rot + $diff ) < 89 );
     }
     else {
-
-        $mouse_dist += $new_y * 0.2;
-        $mouse_dist = 0.2 if $mouse_dist < 0.2;
+        my $zoom_by_fov = 0;
+        if ( $zoom_by_fov ) {
+            $cam_angle += $new_y * 0.2;
+            $cam_angle = 1 if $cam_angle < 1;
+            $cam_angle = 179 if $cam_angle > 179;
+        }
+        else {
+            $mouse_dist += $new_y * 0.2;
+            $mouse_dist = 0.2 if $mouse_dist < 0.2;
+        }
 
     }
 
