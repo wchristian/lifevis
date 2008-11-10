@@ -113,8 +113,8 @@ my %building_visuals = get_df_building_visuals();
 my @TILE_TYPES       = get_df_tile_type_data();
 my %DRAW_MODEL;
 my %model_display_lists;
-my @ramps            = get_ramp_bitmasks();
-my %vtables          = get_vtables();
+my @ramps   = get_ramp_bitmasks();
+my %vtables = get_vtables();
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
@@ -157,10 +157,10 @@ my ( $x_pos, $y_pos, $z_pos, $x_off, $y_off, $z_off, $x_rot, $y_rot );
 # current cursor coordinates in cells
 my ( $xcell, $ycell ) = ( $c{view_range}, $c{view_range} );
 
-my $min_x_range;
-my $max_x_range;
-my $min_y_range;
-my $max_y_range;
+my $min_x_range = 0;
+my $max_x_range = 0;
+my $min_y_range = 3;
+my $max_y_range = 3;
 
 my $current_data_proc_task = 0;
 my $max_data_proc_tasks    = 0;
@@ -189,7 +189,7 @@ my $middle_mouse = 0;
 my $last_mouse_x;
 my $last_mouse_y;
 my $mouse_dist = 100;
-my $cam_angle = 45;
+my $cam_angle  = 45;
 
 my ( %sin_cache, %cos_cache );
 
@@ -386,7 +386,7 @@ sub run {
     $loc_loop = new Coro \&location_update_loop;
     $loc_loop->ready;
     cede();
-    
+
     generate_model_display_lists();
     $land_loop = new Coro \&landscape_update_loop;
     $land_loop->ready;
@@ -510,20 +510,20 @@ sub creature_update_loop {
             # update record of current creature
             $creatures{$creature}[c_x] = $rx;
             $creatures{$creature}[c_y] = $ry;
-            $creatures{$creature}[c_z] = $rz;
 
             # get old and new cell location and compare
             my $old_x = $creatures{$creature}[cell_x];
             my $old_y = $creatures{$creature}[cell_y];
+            my $old_z = $creatures{$creature}[c_z];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
-            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+            if ( !defined $old_x or $bx != $old_x or $by != $old_y or $rz != $old_z ) {
 
                 # creature moved to other cell or is new
                 # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
                     $redraw_needed = 1;
-                    my $creature_list = $cells[$old_x][$old_y][creature_list];
+                    my $creature_list = $cells[$old_x][$old_y][creature_list][$old_z];
                     for my $entry ( @{$creature_list} ) {
                         if ( $entry == $creature ) {
                             $entry = $creature_list->[$#$creature_list];
@@ -534,9 +534,10 @@ sub creature_update_loop {
                 }
 
                 # add entry to new cell and update cell coordinates
-                push @{ $cells[$bx][$by][creature_list] }, $creature;
+                push @{ $cells[$bx][$by][creature_list][$rz] }, $creature;
                 $creatures{$creature}[cell_x] = $bx;
                 $creatures{$creature}[cell_y] = $by;
+                $creatures{$creature}[c_z]    = $rz;
             }
         }
     }
@@ -589,7 +590,6 @@ sub building_update_loop {
             # update record of current creature
             $buildings{$building}[b_x]            = $rx;
             $buildings{$building}[b_y]            = $ry;
-            $buildings{$building}[b_z]            = $rz;
             $buildings{$building}[b_vtable_const] = $vtable;
             $buildings{$building}[b_vtable_id]    = $vtables{$vtable};
             warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
@@ -597,15 +597,16 @@ sub building_update_loop {
             # get old and new cell location and compare
             my $old_x = $buildings{$building}[b_cell_x];
             my $old_y = $buildings{$building}[b_cell_y];
+            my $old_z = $buildings{$building}[b_z];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
-            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+            if ( !defined $old_x || $bx != $old_x || $by != $old_y or $rz != $old_z ) {
 
                 # creature moved to other cell or is new
                 # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
                     $redraw_needed = 1;
-                    my $building_list = $cells[$old_x][$old_y][building_list];
+                    my $building_list = $cells[$old_x][$old_y][building_list][$old_z];
                     for my $entry ( @{$building_list} ) {
                         if ( $entry == $building ) {
                             $entry = $building_list->[$#$building_list];
@@ -616,9 +617,10 @@ sub building_update_loop {
                 }
 
                 # add entry to new cell and update cell coordinates
-                push @{ $cells[$bx][$by][building_list] }, $building;
+                push @{ $cells[$bx][$by][building_list][$rz] }, $building;
                 $buildings{$building}[b_cell_x] = $bx;
                 $buildings{$building}[b_cell_y] = $by;
+                $buildings{$building}[b_z]      = $rz;
             }
         }
     }
@@ -685,7 +687,6 @@ sub item_update_loop {
             # update record of current creature
             $items[$id][i_x]            = $rx;
             $items[$id][i_y]            = $ry;
-            $items[$id][i_z]            = $rz;
             $items[$id][i_type]         = $type;
             $items[$id][i_state]        = $state;
             $items[$id][i_address]      = $item_address;
@@ -700,15 +701,16 @@ sub item_update_loop {
             # get old and new cell location and compare
             my $old_x = $items[$id][i_cell_x];
             my $old_y = $items[$id][i_cell_y];
+            my $old_z = $items[$id][i_z];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
-            if ( !defined $old_x || $bx != $old_x || $by != $old_y ) {
+            if ( !defined $old_x || $bx != $old_x || $by != $old_y || $rz != $old_z ) {
 
                 # creature moved to other cell or is new
                 # get creature list of old cell then cycle through it and remove the old entry
                 if ( defined $old_x ) {
                     $redraw_needed = 1;
-                    my $item_list = $cells[$old_x][$old_y][item_list];
+                    my $item_list = $cells[$old_x][$old_y][item_list][$old_z];
                     for my $entry ( @{$item_list} ) {
                         if ( $entry == $id ) {
                             $entry = $item_list->[$#$item_list];
@@ -719,9 +721,10 @@ sub item_update_loop {
                 }
 
                 # add entry to new cell and update cell coordinates
-                push @{ $cells[$bx][$by][item_list] }, $id;
+                push @{ $cells[$bx][$by][item_list][$rz] }, $id;
                 $items[$id][i_cell_x] = $bx;
                 $items[$id][i_cell_y] = $by;
+                $items[$id][i_z]      = $rz;
             }
         }
         @item_present        = @item_present_temp;
@@ -881,7 +884,7 @@ sub landscape_update_loop {
                         $cells[$bx][$by][changed] = 0;
                     }
 
-                    $cache[$cache_id][1]++;
+                    $cache[$cache_id][use_counter]++;
 
                 }
                 else {
@@ -897,9 +900,9 @@ sub landscape_update_loop {
                     $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
 
                     # set up link to cell and back-link to cache id
-                    $cache[$cache_id][cell_ptr] = \$cells[$bx][$by][cache_ptr];
-                    $cells[$bx][$by][cache_ptr] = $cache_id;
-                    $cache[$cache_id][1]        = 0;
+                    $cache[$cache_id][cell_ptr]    = \$cells[$bx][$by][cache_ptr];
+                    $cells[$bx][$by][cache_ptr]    = $cache_id;
+                    $cache[$cache_id][use_counter] = 0;
 
                     # cycle through slices and
                     # create displaylists as necessary,
@@ -953,24 +956,24 @@ sub memory_control_loop {
         for my $id ( 0 .. $#cache ) {
 
             # skip empty caches
-            next if !defined $cache[$id][1];
+            next if !defined $cache[$id][use_counter];
 
             # skip caches we're currently looking at
             next if $protected_caches[$id];
 
-            if ( !defined $use || $cache[$id][1] < $use ) {
+            if ( !defined $use || $cache[$id][use_counter] < $use ) {
                 $delete = $id;
-                $use    = $cache[$id][1];
+                $use    = $cache[$id][use_counter];
             }
         }
 
         if ( defined $delete ) {
             $memory_clears++;
 
-            my $slices = $cache[$delete];
-            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-                glDeleteLists( $cache[$delete][$slice], 1 )
-                  if ( $cache[$delete][$slice] );
+            my $slices = $cache[$delete][display_lists];
+            for my $slice ( 0 .. @{$slices} - 1 ) {
+                glDeleteLists( $cache[$delete][display_lists][$slice], 1 )
+                  if ( $cache[$delete][display_lists][$slice] );
             }
 
             undef ${ $cache[$delete][cell_ptr] };
@@ -988,7 +991,7 @@ sub memory_control_loop {
 
 sub generate_model_display_lists {
     for my $model ( keys %DRAW_MODEL ) {
-        for my $part ( 0..$#{ $DRAW_MODEL{$model} } ) {
+        for my $part ( 0 .. $#{ $DRAW_MODEL{$model} } ) {
             next if !defined $DRAW_MODEL{$model}[$part];
             my $dl = $DRAW_MODEL{$model}[$part]->( 0, 0, 0, 1, 0, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
             $model_display_lists{$model}[$part] = $dl;
@@ -1004,12 +1007,12 @@ sub generate_display_list {
     my $type_above;
     my $brightness_mod;
 
-    if ( $cache[$id][ $z + 2 ] ) {
-        $dl = $cache[$id][ $z + 2 ];
+    if ( $cache[$id][display_lists][$z] ) {
+        $dl = $cache[$id][display_lists][$z];
     }
     else {
         $dl = glGenLists(1);
-        $cache[$id][ $z + 2 ] = $dl;
+        $cache[$id][display_lists][$z] = $dl;
     }
 
     glNewList( $dl, GL_COMPILE );
@@ -1059,46 +1062,68 @@ sub generate_display_list {
                         $brightness_mod *= 0.75 if ( defined $type_above && $above != EMPTY );
                     }
                 }
-                
+
                 my @const_model_map;
-                $const_model_map[WALL] = "Wall";
-                $const_model_map[PILLAR] = "Pillar";
-                $const_model_map[FORTIF] = "Fortif";
-                $const_model_map[TREE] = "Tree";
-                $const_model_map[SHRUB] = "Shrub";
-                $const_model_map[BOULDER] = "Boulder";
-                $const_model_map[SAPLING] = "Sapling";
-                $const_model_map[STAIR] = "Stairs";
-                $const_model_map[STAIR_UP] = "Stair_Up";
+                $const_model_map[WALL]       = "Wall";
+                $const_model_map[PILLAR]     = "Pillar";
+                $const_model_map[FORTIF]     = "Fortif";
+                $const_model_map[TREE]       = "Tree";
+                $const_model_map[SHRUB]      = "Shrub";
+                $const_model_map[BOULDER]    = "Boulder";
+                $const_model_map[SAPLING]    = "Sapling";
+                $const_model_map[STAIR]      = "Stairs";
+                $const_model_map[STAIR_UP]   = "Stair_Up";
                 $const_model_map[STAIR_DOWN] = "Stair_Down";
-                $const_model_map[FLOOR] = "Floor";
-                
+                $const_model_map[FLOOR]      = "Floor";
+
                 my $base_visual = $TILE_TYPES[$type][base_visual];
-                
-                given ( $base_visual ) {
-                    when ([WALL,PILLAR,FORTIF,TREE,SHRUB,BOULDER,SAPLING,STAIR,STAIR_UP,STAIR_DOWN,FLOOR]) {
-                        my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
-                        glColor3f($brightness, $brightness, $brightness);
-                        glTranslatef($rx, $z, $ry);
-                        
-                        for my $part ( 0..$#{ $DRAW_MODEL{$const_model_map[$base_visual]} } ) {
-                            next if ( ($base_visual == WALL) && ($part == east) && ($east == WALL) );
-                            next if ( ($base_visual == WALL) && ($part == west) && ($west == WALL) );
-                            next if ( ($base_visual == WALL) && ($part == north) && ($north == WALL) );
-                            next if ( ($base_visual == WALL) && ($part == south) && ($south == WALL) );
-                            
-                            next if ( ($base_visual != STAIR) && ($base_visual != STAIR_DOWN) && ($part == bottom) && ($below == WALL) );
-                            
-                            next if ( ($base_visual != WALL) && ($part == east) && ($east != EMPTY) && ($east != RAMP_TOP) );
-                            next if ( ($base_visual != WALL) && ($part == west) && ($west != EMPTY) && ($west != RAMP_TOP) );
-                            next if ( ($base_visual != WALL) && ($part == north) && ($north != EMPTY) && ($north != RAMP_TOP) );
-                            next if ( ($base_visual != WALL) && ($part == south) && ($south != EMPTY) && ($south != RAMP_TOP) );
-                            
-                            next if !defined $model_display_lists{$const_model_map[$base_visual]}[$part];
-                            glCallList($model_display_lists{$const_model_map[$base_visual]}[$part]);
+
+                my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.2 + $brightness_mod );
+
+                given ($base_visual) {
+                    when ( [ WALL, PILLAR, FORTIF, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, FLOOR ] )
+                    {
+                        glColor3f( $brightness, $brightness, $brightness );
+                        glTranslatef( $rx, $z, $ry );
+
+                        for my $part ( 0 .. $#{ $DRAW_MODEL{ $const_model_map[$base_visual] } } ) {
+                            next if ( ( $base_visual == WALL ) && ( $part == east )  && ( $east == WALL ) );
+                            next if ( ( $base_visual == WALL ) && ( $part == west )  && ( $west == WALL ) );
+                            next if ( ( $base_visual == WALL ) && ( $part == north ) && ( $north == WALL ) );
+                            next if ( ( $base_visual == WALL ) && ( $part == south ) && ( $south == WALL ) );
+
+                            next
+                              if ( ( $base_visual != STAIR )
+                                && ( $base_visual != STAIR_DOWN )
+                                && ( $part == bottom )
+                                && ( $below == WALL ) );
+
+                            next
+                              if ( ( $base_visual != WALL )
+                                && ( $part == east )
+                                && ( $east != EMPTY )
+                                && ( $east != RAMP_TOP ) );
+                            next
+                              if ( ( $base_visual != WALL )
+                                && ( $part == west )
+                                && ( $west != EMPTY )
+                                && ( $west != RAMP_TOP ) );
+                            next
+                              if ( ( $base_visual != WALL )
+                                && ( $part == north )
+                                && ( $north != EMPTY )
+                                && ( $north != RAMP_TOP ) );
+                            next
+                              if ( ( $base_visual != WALL )
+                                && ( $part == south )
+                                && ( $south != EMPTY )
+                                && ( $south != RAMP_TOP ) );
+
+                            next if !defined $model_display_lists{ $const_model_map[$base_visual] }[$part];
+                            glCallList( $model_display_lists{ $const_model_map[$base_visual] }[$part] );
                         }
-                        
-                        glTranslatef(-$rx, -$z, -$ry);
+
+                        glTranslatef( -$rx, -$z, -$ry );
                     }
 
                     when (RAMP) {
@@ -1137,15 +1162,14 @@ sub generate_display_list {
                                 my $func = $ramps[$ramp_type]{func};
                                 croak "Need following ramp model: $func"
                                   if !defined $DRAW_MODEL{$func}[main];
-                                  
-                                my $brightness = ((($z/($zcount-15)) * $brightness_mod)*.7)+.15;
-                                glColor3f($brightness, $brightness, $brightness);
-                                glTranslatef($rx, $z, $ry);
-                                for my $part ( 0..$#{ $DRAW_MODEL{$func} } ) {
+
+                                glColor3f( $brightness, $brightness, $brightness );
+                                glTranslatef( $rx, $z, $ry );
+                                for my $part ( 0 .. $#{ $DRAW_MODEL{$func} } ) {
                                     next if !defined $model_display_lists{$func}[$part];
-                                    glCallList($model_display_lists{$func}[$part]);
+                                    glCallList( $model_display_lists{$func}[$part] );
                                 }
-                                glTranslatef(-$rx, -$z, -$ry);
+                                glTranslatef( -$rx, -$z, -$ry );
                                 last;
                             }
                         }
@@ -1364,7 +1388,6 @@ sub idle_tasks {
     return;
 }
 
-
 # ------
 # Routine which actually does the drawing
 
@@ -1397,19 +1420,19 @@ sub render_scene {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
-        
+
         render_models();
-        
+
         # draw visible cursor
         glDisable(GL_LIGHTING);
         glLineWidth(2);
         glBindTexture( GL_TEXTURE_2D, $texture_ID[cursor] );
         glPolygonMode( GL_FRONT, GL_LINE );
-        glColor3f(1, 1, 1);
+        glColor3f( 1, 1, 1 );
         glTranslatef( $x_pos, $y_pos, $z_pos );
-        for my $part ( 0..$#{ $DRAW_MODEL{Cursor} } ) {
+        for my $part ( 0 .. $#{ $DRAW_MODEL{Cursor} } ) {
             next if !defined $model_display_lists{Cursor}[$part];
-            glCallList($model_display_lists{Cursor}[$part]);
+            glCallList( $model_display_lists{Cursor}[$part] );
         }
         glTranslatef( -$x_pos, -$y_pos, -$z_pos );
         glPolygonMode( GL_FRONT, GL_FILL );
@@ -1443,124 +1466,114 @@ sub render_scene {
 }
 
 sub render_models {
-    my @landscape_displaylists;
-    
-    
-    # cycle through cells in range around cursor to render
-    for my $bx ( $min_x_range .. $max_x_range ) {
-        for my $by ( $min_y_range .. $max_y_range ) {
 
-            my $cache_ptr = $cells[$bx][$by][cache_ptr];
-            next if !defined $cache_ptr;
-            next if !defined $cache[$cache_ptr];
+    for my $z ( 0 .. $zcount ) {
+        my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.2 );
 
-            # draw landscape
-            my $slices = $cache[$cache_ptr];
-            for my $slice ( 2 .. ( @{$slices} - 1 ) ) {
-                next if $slice > $ceiling_slice + 2;
-                push @landscape_displaylists, $slices->[$slice] if $slices->[$slice];
-            }
+        # cycle through cells in range around cursor to render
+        for my $bx ( $min_x_range .. $max_x_range ) {
+            for my $by ( $min_y_range .. $max_y_range ) {
 
-            # draw creatures
-            if ( defined $cells[$bx][$by][creature_list] ) {
-                my $creature_list_size = @{ $cells[$bx][$by][creature_list] };
-                for my $entry ( 0 .. $creature_list_size ) {
-                    my $creature_id = $cells[$bx][$by][creature_list][$entry];
-                    next if !defined $creature_id;
-                    next unless $creatures_present{$creature_id};
+                my $cache_ptr = $cells[$bx][$by][cache_ptr];
+                next if !defined $cache_ptr;
+                next if !defined $cache[$cache_ptr];
 
-                    next if $creatures{$creature_id}[flags] & 2;
-                    my $x = $creatures{$creature_id}[c_x];
-                    my $z = $creatures{$creature_id}[c_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $creatures{$creature_id}[c_y];
-                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
-                    glColor3f($brightness, $brightness, $brightness);
-                    glTranslatef( $x, $z, $y );
-                    my $model_name;
-                    given ( $creatures{$creature_id}[race] ) {
-                        when (166) {
-                            $model_name = "Creature";
+                my $slices = $cache[$cache_ptr][display_lists];
+
+                # draw landscape
+                glCallList( $slices->[$z] ) if $slices->[$z];
+
+                # draw creatures
+                if ( defined $cells[$bx][$by][creature_list][$z] ) {
+                    my $creature_list_size = @{ $cells[$bx][$by][creature_list][$z] };
+                    for my $entry ( 0 .. $creature_list_size ) {
+                        my $creature_id = $cells[$bx][$by][creature_list][$z][$entry];
+                        next if !defined $creature_id;
+                        next unless $creatures_present{$creature_id};
+
+                        next if $creatures{$creature_id}[flags] & 2;    # dead, i think
+                        my $x = $creatures{$creature_id}[c_x];
+                        my $y = $creatures{$creature_id}[c_y];
+                        glColor3f( $brightness, $brightness, $brightness );
+                        glTranslatef( $x, $z, $y );
+                        my $model_name;
+                        given ( $creatures{$creature_id}[race] ) {
+                            when (166) {
+                                $model_name = "Creature";
+                            }
+                            default {
+                                $model_name = "Creature2";
+                            }
                         }
-                        default {
-                            $model_name = "Creature2";
+
+                        glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                            next if !defined $model_display_lists{$model_name}[$part];
+                            glCallList( $model_display_lists{$model_name}[$part] );
                         }
+                        glTranslatef( -$x, -$z, -$y );
                     }
-                    
-                    glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
-                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
-                        next if !defined $model_display_lists{$model_name}[$part];
-                        glCallList($model_display_lists{$model_name}[$part]);
-                    }
-                    glTranslatef( -$x, -$z, -$y );
                 }
-            }
 
-            # draw buildings
-            if ( defined $cells[$bx][$by][building_list] ) {
-                my $building_list_size = @{ $cells[$bx][$by][building_list] };
-                for my $entry ( 0 .. $building_list_size ) {
-                    my $building_id = $cells[$bx][$by][building_list][$entry];
-                    next if !defined $building_id;
-                    next unless $building_present{$building_id};
+                # draw buildings
+                if ( defined $cells[$bx][$by][building_list][$z] ) {
+                    my $building_list_size = @{ $cells[$bx][$by][building_list][$z] };
+                    for my $entry ( 0 .. $building_list_size ) {
+                        my $building_id = $cells[$bx][$by][building_list][$z][$entry];
+                        next if !defined $building_id;
+                        next unless $building_present{$building_id};
 
-                    my $x = $buildings{$building_id}[b_x];
-                    my $z = $buildings{$building_id}[b_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $buildings{$building_id}[b_y];
-                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
-                    glColor3f($brightness, $brightness, $brightness);
-                    glTranslatef( $x, $z, $y );
-                    
-                    my $vtable_id = $buildings{$building_id}[b_vtable_id];
-                    $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
-                    my $model_name = $building_visuals{$vtable_id}[0];
-                    
-                    glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
-                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
-                        next if !defined $model_display_lists{$model_name}[$part];
-                        glCallList($model_display_lists{$model_name}[$part]);
-                    }
-                    glTranslatef( -$x, -$z, -$y );
-                }
-            }
+                        my $x = $buildings{$building_id}[b_x];
+                        my $y = $buildings{$building_id}[b_y];
+                        glColor3f( $brightness, $brightness, $brightness );
+                        glTranslatef( $x, $z, $y );
 
-            # draw items
-            if ( defined $cells[$bx][$by][item_list] ) {
-                my $item_list_size = @{ $cells[$bx][$by][item_list] };
-                for my $entry ( 0 .. $item_list_size ) {
-                    my $item_id = $cells[$bx][$by][item_list][$entry];
-                    next if !defined $item_id;
-                    next unless defined $item_present[$item_id];
+                        my $vtable_id = $buildings{$building_id}[b_vtable_id];
+                        $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
+                        my $model_name = $building_visuals{$vtable_id}[0];
 
-                    my $x = $items[$item_id][i_x];
-                    my $z = $items[$item_id][i_z];
-                    next if $z > $ceiling_slice;
-                    my $y = $items[$item_id][i_y];
-
-                    my $brightness = ((($z/($zcount-15)) * 1)*.7)+.15;
-                    glColor3f($brightness, $brightness, $brightness);
-                    glTranslatef( $x, $z, $y );
-                    my $model_name;
-                    given ( $item_id ) {
-                        default {
-                            $model_name = "Items";
+                        glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
+                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                            next if !defined $model_display_lists{$model_name}[$part];
+                            glCallList( $model_display_lists{$model_name}[$part] );
                         }
+                        glTranslatef( -$x, -$z, -$y );
                     }
-                    
-                    glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
-                    for my $part ( 0..$#{ $DRAW_MODEL{$model_name} } ) {
-                        next if !defined $model_display_lists{$model_name}[$part];
-                        glCallList($model_display_lists{$model_name}[$part]);
-                    }
-                    
-                    glTranslatef( -$x, -$z, -$y );
                 }
+
+                # draw items
+                if ( defined $cells[$bx][$by][item_list][$z] ) {
+                    my $item_list_size = @{ $cells[$bx][$by][item_list][$z] };
+                    for my $entry ( 0 .. $item_list_size ) {
+                        my $item_id = $cells[$bx][$by][item_list][$z][$entry];
+                        next if !defined $item_id;
+                        next unless defined $item_present[$item_id];
+
+                        my $x = $items[$item_id][i_x];
+                        my $y = $items[$item_id][i_y];
+
+                        glColor3f( $brightness, $brightness, $brightness );
+                        glTranslatef( $x, $z, $y );
+                        my $model_name;
+                        given ($item_id) {
+                            default {
+                                $model_name = "Items";
+                            }
+                        }
+
+                        glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
+                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                            next if !defined $model_display_lists{$model_name}[$part];
+                            glCallList( $model_display_lists{$model_name}[$part] );
+                        }
+
+                        glTranslatef( -$x, -$z, -$y );
+                    }
+                }
+
             }
         }
     }
-    
-    glCallLists_p (@landscape_displaylists);
 
     return;
 }
@@ -1727,8 +1740,9 @@ sub render_ui {
     for my $slice ( 0 .. $zcount ) {
         if ( $slice == $ceiling_slice ) {
             glColor4f( 1, 1, 0, 1 );
-            my $height = ($height_mod * $slice) - ($height_mod * ( $slice + 1 ));
-            glRasterPos2i( $c{window_width} - 17, $c{window_height} - 22 - ($height/2) - $height_mod * ( $slice + 1 ) );
+            my $height = ( $height_mod * $slice ) - ( $height_mod * ( $slice + 1 ) );
+            glRasterPos2i( $c{window_width} - 17,
+                $c{window_height} - 22 - ( $height / 2 ) - $height_mod * ( $slice + 1 ) );
             glutBitmapString( GLUT_BITMAP_HELVETICA_12, $slice );
         }
     }
@@ -1783,34 +1797,36 @@ sub resize_scene {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    
-    my $cam_target = V($x_pos,$y_pos,$z_pos);
-    my $cam_off = V($x_off,$y_off,$z_off);
-    my $cam_pos = $cam_target + $cam_off;
-    my $cam_normal = $cam_off*-1;
-    
-    my @x = ($min_x_range*16,($max_x_range*16)+15);
-    my @y = ($min_y_range*16,($max_y_range*16)+15);
-    my @z = (0,$zcount);
-    
+
+    my $cam_target = V( $x_pos, $y_pos, $z_pos );
+    my $cam_off    = V( $x_off, $y_off, $z_off );
+    my $cam_pos    = $cam_target + $cam_off;
+    my $cam_normal = $cam_off * -1;
+
+    my @x = ( $min_x_range * 16, ( $max_x_range * 16 ) + 15 );
+    my @y = ( $min_y_range * 16, ( $max_y_range * 16 ) + 15 );
+    my @z = ( 0, $zcount );
+
     my $dist_min = 999999;
     my $dist_max = -999999;
-    
-    for my $x (@x) {   
+
+    for my $x (@x) {
         for my $y (@y) {
             for my $z (@z) {
-                my $target = V($x,$z,$y);
-                my $dist = ( $cam_normal * ($target-$cam_pos) ) / abs($cam_normal);
+                my $target = V( $x, $z, $y );
+                my $dist = ( $cam_normal * ( $target - $cam_pos ) ) / abs($cam_normal);
                 $dist_min = $dist if $dist < $dist_min;
                 $dist_max = $dist if $dist > $dist_max;
-            }   
+            }
         }
     }
-    
+
     $dist_min -= .75;
     $dist_min = 1 if $dist_min < 1;
-    
+
     gluPerspective( $cam_angle, $width / $height, $dist_min, $dist_max );
+
+    #say "$dist_min, $dist_max";
 
     glMatrixMode(GL_MODELVIEW);
 
@@ -2123,9 +2139,9 @@ sub process_active_mouse_motion {
     }
     else {
         my $zoom_by_fov = 0;
-        if ( $zoom_by_fov ) {
+        if ($zoom_by_fov) {
             $cam_angle += $new_y * 0.2;
-            $cam_angle = 1 if $cam_angle < 1;
+            $cam_angle = 1   if $cam_angle < 1;
             $cam_angle = 179 if $cam_angle > 179;
         }
         else {
@@ -2136,7 +2152,7 @@ sub process_active_mouse_motion {
     }
 
     resize_scene( $c{window_width}, $c{window_height} );
-    
+
     $last_mouse_x = $x;
     $last_mouse_y = $y;
     reposition_camera();

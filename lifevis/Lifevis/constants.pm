@@ -28,7 +28,7 @@ our @EXPORT = (
 
     i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const
 
-    cell_ptr
+    cell_ptr use_counter display_lists
 
     changed z offset creature_list cache_ptr building_list item_list
 
@@ -92,7 +92,9 @@ use enum qw(
   i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const
 );
 
-use constant cell_ptr => 0;
+use enum qw(
+  cell_ptr use_counter display_lists
+);
 
 use enum qw(
   changed z offset creature_list cache_ptr building_list item_list
