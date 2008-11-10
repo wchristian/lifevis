@@ -114,6 +114,7 @@ glAreTexturesResident_c
 glAreTexturesResident_p
 glArrayElement
 glBegin
+glBeginQuery
 glEnd
 glBindTexture
 glBitmap_s
@@ -4717,6 +4718,7 @@ DirectColor
 	glAccum
 	glAlphaFunc
 	glBegin
+	glBeginQuery
 	glBitmap
 	glBlendColorEXT
 	glBlendEquationEXT
