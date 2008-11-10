@@ -1,0 +1,89 @@
+in OpenGL.xs:
+
+################################################################
+
+#// 1.0
+#//# @queryIDs = glGenQueries_p($n);
+void
+glGenQueries_p(n)
+	GLint	n
+	INIT:
+		loadProc(glGenQueries,"glGenQueries");
+	PPCODE:
+	if (n) {
+		GLuint * ids = malloc(sizeof(GLuint) * n);
+		int i;
+		
+		glGenQueries(n, ids);
+		
+		EXTEND(sp, n);
+		for(i=0;i<n;i++)
+			PUSHs(sv_2mortal(newSViv(ids[i])));
+
+		free(ids);
+	}
+
+#// 1.0
+#//# $result = glGetQueryObjectiv($id, $pname);
+GLint
+glGetQueryObjectiv(id, pname)
+	GLuint	id
+	GLenum	pname
+	INIT:
+		loadProc(glGetQueryObjectiv,"glGetQueryObjectiv");
+	CODE:
+		{
+		GLuint result;
+		glGetQueryObjectiv(id, pname, &result);
+		RETVAL = result;
+		}
+	OUTPUT:
+	    RETVAL
+
+#// 1.0
+#//# $result = glGetQueryObjectuiv($id, $pname);
+GLuint
+glGetQueryObjectuiv_s(id, pname)
+	GLuint	id
+	GLenum	pname
+	INIT:
+		loadProc(glGetQueryObjectuiv,"glGetQueryObjectuiv");
+	CODE:
+		{
+		GLuint result;
+		glGetQueryObjectuiv(id, pname, &result);
+		RETVAL = result;
+		}
+	OUTPUT:
+	    RETVAL
+
+#// 1.0
+#//# glBeginQuery($target, $id);
+void
+glBeginQuery(target, id)
+	GLenum	target
+	GLuint id
+	INIT:
+		loadProc(glBeginQuery,"glBeginQuery");
+
+#// 1.0
+#//# glEndQuery($target, $id);
+void
+glEndQuery(target)
+	GLenum	target
+	INIT:
+		loadProc(glEndQuery,"glEndQuery");
+
+################################################################
+
+in OpenGL.pm:
+
+################################################################
+
+glGenQueries_p
+glBeginQuery
+glEndQuery
+glGetQueryObjectiv_s
+glGetQueryObjectuiv_s
+
+################################################################
