@@ -91,7 +91,7 @@ use Scalar::Util ();
 use AnyEvent ();
 use AnyEvent::Util ();
 
-our $VERSION = 4.3;
+our $VERSION = 4.32;
 
 our ($NOW, $MNOW);
 
@@ -148,12 +148,14 @@ _update_clock;
 sub now { $NOW }
 
 # fds[0] is for read, fds[1] is for write watchers
-# fds[poll]{v} is the bitmask for select
-# fds[poll]{w}[fd] contains a list of i/o watchers
+# fds[poll][V] is the bitmask for select
+# fds[poll][W][fd] contains a list of i/o watchers
 # an I/O watcher is a blessed arrayref containing [fh, poll(0/1), callback, queue-index]
-# the queue-index is simply the index in the {w} array, which is only used to improve
+# the queue-index is simply the index in the [W] array, which is only used to improve
 # benchmark results in the synthetic "many watchers on one fd" benchmark.
-my @fds = ({}, {});
+my @fds = ([], []);
+sub V() { 0 }
+sub W() { 1 }
 
 my $need_sort = 1e300; # when to re-sort timer list
 my @timer; # list of [ abs-timeout, Timer::[callback] ]
@@ -185,9 +187,9 @@ sub one_event {
       $wait = $wait < MAXWAIT ? $wait + ROUNDUP : MAXWAIT;
 
       if ($fds = select
-            $vec[0] = $fds[0]{v},
-            $vec[1] = $fds[1]{v},
-            AnyEvent::WIN32 ? $vec[2] = $fds[1]{v} : undef,
+            $vec[0] = $fds[0][V],
+            $vec[1] = $fds[1][V],
+            AnyEvent::WIN32 ? $vec[2] = $fds[1][V] : undef,
             $wait
       ) {
          _update_clock;
@@ -207,7 +209,7 @@ sub one_event {
                while (/\G0*1/g) {
                   # and using the resulting string position as fd
                   $_ && $_->[2]()
-                     for @{ $fds->{w}[-1 + pos] || [] };
+                     for @{ $fds->[W][-1 + pos] || [] };
                }
             }
          }
@@ -232,9 +234,9 @@ sub io {
 
    # add watcher to fds structure
    my $fd = fileno $self->[0];
-   my $q = $fds->{w}[$fd] ||= [];
+   my $q = $fds->[W][$fd] ||= [];
 
-   (vec $fds->{v}, $fd, 1) = 1;
+   (vec $fds->[V], $fd, 1) = 1;
 
    $self->[3] = @$q;
    push @$q, $self;
@@ -251,11 +253,11 @@ sub AnyEvent::Impl::Perl::Io::DESTROY {
    # remove watcher from fds structure
    my $fd = fileno $self->[0];
 
-   if (@{ $fds->{w}[$fd] } == 1) {
-      delete $fds->{w}[$fd];
-      (vec $fds->{v}, $fd, 1) = 0;
+   if (@{ $fds->[W][$fd] } == 1) {
+      delete $fds->[W][$fd];
+      (vec $fds->[V], $fd, 1) = 0;
    } else {
-      my $q = $fds->{w}[$fd];
+      my $q = $fds->[W][$fd];
       my $last = pop @$q;
 
       if ($last != $self) {

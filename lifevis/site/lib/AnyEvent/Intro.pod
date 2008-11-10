@@ -266,7 +266,7 @@ this, without an extra variable to store the name in:
 
    my $wait_for_input = AnyEvent->io (
       fh => \*STDIN, poll => "r",
-      cb => sub { $name_ready->send (scalar = <STDIN>) }
+      cb => sub { $name_ready->send (scalar <STDIN>) }
    );
 
    # do something else here

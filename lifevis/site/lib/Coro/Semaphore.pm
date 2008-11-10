@@ -37,7 +37,7 @@ no warnings;
 
 use Coro ();
 
-$VERSION = 4.8;
+$VERSION = 4.804;
 
 =item new [inital count]
 

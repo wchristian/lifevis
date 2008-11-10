@@ -106,16 +106,15 @@ use Carp ();
 use Time::HiRes ();
 use Scalar::Util ();
 
-use IO::Socket::UNIX ();
-
 use AnyEvent ();
+use AnyEvent::Socket ();
 
 use Coro ();
 use Coro::Handle ();
 use Coro::State ();
 use Coro::AnyEvent ();
 
-our $VERSION = 4.8;
+our $VERSION = 4.804;
 
 our %log;
 our $SESLOGLEVEL = exists $ENV{PERL_CORO_DEFAULT_LOGLEVEL} ? $ENV{PERL_CORO_DEFAULT_LOGLEVEL} : -1;
@@ -270,8 +269,11 @@ sub command($) {
 
    $cmd =~ s/\s+$//;
 
-   if ($cmd =~ /^ps$/) {
-      printf "%20s %s%s %4s %4s %-24.24s %s\n", "PID", "S", "C", "RSS", "USES", "Description", "Where";
+   if ($cmd =~ /^ps (?:\s* (\S+))? $/x) {
+      my $flags = $1;
+      my $desc = $flags =~ /w/ ? "%-24s" : "%-24.24s";
+      my $buf = sprintf "%20s %s%s %4s %4s $desc %s\n",
+                        "PID", "S", "C", "RSS", "USES", "Description", "Where";
       for my $coro (reverse Coro::State::list) {
          Coro::cede;
          my @bt;
@@ -284,15 +286,17 @@ sub command($) {
                last unless $bt[0] =~ /^Coro/;
             }
          });
-         printf "%20s %s%s %4s %4s %-24.24s %s\n",
-                $coro+0,
-                $coro->is_new ? "N" : $coro->is_running ? "U" : $coro->is_ready ? "R" : "-",
-                $coro->is_traced ? "T" : $coro->has_cctx ? "C" : "-",
-                format_num4 $coro->rss,
-                format_num4 $coro->usecount,
-                $coro->debug_desc,
-                (@bt ? sprintf "[%s:%d]", $bt[1], $bt[2] : "-");
+         $buf .= sprintf "%20s %s%s %4s %4s $desc %s\n",
+                         $coro+0,
+                         $coro->is_new ? "N" : $coro->is_running ? "U" : $coro->is_ready ? "R" : "-",
+                         $coro->is_traced ? "T" : $coro->has_cctx ? "C" : "-",
+                         format_num4 $coro->rss,
+                         format_num4 $coro->usecount,
+                         $coro->debug_desc,
+                         (@bt ? sprintf "[%s:%d]", $bt[1], $bt[2] : "-");
       }
+      Coro::cede;
+      print $buf;
 
    } elsif ($cmd =~ /^bt\s+(\d+)$/) {
       if (my $coro = find_coro $1) {
@@ -380,6 +384,7 @@ EOF
       my @res = eval $cmd;
       print $@ ? $@ : (join " ", @res) . "\n";
    }
+   Coro::cede;
 }
 
 =item session $fh
@@ -431,12 +436,15 @@ runs C<session> on any connection. Normal unix permission checks and umask
 applies, so you can protect your socket by puttint it into a protected
 directory.
 
-The C<socat> utility is an excellent way to connect to this socket,
-offering readline and history support:
+The C<socat> utility is an excellent way to connect to this socket:
 
-   socat readline:history=/tmp/hist.corodebug unix:/path/to/socket
+   socat readline /path/to/socket
 
-The server accepts connections until it is destroyed, so you should keep
+Socat also offers history support:
+
+   socat readline:history=/tmp/hist.corodebug /path/to/socket
+
+The server accepts connections until it is destroyed, so you must keep
 the return value around as long as you want the server to stay available.
 
 =cut
@@ -445,31 +453,41 @@ sub new_unix_server {
    my ($class, $path) = @_;
 
    unlink $path;
-   my $fh = new IO::Socket::UNIX Listen => 1, Local => $path
-      or Carp::croak "Coro::Debug::Server($path): $!";
+   AnyEvent::Socket::tcp_server "unix/", $path, sub {
+      my ($fh) = @_;
+      Coro::async_pool {
+         $Coro::current->desc ("[Coro::Debug session]");
+         session $fh;
+      };
+   } or Carp::croak "Coro::Debug::new_unix_server($path): $!";
+}
 
-   my $self = bless {
-      fh   => $fh,
-      path => $path,
-   }, $class;
+=item $server = new_tcp_server Coro::Debug $port
 
-   $self->{cw} = AnyEvent->io (fh => $fh, poll => 'r', cb => sub {
-      if (my $fh = $fh->accept) {
-         Coro::async_pool {
-            $Coro::current->desc ("[Coro::Debug session]");
-            session $fh;
-         };
-      }
-   });
+Similar to C<new_unix_server>, but binds on a TCP port. I<Note that this is
+usually results in a gaping security hole>.
 
-   $self
+Currently, only a TCPv4 socket is created, in the future, a TCPv6 socket
+might also be created.
+
+=cut
+
+sub new_tcp_server {
+   my ($class, $port) = @_;
+
+   AnyEvent::Socket::tcp_server undef, $port, sub {
+      my ($fh) = @_;
+      Coro::async_pool {
+         $Coro::current->desc ("[Coro::Debug session]");
+         session $fh;
+      };
+   } or Carp::croak "Coro::Debug::new_tcp_server($port): $!";
 }
 
 sub DESTROY {
    my ($self) = @_;
 
-   unlink $self->{path};
-   close $self->{fh};
+   unlink $self->{path} if exists $self->{path};
    %$self = ();
 }
 

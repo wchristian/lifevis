@@ -92,7 +92,7 @@ sub warnhook { &$WARNHOOK }
 use XSLoader;
 
 BEGIN {
-   our $VERSION = 4.8;
+   our $VERSION = 4.804;
 
    # must be done here because the xs part expects it to exist
    # it might exist already because Coro::Specific created it.
@@ -228,11 +228,6 @@ to another state.
 
 Like C<call>, but eval's the string. Dangerous.
 
-=item $state->throw ($exception)
-
-Makes the coroutine throw the given exception as soon as it regains
-control.
-
 =item $state->swap_defsv
 
 =item $state->swap_defav
@@ -302,6 +297,7 @@ Returns a list of all states currently allocated.
 
 =cut
 
+# used by Coro::Debug only atm.
 sub debug_desc {
    $_[0]{desc}
 }

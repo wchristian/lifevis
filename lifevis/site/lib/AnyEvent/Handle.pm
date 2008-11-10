@@ -16,7 +16,7 @@ AnyEvent::Handle - non-blocking I/O on file handles via AnyEvent
 
 =cut
 
-our $VERSION = 4.3;
+our $VERSION = 4.32;
 
 =head1 SYNOPSIS
 
@@ -86,11 +86,11 @@ i.e. in the case of a socket, when the other side has closed the
 connection cleanly.
 
 For sockets, this just means that the other side has stopped sending data,
-you can still try to write data, and, in fact, one can return from the eof
+you can still try to write data, and, in fact, one can return from the EOF
 callback and continue writing data, as only the read part has been shut
 down.
 
-While not mandatory, it is I<highly> recommended to set an eof callback,
+While not mandatory, it is I<highly> recommended to set an EOF callback,
 otherwise you might end up with a closed socket while you are still
 waiting for data.
 
@@ -328,7 +328,7 @@ sub _error {
 
    if ($self->{on_error}) {
       $self->{on_error}($self, $fatal);
-   } else {
+   } elsif ($self->{fh}) {
       Carp::croak "AnyEvent::Handle uncaught error: $!";
    }
 }
@@ -1373,7 +1373,7 @@ sub starttls {
 
    require Net::SSLeay;
 
-   Carp::croak "it is an error to call starttls more than once on an Anyevent::Handle object"
+   Carp::croak "it is an error to call starttls more than once on an AnyEvent::Handle object"
       if $self->{tls};
    
    if ($ssl eq "accept") {
@@ -1472,6 +1472,31 @@ sub DESTROY {
    }
 }
 
+=item $handle->destroy
+
+Shuts down the handle object as much as possible - this call ensures that
+no further callbacks will be invoked and resources will be freed as much
+as possible. You must not call any methods on the object afterwards.
+
+Normally, you can just "forget" any references to an AnyEvent::Handle
+object and it will simply shut down. This works in fatal error and EOF
+callbacks, as well as code outside. It does I<NOT> work in a read or write
+callback, so when you want to destroy the AnyEvent::Handle object from
+within such an callback. You I<MUST> call C<< ->destroy >> explicitly in
+that case.
+
+The handle might still linger in the background and write out remaining
+data, as specified by the C<linger> option, however.
+
+=cut
+
+sub destroy {
+   my ($self) = @_;
+
+   $self->DESTROY;
+   %$self = ();
+}
+
 =item AnyEvent::Handle::TLS_CTX
 
 This function creates and returns the Net::SSLeay::CTX object used by
@@ -1514,6 +1539,33 @@ sub TLS_CTX() {
 
 =over 4
 
+=item I C<undef> the AnyEvent::Handle reference inside my callback and
+still get further invocations!
+
+That's because AnyEvent::Handle keeps a reference to itself when handling
+read or write callbacks.
+
+It is only safe to "forget" the reference inside EOF or error callbacks,
+from within all other callbacks, you need to explicitly call the C<<
+->destroy >> method.
+
+=item I get different callback invocations in TLS mode/Why can't I pause
+reading?
+
+Unlike, say, TCP, TLS connections do not consist of two independent
+communication channels, one for each direction. Or put differently. The
+read and write directions are not independent of each other: you cannot
+write data unless you are also prepared to read, and vice versa.
+
+This can mean than, in TLS mode, you might get C<on_error> or C<on_eof>
+callback invocations when you are not expecting any read data - the reason
+is that AnyEvent::Handle always reads in TLS mode.
+
+During the connection, you have to make sure that you always have a
+non-empty read-queue, or an C<on_read> watcher. At the end of the
+connection (or when you no longer want to use it) you can call the
+C<destroy> method.
+
 =item How do I read data until the other side closes the connection?
 
 If you just want to read your data into a perl scalar, the easiest way
@@ -1532,11 +1584,10 @@ The reason to use C<on_error> is that TCP connections, due to latencies
 and packets loss, might get closed quite violently with an error, when in
 fact, all data has been received.
 
-It is usually better to use acknowledgements when transfering data,
+It is usually better to use acknowledgements when transferring data,
 to make sure the other side hasn't just died and you got the data
 intact. This is also one reason why so many internet protocols have an
 explicit QUIT command.
-
 
 =item I don't want to destroy the handle too early - how do I wait until
 all data has been written?

@@ -69,7 +69,7 @@ our $idle;    # idle handler
 our $main;    # main coroutine
 our $current; # current coroutine
 
-our $VERSION = 4.8;
+our $VERSION = 4.804;
 
 our @EXPORT = qw(async async_pool cede schedule terminate current unblock_sub);
 our %EXPORT_TAGS = (
@@ -170,7 +170,7 @@ $manager = new Coro sub {
       &schedule;
    }
 };
-$manager->desc ("[coro manager]");
+$manager->{desc} = "[coro manager]";
 $manager->prio (PRIO_MAX);
 
 =back
@@ -223,7 +223,7 @@ coroutine that might have executed other code already (which can be good
 or bad :).
 
 On the plus side, this function is faster than creating (and destroying)
-a completely new coroutine, so if you need a lot of generic coroutines in
+a completly new coroutine, so if you need a lot of generic coroutines in
 quick successsion, use C<async_pool>, not C<async>.
 
 The code block is executed in an C<eval> context and a warning will be
@@ -237,12 +237,12 @@ The priority will be reset to C<0> after each run, tracing will be
 disabled, the description will be reset and the default output filehandle
 gets restored, so you can change all these. Otherwise the coroutine will
 be re-used "as-is": most notably if you change other per-coroutine global
-stuff such as C<$/> you I<must needs> to revert that change, which is most
-simply done by using local as in: C< local $/ >.
+stuff such as C<$/> you I<must needs> revert that change, which is most
+simply done by using local as in: C<< local $/ >>.
 
-The pool size is limited to C<8> idle coroutines (this can be adjusted by
-changing $Coro::POOL_SIZE), and there can be as many non-idle coros as
-required.
+The idle pool size is limited to C<8> idle coroutines (this can be
+adjusted by changing $Coro::POOL_SIZE), but there can be as many non-idle
+coros as required.
 
 If you are concerned about pooled coroutines growing a lot because a
 single C<async_pool> used a lot of stackspace you can e.g. C<async_pool
@@ -443,6 +443,25 @@ sub cancel {
    }
 }
 
+=item $coroutine->throw ([$scalar])
+
+If C<$throw> is specified and defined, it will be thrown as an exception
+inside the coroutine at the next convenient point in time (usually after
+it gains control at the next schedule/transfer/cede). Otherwise clears the
+exception object.
+
+The exception object will be thrown "as is" with the specified scalar in
+C<$@>, i.e. if it is a string, no line number or newline will be appended
+(unlike with C<die>).
+
+This can be used as a softer means than C<cancel> to ask a coroutine to
+end itself, although there is no guarantee that the exception will lead to
+termination, and if the exception isn't caught it might well end the whole
+program.
+
+You might also think of C<throw> as being the moral equivalent of
+C<kill>ing a coroutine with a signal (in this case, a scalar).
+
 =item $coroutine->join
 
 Wait until the coroutine terminates and return any values given to the
@@ -513,26 +532,11 @@ higher values mean lower priority, just as in unix).
 =item $olddesc = $coroutine->desc ($newdesc)
 
 Sets (or gets in case the argument is missing) the description for this
-coroutine. This is just a free-form string you can associate with a coroutine.
+coroutine. This is just a free-form string you can associate with a
+coroutine.
 
-This method simply sets the C<< $coroutine->{desc} >> member to the given string. You
-can modify this member directly if you wish.
-
-=item $coroutine->throw ([$scalar])
-
-If C<$throw> is specified and defined, it will be thrown as an exception
-inside the coroutine at the next convinient point in time (usually after
-it gains control at the next schedule/transfer/cede). Otherwise clears the
-exception object.
-
-The exception object will be thrown "as is" with the specified scalar in
-C<$@>, i.e. if it is a string, no line number or newline will be appended
-(unlike with C<die>).
-
-This can be used as a softer means than C<cancel> to ask a coroutine to
-end itself, although there is no guarentee that the exception will lead to
-termination, and if the exception isn't caught it might well end the whole
-program.
+This method simply sets the C<< $coroutine->{desc} >> member to the given
+string. You can modify this member directly if you wish.
 
 =cut
 
@@ -644,7 +648,7 @@ our $unblock_scheduler = new Coro sub {
       schedule; # sleep well
    }
 };
-$unblock_scheduler->desc ("[unblock_sub scheduler]");
+$unblock_scheduler->{desc} = "[unblock_sub scheduler]";
 
 sub unblock_sub(&) {
    my $cb = shift;

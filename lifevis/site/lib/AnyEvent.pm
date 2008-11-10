@@ -863,7 +863,7 @@ use strict qw(vars subs);
 
 use Carp;
 
-our $VERSION = 4.3;
+our $VERSION = 4.32;
 our $MODEL;
 
 our $AUTOLOAD;
@@ -1535,16 +1535,16 @@ watcher.
 =head3 Results
 
           name watchers bytes create invoke destroy comment
-         EV/EV   400000   244   0.56   0.46    0.31 EV native interface
-        EV/Any   100000   244   2.50   0.46    0.29 EV + AnyEvent watchers
-    CoroEV/Any   100000   244   2.49   0.44    0.29 coroutines + Coro::Signal
-      Perl/Any   100000   513   4.92   0.87    1.12 pure perl implementation
-   Event/Event    16000   516  31.88  31.30    0.85 Event native interface
-     Event/Any    16000   590  35.75  31.42    1.08 Event + AnyEvent watchers
-      Glib/Any    16000  1357  98.22  12.41   54.00 quadratic behaviour
-        Tk/Any     2000  1860  26.97  67.98   14.00 SEGV with >> 2000 watchers
-     POE/Event     2000  6644 108.64 736.02   14.73 via POE::Loop::Event
-    POE/Select     2000  6343  94.13 809.12  565.96 via POE::Loop::Select
+         EV/EV   400000   224   0.47   0.35    0.27 EV native interface
+        EV/Any   100000   224   2.88   0.34    0.27 EV + AnyEvent watchers
+    CoroEV/Any   100000   224   2.85   0.35    0.28 coroutines + Coro::Signal
+      Perl/Any   100000   452   4.14   0.75    0.99 pure perl implementation
+   Event/Event    16000   517  32.20  31.80    0.81 Event native interface
+     Event/Any    16000   590  35.85  31.55    1.06 Event + AnyEvent watchers
+      Glib/Any    16000  1357 102.33  12.31   51.00 quadratic behaviour
+        Tk/Any     2000  1860  27.20  66.31   14.00 SEGV with >> 2000 watchers
+     POE/Event     2000  6328 109.99 751.67   14.02 via POE::Loop::Event
+    POE/Select     2000  6027  94.54 809.13  579.80 via POE::Loop::Select
 
 =head3 Discussion
 

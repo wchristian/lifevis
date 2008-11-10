@@ -46,7 +46,7 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK WSAEINPROGRESS);
 
 use base 'Exporter';
 
-our $VERSION = 4.8;
+our $VERSION = 4.804;
 our @EXPORT = qw(unblock);
 
 =item $fh = new_from_fh Coro::Handle $fhandle [, arg => value...]
@@ -522,21 +522,25 @@ sub READ {
 
 sub READLINE {
    my $irs = @_ > 1 ? $_[1] : $/;
+   my ($ofs, $len);
 
    while() {
       if (defined $irs) {
-         my $pos = index $_[0][3], $irs;
+         my $pos = index $_[0][3], $irs, $ofs < 0 ? 0 : $ofs;
          if ($pos >= 0) {
             $pos += length $irs;
             my $res = substr $_[0][3], 0, $pos;
             substr ($_[0][3], 0, $pos) = "";
             return $res;
          }
+
+         $ofs = length $_[0][3] - length $irs;
       }
 
-      my $r = sysread $_[0][0], $_[0][3], 8192, length $_[0][3];
-      if (defined $r) {
-         return length $_[0][3] ? delete $_[0][3] : undef unless $r;
+      $len = sysread $_[0][0], $_[0][3], $len + 4096, length $_[0][3];
+      if (defined $len) {
+         return length $_[0][3] ? delete $_[0][3] : undef
+            unless $len;
       } elsif (($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) || !&readable) {
          return length $_[0][3] ? delete $_[0][3] : undef;
       }
