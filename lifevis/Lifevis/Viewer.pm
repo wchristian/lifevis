@@ -970,14 +970,14 @@ sub memory_control_loop {
 
         if ( defined $delete ) {
             $memory_clears++;
-            
+
             # delete landscape display lists
             my $slices = $cache[$delete][display_lists];
             for my $slice ( 0 .. @{$slices} - 1 ) {
                 glDeleteLists( $cache[$delete][display_lists][$slice], 1 )
                   if ( $cache[$delete][display_lists][$slice] );
             }
-            
+
             # delete landscape masks
             $slices = $cache[$delete][mask_lists];
             for my $slice ( 0 .. @{$slices} - 1 ) {
@@ -1197,60 +1197,62 @@ sub generate_display_list {
         $cache[$id][mask_lists][$z] = $dl;
     }
 
-    draw_quadrangle(( $x * 16 ),$z,( $y * 16 ),16,16, $dl);
+    draw_quadrangle( ( $x * 16 ), $z, ( $y * 16 ), 16, 16, $dl );
 
     return;
 }
 
-
-
 sub draw_quadrangle {
-my ($x, $y, $z, $width, $length, $dl) = @_;
+    my ( $x, $y, $z, $width, $length, $dl ) = @_;
 
-my $x_west = $x+-0.4;
-my $x_east = $x+$width-0.4;
-my $y_top = $y+0.4;
-my $y_bottom = $y+-0.4;
-my $z_north = $z+-0.4;
-my $z_south = $z+$length-0.4;
+    my $x_west   = $x + -0.4;
+    my $x_east   = $x + $width - 0.4;
+    my $y_top    = $y + 0.4;
+    my $y_bottom = $y + -0.4;
+    my $z_north  = $z + -0.4;
+    my $z_south  = $z + $length - 0.4;
 
-my @verts = (
-$x_west,$y_bottom,$z_south,   $x_east,$y_bottom,$z_south,   $x_west,$y_top,$z_south,   $x_west,$y_top,$z_south,   $x_east,$y_bottom,$z_south,   $x_east,$y_top,$z_south,   
-$x_west,$y_bottom,$z_north,   $x_east,$y_top,$z_north,   $x_east,$y_bottom,$z_north,   $x_west,$y_top,$z_north,   $x_east,$y_top,$z_north,   $x_west,$y_bottom,$z_north, 
-$x_west,$y_top,$z_south,   $x_east,$y_top,$z_north,   $x_west,$y_top,$z_north,   $x_east,$y_top,$z_south,   $x_east,$y_top,$z_north,   $x_west,$y_top,$z_south,   
-$x_west,$y_top,$z_south,   $x_west,$y_bottom,$z_north,   $x_west,$y_bottom,$z_south,   $x_west,$y_top,$z_north,   $x_west,$y_bottom,$z_north,   $x_west,$y_top,$z_south,
-$x_east,$y_bottom,$z_south,   $x_east,$y_top,$z_north,   $x_east,$y_top,$z_south,   $x_east,$y_bottom,$z_north,   $x_east,$y_top,$z_north,   $x_east,$y_bottom,$z_south, 
-$x_west,$y_bottom,$z_south,   $x_west,$y_bottom,$z_north,   $x_east,$y_bottom,$z_south,   $x_east,$y_bottom,$z_south,   $x_west,$y_bottom,$z_north,   $x_east,$y_bottom,$z_north,  );
-my $verts = OpenGL::Array->new_list( GL_FLOAT, @verts );
+    my @verts = (
+        $x_west,   $y_bottom, $z_south,  $x_east,   $y_bottom, $z_south,  $x_west,   $y_top,    $z_south,  $x_west,
+        $y_top,    $z_south,  $x_east,   $y_bottom, $z_south,  $x_east,   $y_top,    $z_south,  $x_west,   $y_bottom,
+        $z_north,  $x_east,   $y_top,    $z_north,  $x_east,   $y_bottom, $z_north,  $x_west,   $y_top,    $z_north,
+        $x_east,   $y_top,    $z_north,  $x_west,   $y_bottom, $z_north,  $x_west,   $y_top,    $z_south,  $x_east,
+        $y_top,    $z_north,  $x_west,   $y_top,    $z_north,  $x_east,   $y_top,    $z_south,  $x_east,   $y_top,
+        $z_north,  $x_west,   $y_top,    $z_south,  $x_west,   $y_top,    $z_south,  $x_west,   $y_bottom, $z_north,
+        $x_west,   $y_bottom, $z_south,  $x_west,   $y_top,    $z_north,  $x_west,   $y_bottom, $z_north,  $x_west,
+        $y_top,    $z_south,  $x_east,   $y_bottom, $z_south,  $x_east,   $y_top,    $z_north,  $x_east,   $y_top,
+        $z_south,  $x_east,   $y_bottom, $z_north,  $x_east,   $y_top,    $z_north,  $x_east,   $y_bottom, $z_south,
+        $x_west,   $y_bottom, $z_south,  $x_west,   $y_bottom, $z_north,  $x_east,   $y_bottom, $z_south,  $x_east,
+        $y_bottom, $z_south,  $x_west,   $y_bottom, $z_north,  $x_east,   $y_bottom, $z_north,
+    );
+    my $verts = OpenGL::Array->new_list( GL_FLOAT, @verts );
 
-my @texcoords = (0,0,   1,0,   0,1,   0,1,   1,0,   1,1,   
-1,0,   0,1,   0,0,   1,1,   0,1,   1,0,   
-0,0,   1,1,   0,1,   1,0,   1,1,   0,0,
-1,1,   0,0,   1,0,   0,1,   0,0,   1,1,  
-0,0,   1,1,   0,1,   1,0,   1,1,   0,0, 
-1,0,   1,1,   0,0,   0,0,   1,1,   0,1,  );
-my $texcoords = OpenGL::Array->new_list( GL_FLOAT, @texcoords );
+    my @texcoords = (
+        0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0,
+        1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1,
+    );
+    my $texcoords = OpenGL::Array->new_list( GL_FLOAT, @texcoords );
 
-my @norms = (0,0,1,   0,0,1,   0,0,1,   0,0,1,   0,0,1,   0,0,1,   
-0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,
-0,1,0,   0,1,0,   0,1,0,   0,1,0,   0,1,0,   0,1,0, 
--1,0,0,   -1,0,0,   -1,0,0,   -1,0,0,   -1,0,0,   -1,0,0, 
-1,0,0,   1,0,0,   1,0,0,   1,0,0,   1,0,0,   1,0,0,
-0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,
- );
-my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
+    my @norms = (
+        0,  0,  1, 0,  0,  1, 0,  0,  1, 0,  0,  1, 0,  0,  1, 0,  0,  1, 0,  0,  -1, 0,
+        0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 1,  0,  0, 1,  0,  0,  1,
+        0,  0,  1, 0,  0,  1, 0,  0,  1, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0,  0,
+        -1, 0,  0, -1, 0,  0, 1,  0,  0, 1,  0,  0, 1,  0,  0, 1,  0,  0, 1,  0,  0,  1,
+        0,  0,  0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,
+    );
+    my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
 
-my @indices = ( 0 .. 36 );
-my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
+    my @indices = ( 0 .. 36 );
+    my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
 
-glVertexPointer_p( 3, $verts );
-glNormalPointer_p( $norms );
-glTexCoordPointer_p( 2, $texcoords );
+    glVertexPointer_p( 3, $verts );
+    glNormalPointer_p($norms);
+    glTexCoordPointer_p( 2, $texcoords );
 
-glNewList( $dl, GL_COMPILE );
-glDrawArrays( GL_TRIANGLES, 0, 36 );
-glEndList();
-};
+    glNewList( $dl, GL_COMPILE );
+    glDrawArrays( GL_TRIANGLES, 0, 36 );
+    glEndList();
+}
 
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
@@ -1460,9 +1462,6 @@ sub idle_tasks {
 # ------
 # Routine which actually does the drawing
 
-
-
-
 sub render_scene {
 
     while (1) {
@@ -1494,10 +1493,10 @@ sub render_scene {
         glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
 
         render_models();
-        
+
         ## get pixels of cursor
         #my @array = glGenQueries_p(1);
-        #    
+        #
         #glDepthMask(GL_FALSE);
         #glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
         #
@@ -1583,16 +1582,17 @@ sub render_models {
             }
         }
     }
-    
+
     my @query_cells;
     my @cells_to_draw;
-     
+
     $pixels = '';
     my @queries;
     glDepthMask(GL_FALSE);
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+    glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
     glDisable(GL_CULL_FACE);
     for my $z ( 0 .. $ceiling_slice ) {
+
         # cycle through cells in range around cursor to render
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
@@ -1603,131 +1603,129 @@ sub render_models {
 
                 # draw landscape masks
                 my $slices = $cache[$cache_ptr][mask_lists];
-                if ($slices->[$z]) {
+                if ( $slices->[$z] ) {
                     my ($query) = glGenQueries_p(1);
-                    glBeginQuery(GL_SAMPLES_PASSED, $query);
+                    glBeginQuery( GL_SAMPLES_PASSED, $query );
                     glCallList( $slices->[$z] );
                     glEndQuery(GL_SAMPLES_PASSED);
                     push @queries, $query;
-                    $query_cells[$query] = [$bx,$by,$z];
+                    $query_cells[$query] = [ $bx, $by, $z ];
                 }
-                
 
             }
         }
     }
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-    
-    for my $query ( @queries ) {
-        while (!glGetQueryObjectiv($query, GL_QUERY_RESULT_AVAILABLE)) {}
-        my $pixel = glGetQueryObjectuiv($query, GL_QUERY_RESULT);
+    glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+
+    for my $query (@queries) {
+        while ( !glGetQueryObjectiv( $query, GL_QUERY_RESULT_AVAILABLE ) ) { }
+        my $pixel = glGetQueryObjectuiv( $query, GL_QUERY_RESULT );
         $pixels .= "$pixel:";
         push @cells_to_draw, $query_cells[$query] if $pixel > 0;
     }
     glDeleteQueries(@queries);
-    
-    $pixels = $#cells_to_draw."/".$#query_cells." = ".$pixels;
 
-    for my $cell ( @cells_to_draw ) {
-        my $z = $cell->[2];
+    $pixels = $#cells_to_draw . "/" . $#query_cells . " = " . $pixels;
+
+    for my $cell (@cells_to_draw) {
+        my $z          = $cell->[2];
         my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
-        my $bx = $cell->[0];
-        my $by = $cell->[1];
+        my $bx         = $cell->[0];
+        my $by         = $cell->[1];
 
-                my $cache_ptr = $cells[$bx][$by][cache_ptr];
-                next if !defined $cache_ptr;
-                next if !defined $cache[$cache_ptr];
+        my $cache_ptr = $cells[$bx][$by][cache_ptr];
+        next if !defined $cache_ptr;
+        next if !defined $cache[$cache_ptr];
 
+        # draw creatures
+        if ( defined $cells[$bx][$by][creature_list][$z] ) {
+            my $creature_list_size = @{ $cells[$bx][$by][creature_list][$z] };
+            for my $entry ( 0 .. $creature_list_size ) {
+                my $creature_id = $cells[$bx][$by][creature_list][$z][$entry];
+                next if !defined $creature_id;
+                next unless $creatures_present{$creature_id};
 
-                # draw creatures
-                if ( defined $cells[$bx][$by][creature_list][$z] ) {
-                    my $creature_list_size = @{ $cells[$bx][$by][creature_list][$z] };
-                    for my $entry ( 0 .. $creature_list_size ) {
-                        my $creature_id = $cells[$bx][$by][creature_list][$z][$entry];
-                        next if !defined $creature_id;
-                        next unless $creatures_present{$creature_id};
-
-                        next if $creatures{$creature_id}[flags] & 2;    # dead, i think
-                        my $x = $creatures{$creature_id}[c_x];
-                        my $y = $creatures{$creature_id}[c_y];
-                        glColor3f( $brightness, $brightness, $brightness );
-                        glTranslatef( $x, $z, $y );
-                        my $model_name;
-                        given ( $creatures{$creature_id}[race] ) {
-                            when (166) {
-                                $model_name = "Creature";
-                            }
-                            default {
-                                $model_name = "Creature2";
-                            }
-                        }
-
-                        glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
-                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                            next if !defined $model_display_lists{$model_name}[$part];
-                            glCallList( $model_display_lists{$model_name}[$part] );
-                        }
-                        glTranslatef( -$x, -$z, -$y );
+                next if $creatures{$creature_id}[flags] & 2;    # dead, i think
+                my $x = $creatures{$creature_id}[c_x];
+                my $y = $creatures{$creature_id}[c_y];
+                glColor3f( $brightness, $brightness, $brightness );
+                glTranslatef( $x, $z, $y );
+                my $model_name;
+                given ( $creatures{$creature_id}[race] ) {
+                    when (166) {
+                        $model_name = "Creature";
+                    }
+                    default {
+                        $model_name = "Creature2";
                     }
                 }
 
-                # draw buildings
-                if ( defined $cells[$bx][$by][building_list][$z] ) {
-                    my $building_list_size = @{ $cells[$bx][$by][building_list][$z] };
-                    for my $entry ( 0 .. $building_list_size ) {
-                        my $building_id = $cells[$bx][$by][building_list][$z][$entry];
-                        next if !defined $building_id;
-                        next unless $building_present{$building_id};
+                glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                    next if !defined $model_display_lists{$model_name}[$part];
+                    glCallList( $model_display_lists{$model_name}[$part] );
+                }
+                glTranslatef( -$x, -$z, -$y );
+            }
+        }
 
-                        my $x = $buildings{$building_id}[b_x];
-                        my $y = $buildings{$building_id}[b_y];
-                        glColor3f( $brightness, $brightness, $brightness );
-                        glTranslatef( $x, $z, $y );
+        # draw buildings
+        if ( defined $cells[$bx][$by][building_list][$z] ) {
+            my $building_list_size = @{ $cells[$bx][$by][building_list][$z] };
+            for my $entry ( 0 .. $building_list_size ) {
+                my $building_id = $cells[$bx][$by][building_list][$z][$entry];
+                next if !defined $building_id;
+                next unless $building_present{$building_id};
 
-                        my $vtable_id = $buildings{$building_id}[b_vtable_id];
-                        $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
-                        my $model_name = $building_visuals{$vtable_id}[0];
+                my $x = $buildings{$building_id}[b_x];
+                my $y = $buildings{$building_id}[b_y];
+                glColor3f( $brightness, $brightness, $brightness );
+                glTranslatef( $x, $z, $y );
 
-                        glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
-                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                            next if !defined $model_display_lists{$model_name}[$part];
-                            glCallList( $model_display_lists{$model_name}[$part] );
-                        }
-                        glTranslatef( -$x, -$z, -$y );
+                my $vtable_id = $buildings{$building_id}[b_vtable_id];
+                $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
+                my $model_name = $building_visuals{$vtable_id}[0];
+
+                glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
+                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                    next if !defined $model_display_lists{$model_name}[$part];
+                    glCallList( $model_display_lists{$model_name}[$part] );
+                }
+                glTranslatef( -$x, -$z, -$y );
+            }
+        }
+
+        # draw items
+        if ( defined $cells[$bx][$by][item_list][$z] ) {
+            my $item_list_size = @{ $cells[$bx][$by][item_list][$z] };
+            for my $entry ( 0 .. $item_list_size ) {
+                my $item_id = $cells[$bx][$by][item_list][$z][$entry];
+                next if !defined $item_id;
+                next unless defined $item_present[$item_id];
+
+                my $x = $items[$item_id][i_x];
+                my $y = $items[$item_id][i_y];
+
+                glColor3f( $brightness, $brightness, $brightness );
+                glTranslatef( $x, $z, $y );
+                my $model_name;
+                given ($item_id) {
+                    default {
+                        $model_name = "Items";
                     }
                 }
 
-                # draw items
-                if ( defined $cells[$bx][$by][item_list][$z] ) {
-                    my $item_list_size = @{ $cells[$bx][$by][item_list][$z] };
-                    for my $entry ( 0 .. $item_list_size ) {
-                        my $item_id = $cells[$bx][$by][item_list][$z][$entry];
-                        next if !defined $item_id;
-                        next unless defined $item_present[$item_id];
-
-                        my $x = $items[$item_id][i_x];
-                        my $y = $items[$item_id][i_y];
-
-                        glColor3f( $brightness, $brightness, $brightness );
-                        glTranslatef( $x, $z, $y );
-                        my $model_name;
-                        given ($item_id) {
-                            default {
-                                $model_name = "Items";
-                            }
-                        }
-
-                        glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
-                        for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                            next if !defined $model_display_lists{$model_name}[$part];
-                            glCallList( $model_display_lists{$model_name}[$part] );
-                        }
-
-                        glTranslatef( -$x, -$z, -$y );
-                    }
+                glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
+                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
+                    next if !defined $model_display_lists{$model_name}[$part];
+                    glCallList( $model_display_lists{$model_name}[$part] );
                 }
+
+                glTranslatef( -$x, -$z, -$y );
+            }
+        }
 
     }
 
