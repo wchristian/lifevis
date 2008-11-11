@@ -13,7 +13,7 @@ use lib '.';
 use lib '..';
 use Lifevis::constants;
 
-my @light_variance = ( 0.015, 0.005, -0.005, -0.015 );
+my @light_variance = ( 0.03, 0, -0.03, -0.06 );
 
 $TILE_TYPES[1]   = [ RAMP_TOP,   unknown,           0 ];                  #   MAPTILE_RAMPSPACE,
 $TILE_TYPES[2]   = [ WALL,       pool,              0 ];                  #   MAPTILE_POOL,

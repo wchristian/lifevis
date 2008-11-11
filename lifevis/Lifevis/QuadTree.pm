@@ -27,6 +27,9 @@ my @adjacent_pairs = ( [ 'nw', 'ne' ], [ 'sw', 'se' ], [ 'nw', 'sw' ], [ 'ne', '
 #     -parent => undef,
 #     -pos    => undef);
 #
+# Note that it treats the coordinates as those of an integer-based grid,
+# with the height and width being equal and a power of 2.
+#
 ###############################
 
 sub new {
@@ -200,6 +203,19 @@ sub get_rectangles {
         else {
             $rectangles .= $self->{CHILDREN}{$pos}->get_rectangles;
         }
+    }
+    
+    if ( !defined $self->{PARENT} ) {
+        my @rects = split ( /|/, $rectangles );
+        
+        my $rects_combined = 1;
+        while ( $rects_combined != 0 ) {
+            $rects_combined = 0;
+            
+            
+            
+        }
+        
     }
 
     # return string with coordinates of rectangles within this node

@@ -223,6 +223,7 @@ my $buil_loop;
 my $item_delay_counter;
 my $item_loop;
 my $force_rt = 0;
+my $pixels;
 
 my @offsets;
 my $df_proc_handle;
@@ -969,11 +970,19 @@ sub memory_control_loop {
 
         if ( defined $delete ) {
             $memory_clears++;
-
+            
+            # delete landscape display lists
             my $slices = $cache[$delete][display_lists];
             for my $slice ( 0 .. @{$slices} - 1 ) {
                 glDeleteLists( $cache[$delete][display_lists][$slice], 1 )
                   if ( $cache[$delete][display_lists][$slice] );
+            }
+            
+            # delete landscape masks
+            $slices = $cache[$delete][mask_lists];
+            for my $slice ( 0 .. @{$slices} - 1 ) {
+                glDeleteLists( $cache[$delete][mask_lists][$slice], 1 )
+                  if ( $cache[$delete][mask_lists][$slice] );
             }
 
             undef ${ $cache[$delete][cell_ptr] };
@@ -1078,7 +1087,7 @@ sub generate_display_list {
 
                 my $base_visual = $TILE_TYPES[$type][base_visual];
 
-                my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.2 + $brightness_mod );
+                my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 + $brightness_mod );
 
                 given ($base_visual) {
                     when ( [ WALL, PILLAR, FORTIF, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, FLOOR ] )
@@ -1180,8 +1189,68 @@ sub generate_display_list {
     }
     glEndList();
 
+    if ( $cache[$id][mask_lists][$z] ) {
+        $dl = $cache[$id][mask_lists][$z];
+    }
+    else {
+        $dl = glGenLists(1);
+        $cache[$id][mask_lists][$z] = $dl;
+    }
+
+    draw_quadrangle(( $x * 16 ),$z,( $y * 16 ),16,16, $dl);
+
     return;
 }
+
+
+
+sub draw_quadrangle {
+my ($x, $y, $z, $width, $length, $dl) = @_;
+
+my $x_west = $x+-0.4;
+my $x_east = $x+$width-0.4;
+my $y_top = $y+0.4;
+my $y_bottom = $y+-0.4;
+my $z_north = $z+-0.4;
+my $z_south = $z+$length-0.4;
+
+my @verts = (
+$x_west,$y_bottom,$z_south,   $x_east,$y_bottom,$z_south,   $x_west,$y_top,$z_south,   $x_west,$y_top,$z_south,   $x_east,$y_bottom,$z_south,   $x_east,$y_top,$z_south,   
+$x_west,$y_bottom,$z_north,   $x_east,$y_top,$z_north,   $x_east,$y_bottom,$z_north,   $x_west,$y_top,$z_north,   $x_east,$y_top,$z_north,   $x_west,$y_bottom,$z_north, 
+$x_west,$y_top,$z_south,   $x_east,$y_top,$z_north,   $x_west,$y_top,$z_north,   $x_east,$y_top,$z_south,   $x_east,$y_top,$z_north,   $x_west,$y_top,$z_south,   
+$x_west,$y_top,$z_south,   $x_west,$y_bottom,$z_north,   $x_west,$y_bottom,$z_south,   $x_west,$y_top,$z_north,   $x_west,$y_bottom,$z_north,   $x_west,$y_top,$z_south,
+$x_east,$y_bottom,$z_south,   $x_east,$y_top,$z_north,   $x_east,$y_top,$z_south,   $x_east,$y_bottom,$z_north,   $x_east,$y_top,$z_north,   $x_east,$y_bottom,$z_south, 
+$x_west,$y_bottom,$z_south,   $x_west,$y_bottom,$z_north,   $x_east,$y_bottom,$z_south,   $x_east,$y_bottom,$z_south,   $x_west,$y_bottom,$z_north,   $x_east,$y_bottom,$z_north,  );
+my $verts = OpenGL::Array->new_list( GL_FLOAT, @verts );
+
+my @texcoords = (0,0,   1,0,   0,1,   0,1,   1,0,   1,1,   
+1,0,   0,1,   0,0,   1,1,   0,1,   1,0,   
+0,0,   1,1,   0,1,   1,0,   1,1,   0,0,
+1,1,   0,0,   1,0,   0,1,   0,0,   1,1,  
+0,0,   1,1,   0,1,   1,0,   1,1,   0,0, 
+1,0,   1,1,   0,0,   0,0,   1,1,   0,1,  );
+my $texcoords = OpenGL::Array->new_list( GL_FLOAT, @texcoords );
+
+my @norms = (0,0,1,   0,0,1,   0,0,1,   0,0,1,   0,0,1,   0,0,1,   
+0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,   0,0,-1,
+0,1,0,   0,1,0,   0,1,0,   0,1,0,   0,1,0,   0,1,0, 
+-1,0,0,   -1,0,0,   -1,0,0,   -1,0,0,   -1,0,0,   -1,0,0, 
+1,0,0,   1,0,0,   1,0,0,   1,0,0,   1,0,0,   1,0,0,
+0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,   0,-1,0,
+ );
+my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
+
+my @indices = ( 0 .. 36 );
+my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
+
+glVertexPointer_p( 3, $verts );
+glNormalPointer_p( $norms );
+glTexCoordPointer_p( 2, $texcoords );
+
+glNewList( $dl, GL_COMPILE );
+glDrawArrays( GL_TRIANGLES, 0, 36 );
+glEndList();
+};
 
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
@@ -1391,6 +1460,9 @@ sub idle_tasks {
 # ------
 # Routine which actually does the drawing
 
+
+
+
 sub render_scene {
 
     while (1) {
@@ -1422,6 +1494,33 @@ sub render_scene {
         glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
 
         render_models();
+        
+        ## get pixels of cursor
+        #my @array = glGenQueries_p(1);
+        #    
+        #glDepthMask(GL_FALSE);
+        #glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+        #
+        #glBeginQuery(GL_SAMPLES_PASSED, $array[0]);
+        #
+        #glLineWidth(2);
+        #glPolygonMode( GL_FRONT, GL_LINE );
+        #glColor3f( 1, 1, 1 );
+        #glTranslatef( $x_pos, $y_pos, $z_pos );
+        #for my $part ( 0 .. $#{ $DRAW_MODEL{Cursor} } ) {
+        #    next if !defined $model_display_lists{Cursor}[$part];
+        #    glCallList( $model_display_lists{Cursor}[$part] );
+        #}
+        #glTranslatef( -$x_pos, -$y_pos, -$z_pos );
+        #glPolygonMode( GL_FRONT, GL_FILL );
+        #glEndQuery(GL_SAMPLES_PASSED);
+        #
+        #glDepthMask(GL_TRUE);
+        #glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+        #
+        #while (!glGetQueryObjectiv($array[0], GL_QUERY_RESULT_AVAILABLE)) {}
+        #
+        #$pixels = glGetQueryObjectuiv($array[0], GL_QUERY_RESULT);
 
         # draw visible cursor
         glDisable(GL_LIGHTING);
@@ -1467,8 +1566,7 @@ sub render_scene {
 
 sub render_models {
 
-    for my $z ( 0 .. $zcount ) {
-        my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.2 );
+    for my $z ( 0 .. $ceiling_slice ) {
 
         # cycle through cells in range around cursor to render
         for my $bx ( $min_x_range .. $max_x_range ) {
@@ -1478,10 +1576,70 @@ sub render_models {
                 next if !defined $cache_ptr;
                 next if !defined $cache[$cache_ptr];
 
-                my $slices = $cache[$cache_ptr][display_lists];
-
                 # draw landscape
+                my $slices = $cache[$cache_ptr][display_lists];
                 glCallList( $slices->[$z] ) if $slices->[$z];
+
+            }
+        }
+    }
+    
+    my @query_cells;
+    my @cells_to_draw;
+     
+    $pixels = '';
+    my @queries;
+    glDepthMask(GL_FALSE);
+    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    for my $z ( 0 .. $ceiling_slice ) {
+        # cycle through cells in range around cursor to render
+        for my $bx ( $min_x_range .. $max_x_range ) {
+            for my $by ( $min_y_range .. $max_y_range ) {
+
+                my $cache_ptr = $cells[$bx][$by][cache_ptr];
+                next if !defined $cache_ptr;
+                next if !defined $cache[$cache_ptr];
+
+                # draw landscape masks
+                my $slices = $cache[$cache_ptr][mask_lists];
+                if ($slices->[$z]) {
+                    my ($query) = glGenQueries_p(1);
+                    glBeginQuery(GL_SAMPLES_PASSED, $query);
+                    glCallList( $slices->[$z] );
+                    glEndQuery(GL_SAMPLES_PASSED);
+                    push @queries, $query;
+                    $query_cells[$query] = [$bx,$by,$z];
+                }
+                
+
+            }
+        }
+    }
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
+    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+    
+    for my $query ( @queries ) {
+        while (!glGetQueryObjectiv($query, GL_QUERY_RESULT_AVAILABLE)) {}
+        my $pixel = glGetQueryObjectuiv($query, GL_QUERY_RESULT);
+        $pixels .= "$pixel:";
+        push @cells_to_draw, $query_cells[$query] if $pixel > 0;
+    }
+    glDeleteQueries(@queries);
+    
+    $pixels = $#cells_to_draw."/".$#query_cells." = ".$pixels;
+
+    for my $cell ( @cells_to_draw ) {
+        my $z = $cell->[2];
+        my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
+        my $bx = $cell->[0];
+        my $by = $cell->[1];
+
+                my $cache_ptr = $cells[$bx][$by][cache_ptr];
+                next if !defined $cache_ptr;
+                next if !defined $cache[$cache_ptr];
+
 
                 # draw creatures
                 if ( defined $cells[$bx][$by][creature_list][$z] ) {
@@ -1571,8 +1729,6 @@ sub render_models {
                     }
                 }
 
-            }
-        }
     }
 
     return;
@@ -1687,6 +1843,10 @@ sub render_ui {
 
     $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks";
     glRasterPos2i( 2, 236 );
+    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Pixels: $pixels";
+    glRasterPos2i( 2, 250 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
     #$buf = "Crea: $creature_length";
