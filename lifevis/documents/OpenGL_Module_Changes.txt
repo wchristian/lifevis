@@ -23,6 +23,26 @@ glGenQueries_p(n)
 		free(ids);
 	}
 
+#// 1.1
+#//# glDeleteQueries(@textureIDs);
+void
+glDeleteQueries(...)
+	INIT:
+		loadProc(glDeleteQueries,"glDeleteQueries");
+	PPCODE:
+	{
+		GLsizei n = items;
+		GLuint * ids = malloc(sizeof(GLuint) * (n+1));
+		int i;
+		
+		for (i=0;i<n;i++)
+			ids[i] = SvIV(ST(i));
+		
+		glDeleteQueries(n, ids);
+		
+		free(ids);
+	}
+
 #// 1.0
 #//# $result = glGetQueryObjectiv($id, $pname);
 GLint
@@ -43,7 +63,7 @@ glGetQueryObjectiv(id, pname)
 #// 1.0
 #//# $result = glGetQueryObjectuiv($id, $pname);
 GLuint
-glGetQueryObjectuiv_s(id, pname)
+glGetQueryObjectuiv(id, pname)
 	GLuint	id
 	GLenum	pname
 	INIT:
@@ -81,9 +101,10 @@ in OpenGL.pm:
 ################################################################
 
 glGenQueries_p
+glDeleteQueries
 glBeginQuery
 glEndQuery
-glGetQueryObjectiv_s
-glGetQueryObjectuiv_s
+glGetQueryObjectiv
+glGetQueryObjectuiv
 
 ################################################################

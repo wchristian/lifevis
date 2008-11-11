@@ -107,6 +107,15 @@ GL_NV_texture_compression_vtc=>'1.0;ARB_texture_compression,EXT_texture_compress
 
 
 @gl_func = qw(
+
+
+glGenQueries_p
+glDeleteQueries
+glBeginQuery
+glEndQuery
+glGetQueryObjectiv
+glGetQueryObjectuiv
+
 glAccum
 glAlphaFunc
 glAreTexturesResident_s
@@ -114,7 +123,6 @@ glAreTexturesResident_c
 glAreTexturesResident_p
 glArrayElement
 glBegin
-glBeginQuery
 glEnd
 glBindTexture
 glBitmap_s
@@ -4718,7 +4726,6 @@ DirectColor
 	glAccum
 	glAlphaFunc
 	glBegin
-	glBeginQuery
 	glBitmap
 	glBlendColorEXT
 	glBlendEquationEXT
