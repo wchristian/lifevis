@@ -128,6 +128,8 @@ my ( $x_max, $y_max );               # dimensions of the map data we're dealing 
 my $map_base;                        # offset of the address where the map blocks start
 
 my @cells;
+my @cell_strings;
+
 my %creatures_present;
 my $current_creat_proc_task = 0;
 my $max_creat_proc_tasks    = 0;
@@ -224,6 +226,7 @@ my $item_delay_counter;
 my $item_loop;
 my $force_rt = 0;
 my $pixels;
+my $td;
 
 my @offsets;
 my $df_proc_handle;
@@ -418,6 +421,7 @@ sub run {
 ################################################################################
 
 sub extract_base_memory_data {
+    my $buf = '';
     $xcount = $proc->get_u32( $offsets[x_count] );    # map size in cells
     $ycount = $proc->get_u32( $offsets[y_count] );
     $zcount = $proc->get_u32( $offsets[z_count] );
@@ -432,12 +436,14 @@ sub extract_base_memory_data {
       unless ($map_base);
 
     # get the offsets of the address storages for each x-slice and cycle through
-    my @xoffsets = $proc->get_packs( 'L', 4, $map_base, $xcount );
+    _ReadMemory( $df_proc_handle, $map_base, $xcount * 4, $buf );
+    my @xoffsets = unpack( 'L' x $xcount, $buf );
     for my $bx ( 0 .. $xcount - 1 ) {
 
         # get the offsets of the address storages
         # for each y-column in this x-slice and cycle through
-        my @yoffsets = $proc->get_packs( 'L', 4, $xoffsets[$bx], $ycount );
+        _ReadMemory( $df_proc_handle, $xoffsets[$bx], $ycount * 4, $buf );
+        my @yoffsets = unpack( 'L' x $ycount, $buf );
         for my $by ( 0 .. $ycount - 1 ) {
             $cells[$bx][$by][offset] = $yoffsets[$by];
         }
@@ -818,14 +824,17 @@ sub location_update_loop {
 sub landscape_update_loop {
     while (1) {
         schedule();
+        my $t0 = new Benchmark;
         my $buf = "";
 
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
         for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
-            next if ( $bx < 0 || $bx > $xcount - 1 );
+            next if ( $bx < 0 || $bx > $xcount - 1 ); # skip if block is outside the map
+            next if ( $bx < $min_x_range - 1 || $bx > $max_x_range + 1 ); # skip if block is outside the current view range
             for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
-                next if ( $by < 0 || $by > $ycount - 1 );
+                next if ( $by < 0 || $by > $ycount - 1 ); # skip if block is outside the map
+                next if ( $by < $min_y_range - 1 || $by > $max_y_range + 1 ); # skip if block is outside the current view range
 
                 # cycle through slices in cell
                 _ReadMemory( $df_proc_handle, $cells[$bx][$by][offset], 4 * $zcount, $buf );
@@ -924,6 +933,10 @@ sub landscape_update_loop {
 
         $max_data_proc_tasks    = $current_data_proc_task;
         $current_data_proc_task = 0;
+        
+        my $t1 = new Benchmark;
+        $td = timediff($t1, $t0);
+        $redraw_needed = 1;
     }
     return;
 }
@@ -1258,70 +1271,77 @@ sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
     my $changed = 0;
     my $buf     = "";
+    
+    my ($type_changed, $desig_changed, $occup_changed) = (0,0,0);
+    
+    my $cell_string = $cell_strings[$bx][$by][$bz] ||= ['','',''];
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256, $buf );
-    my @type_data = unpack( 'S' x 256, $buf );
+    if ( $cell_string->[type] ne $buf ) {
+        $cell_string->[type] = $buf;
+        $type_changed = 1;
+        $changed = 1;
+    }
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256, $buf );
-    my @designation_data = unpack( 'L' x 256, $buf );
+    if ( $cell_string->[desig] ne $buf ) {
+        $cell_string->[desig] = $buf;
+        $desig_changed = 1;
+        $changed = 1;
+    }
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256, $buf );
-    my @occupation_data = unpack( 'L' x 256, $buf );
-
-    my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
-
-    my $bx_scaled  = $bx * 16;
-    my $by_scaled  = $by * 16;
-    my $tile_index = 0;
-
-    for my $x ( 0 .. 15 ) {
-
-        # this calculates the real x and y values
-        # of this tile on the overall map_base
-        $rx          = $bx_scaled + $x;
-        $tile        = $tiles[$bz][type][$rx] ||= [];
-        $desig       = $tiles[$bz][desig][$rx] ||= [];
-        $desig_below = $tiles[ $bz - 1 ][desig][$rx] ||= [];
-        $occup       = $tiles[$bz][occup][$rx] ||= [];
-
-        # cycle through 16 x and 16 y values,
-        # which generate a total of 256 tile indexes
-        for my $y ( 0 .. 15 ) {
-
-            $ry = $by_scaled + $y;
-
-            if (
-                ( $designation_data[$tile_index] & 512 ) == 512
-                && ( !defined $desig_below->[$ry]
-                    || ( $desig_below->[$ry] & 512 ) == 512 )
-              )
-            {
+    if ( $cell_string->[occup] ne $buf ) {
+        $cell_string->[occup] = $buf;
+        $occup_changed = 1;
+        $changed = 1;
+    }
+    
+    if ( $changed ) {
+        my @type_data = unpack( 'S' x 256, $cell_string->[type] ) if $type_changed;
+        my @designation_data = unpack( 'L' x 256, $cell_string->[desig] ) if $desig_changed;
+        my @occupation_data = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
+    
+        my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
+    
+        my $bx_scaled  = $bx * 16;
+        my $by_scaled  = $by * 16;
+        my $tile_index = 0;
+    
+        for my $rx ( $bx_scaled .. $bx_scaled+15 ) {
+    
+            # this calculates the real x and y values
+            # of this tile on the overall map_base
+            $tile        = $tiles[$bz][type][$rx] ||= [];
+            $desig       = $tiles[$bz][desig][$rx] ||= [];
+            $desig_below = $tiles[ $bz - 1 ][desig][$rx] ||= [];
+            $occup       = $tiles[$bz][occup][$rx] ||= [];
+    
+            # cycle through 16 x and 16 y values,
+            # which generate a total of 256 tile indexes
+            for my $ry ( $by_scaled .. $by_scaled+15 ) {
+                my $hideflag = 0;
+                
+                # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
+                $hideflag = $designation_data[$tile_index] & 512 if $desig_changed;
+                $hideflag = $desig->[$ry] & 512 if !$desig_changed;
+                if (
+                    $hideflag == 512
+                    and ( !defined $desig_below->[$ry]
+                        or ( $desig_below->[$ry] & 512 ) == 512 )
+                  )
+                {
+                    $desig->[$ry] = 512;
+                    ++$tile_index;
+                    next;
+                }
+    
+                $tile->[$ry] = $type_data[$tile_index] if $type_changed;
+                $desig->[$ry] = $designation_data[$tile_index] if $desig_changed;
+                $occup->[$ry] = $occupation_data[$tile_index] if $occup_changed;
+            
                 ++$tile_index;
-                next
-                  ; # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
             }
-
-            if ( !defined $tile->[$ry]
-                || $tile->[$ry] != $type_data[$tile_index] )
-            {
-                $changed = 1;
-                $tile->[$ry] = $type_data[$tile_index];
-            }
-
-            if ( !defined $desig->[$ry]
-                || $desig->[$ry] != $designation_data[$tile_index] )
-            {
-                $changed = 1;
-                $desig->[$ry] = $designation_data[$tile_index];
-            }
-
-            if ( !defined $occup->[$ry]
-                || $occup->[$ry] != $occupation_data[$tile_index] )
-            {
-                $changed = 1;
-                $occup->[$ry] = $occupation_data[$tile_index];
-            }
-            ++$tile_index;
         }
     }
 
@@ -1818,8 +1838,10 @@ sub render_ui {
     $buf = sprintf 'Working threads: %d', Coro::nready;
     glRasterPos2i( 2, 146 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks";
+    
+    my $timestr = '';
+    $timestr = timestr($td) if defined $td;
+    $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks : $timestr";
     glRasterPos2i( 2, 172 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
