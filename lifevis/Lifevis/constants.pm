@@ -22,11 +22,11 @@ our @EXPORT = (
 
     type desig occup
 
-    flags race c_x c_y c_z name cell_x cell_y id c_vtable_id c_vtable_const
+    string flags race c_x c_y c_z name cell_x cell_y id c_vtable_id c_vtable_const
 
-    b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
+    string b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
 
-    i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const
+    string i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const invisible
 
     cell_ptr use_counter display_lists mask_lists
 
@@ -81,15 +81,15 @@ use constant desig => 1;
 use constant occup => 2;
 
 use enum qw(
-  flags race c_x c_y c_z name cell_x cell_y id
+  string flags race c_x c_y c_z name cell_x cell_y id
 );
 
 use enum qw(
-  b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
+  string b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
 );
 
 use enum qw(
-  i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const
+  string i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const invisible
 );
 
 use enum qw(
