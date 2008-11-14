@@ -213,11 +213,11 @@ my $all_protected;
 my $render_loop;
 my $redraw_needed;
 
-my $next_creature_time=0;
-my $next_landscape_time=0;
-my $next_building_time=0;
-my $next_item_time=0;
-my $next_cursor_time=0;
+my $next_creature_time  = 0;
+my $next_landscape_time = 0;
+my $next_building_time  = 0;
+my $next_item_time      = 0;
+my $next_cursor_time    = 0;
 
 my $creature_delay_counter;
 my $creature_loop;
@@ -234,9 +234,9 @@ my $buil_loop;
 my $item_delay_counter;
 my $item_loop;
 my $force_rt = 0;
-my $pixels = '';
+my $pixels   = '';
 
-my %time = (landscape=> 0,creature=>0,building=>0,item=>0);
+my %time = ( landscape => 0, creature => 0, building => 0, item => 0 );
 
 my @offsets;
 my $df_proc_handle;
@@ -493,12 +493,13 @@ sub creature_update_loop {
         $max_creat_proc_tasks    = $#creature_offsets;
 
         for my $creature (@creature_offsets) {
+
             #say $creature unless $full_crea_run;
             my $buf = "";
 
             $current_creat_proc_task++;
 
-            if ( (time-$entry_time) > $time_slice) {
+            if ( ( time - $entry_time ) > $time_slice ) {
                 schedule();
                 $entry_time = time;
             }
@@ -506,28 +507,28 @@ sub creature_update_loop {
             #say $proc->hexdump( $creature, 0x688 );
 
             _ReadMemory( $df_proc_handle, $creature, 232, $buf );
-            
+
             next if ( defined $creatures{$creature}[string] and $creatures{$creature}[string] eq $buf );
             $creatures{$creature}[string] = $buf;
 
-            my $flags = unpack( "L", substr( $buf, 228 , 4 ) );
+            my $flags = unpack( "L", substr( $buf, 228, 4 ) );
             $creatures{$creature}[flags] = $flags;
             next if $flags & 2;
 
             # extract coordinates of current creature and skip if out of bounds
-            my $rx = unpack( "S", substr( $buf, 148 , 2 ) );
+            my $rx = unpack( "S", substr( $buf, 148, 2 ) );
             next if ( $rx > $xcount * 16 );
-            my $rz = unpack( "S", substr( $buf, 152 , 2 ) );
+            my $rz = unpack( "S", substr( $buf, 152, 2 ) );
             next if ( $rz > $zcount + 1 );
-            my $ry = unpack( "S", substr( $buf, 150 , 2 ) );
+            my $ry = unpack( "S", substr( $buf, 150, 2 ) );
 
             # get name and race, but only if we don't have them yet, since they're unlikely to change
             if ( !defined $creatures{$creature}[name] ) {
-                my $name_length = unpack( "L", substr( $buf, 120 , 4 ) );
-                $creatures{$creature}[name] = substr( $buf, 4 , $name_length );
+                my $name_length = unpack( "L", substr( $buf, 120, 4 ) );
+                $creatures{$creature}[name] = substr( $buf, 4, $name_length );
             }
             if ( !defined $creatures{$creature}[race] ) {
-                my $race = unpack( "L", substr( $buf, 140 , 4 ) );
+                my $race = unpack( "L", substr( $buf, 140, 4 ) );
                 $creatures{$creature}[race] = $race;
             }
 
@@ -564,11 +565,11 @@ sub creature_update_loop {
                 $creatures{$creature}[c_z]    = $rz;
             }
         }
-        
+
         my $t1 = time;
-        $time{creature} = sprintf("%.3f", $t1-$t0);
-        $redraw_needed = 1;
-        $full_crea_run = 1;
+        $time{creature} = sprintf( "%.3f", $t1 - $t0 );
+        $redraw_needed  = 1;
+        $full_crea_run  = 1;
     }
 }
 
@@ -581,7 +582,6 @@ sub building_update_loop {
         $entry_time = time;
         my $buf = "";
 
-        
         my $t0 = time;
 
         _ReadMemory( $df_proc_handle, $offsets[building_vector] + 4, 4 * 2, $buf );
@@ -604,28 +604,29 @@ sub building_update_loop {
         $max_buil_proc_tasks    = $#building_offsets;
 
         for my $building (@building_offsets) {
+
             #say $building unless $full_buil_run;
             my $buf = "";
 
             $current_buil_proc_task++;
-            if ( (time-$entry_time) > $time_slice) {
+            if ( ( time - $entry_time ) > $time_slice ) {
                 schedule();
                 $entry_time = time;
             }
 
             #say $proc->hexdump( $building, 0xD8 );
             _ReadMemory( $df_proc_handle, $building, 30, $buf );
-            
+
             next if ( defined $buildings{$building}[string] and $buildings{$building}[string] eq $buf );
             $buildings{$building}[string] = $buf;
 
             # extract coordinates of current creature and skip if out of bounds
-            my $rx = unpack( "S", substr( $buf, 4 , 2 ) );
+            my $rx = unpack( "S", substr( $buf, 4, 2 ) );
             next if ( $rx > $xcount * 16 );
-            my $rz = unpack( "S", substr( $buf, 28 , 2 ) );
+            my $rz = unpack( "S", substr( $buf, 28, 2 ) );
             next if ( $rz > $zcount + 1 );
-            my $ry = unpack( "S", substr( $buf, 8 , 2 ) );
-            my $vtable = unpack( "L", substr( $buf, 0 , 4 ) );
+            my $ry     = unpack( "S", substr( $buf, 8, 2 ) );
+            my $vtable = unpack( "L", substr( $buf, 0, 4 ) );
 
             # update record of current creature
             $buildings{$building}[b_x]            = $rx;
@@ -663,11 +664,11 @@ sub building_update_loop {
                 $buildings{$building}[b_z]      = $rz;
             }
         }
-        
+
         my $t1 = time;
-        $time{building} = sprintf("%.3f", $t1-$t0);
-        $redraw_needed = 1;
-        $full_buil_run = 1;
+        $time{building} = sprintf( "%.3f", $t1 - $t0 );
+        $redraw_needed  = 1;
+        $full_buil_run  = 1;
     }
 }
 
@@ -679,7 +680,7 @@ sub item_update_loop {
         schedule();
         $entry_time = time;
         my $buf = "";
-        
+
         my $t0 = time;
 
         _ReadMemory( $df_proc_handle, $offsets[item_vector] + 4, 4 * 2, $buf );
@@ -693,65 +694,65 @@ sub item_update_loop {
         $current_item_proc_task = 0;
         $max_item_proc_tasks    = $#item_offsets;
 
-        my @sort = sort {$a <=> $b} @item_offsets;
+        my @sort = sort { $a <=> $b } @item_offsets;
         my @buckets;
         my $start = shift @sort;
-        push @buckets, [$start,$start];
-        push @{$buckets[$#buckets][2]}, $start;
-        for my $item ( @sort ) {
-            if ( $item < $buckets[$#buckets][1]+$gap ) {
+        push @buckets, [ $start, $start ];
+        push @{ $buckets[$#buckets][2] }, $start;
+        for my $item (@sort) {
+            if ( $item < $buckets[$#buckets][1] + $gap ) {
                 $buckets[$#buckets][1] = $item;
-                push @{$buckets[$#buckets][2]}, $item;
+                push @{ $buckets[$#buckets][2] }, $item;
             }
             else {
-                push @buckets, [$item,$item];
-                push @{$buckets[$#buckets][2]}, $item;
+                push @buckets, [ $item, $item ];
+                push @{ $buckets[$#buckets][2] }, $item;
             }
         }
-        
+
         for my $bucket (@buckets) {
-            if ( (time-$entry_time) > $time_slice ) {
+            if ( ( time - $entry_time ) > $time_slice ) {
                 schedule();
                 $entry_time = time;
             }
-            
+
             my $string = "";
-            _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1]-$bucket->[0]+24, $string );
-            
-            next if ( $string eq "" ); # skip if the returned string is for some reason empty
-            
+            _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + 24, $string );
+
+            next if ( $string eq "" );    # skip if the returned string is for some reason empty
+
             # skip if string is stored and unchanged, otherwise store new string and move on
             #if ( defined $bucket_strings{$bucket->[0]} and $bucket_strings{$bucket->[0]} eq $string ) {
             #    $current_item_proc_task += @{$bucket->[2]};
             #    next;
             #}
             #$bucket_strings{$bucket->[0]} = $string;
-            
+
             # cycle through items in bucket
-            for my $item_address (@{$bucket->[2]}) {
-    
+            for my $item_address ( @{ $bucket->[2] } ) {
+
                 $current_item_proc_task++;
-                if ( (time-$entry_time) > $time_slice ) {
+                if ( ( time - $entry_time ) > $time_slice ) {
                     schedule();
                     $entry_time = time;
                 }
-                
-                my $new_offset = $item_address-$bucket->[0];
-                my $buf = substr ($string, $new_offset, 24);
-                
+
+                my $new_offset = $item_address - $bucket->[0];
+                my $buf = substr( $string, $new_offset, 24 );
+
                 # extract DF item id
-                my $id = unpack( "L", substr( $buf, 20 , 4 ) );
-                
-                if ($id > $largest_id) {
+                my $id = unpack( "L", substr( $buf, 20, 4 ) );
+
+                if ( $id > $largest_id ) {
                     say $largest_id;
                     $largest_id = $id;
                 }
-                
+
                 next if ( defined $items{$id}[string] and $items{$id}[string] eq $buf );
                 $items{$id}[string] = $buf;
-    
+
                 # extract state of current item and skip applicable items
-                my $state = unpack( "L", substr( $buf, 12 , 4 ) );
+                my $state = unpack( "L", substr( $buf, 12, 4 ) );
                 if (
                     !( $state & 0x1 )    # is not lying on the ground
                     || ( $state & 0x1000000 )    # is hidden
@@ -760,21 +761,21 @@ sub item_update_loop {
                     $items{$id}[invisible] = 1;
                     next;
                 }
-    
+
                 # extract coordinates of current creature and skip if out of bounds
-                my $rx = unpack( "S", substr( $buf, 4 , 2 ) );
+                my $rx = unpack( "S", substr( $buf, 4, 2 ) );
                 if ( $rx > $xcount * 16 ) {
                     $items{$id}[invisible] = 1;
                     next;
                 }
-                my $rz = unpack( "S", substr( $buf, 8 , 2 ) );
+                my $rz = unpack( "S", substr( $buf, 8, 2 ) );
                 next if ( $rz > $zcount + 1 );
-                my $ry = unpack( "S", substr( $buf, 6 , 2 ) );
-                my $type = unpack( "L", substr( $buf, 0 , 4 ) );
+                my $ry   = unpack( "S", substr( $buf, 6, 2 ) );
+                my $type = unpack( "L", substr( $buf, 0, 4 ) );
                 my $vtable = $type;
-    
+
                 #say $proc->hexdump( $item, 0x88 ),"\n ";
-    
+
                 # update record of current creature
                 $items{$id}[i_x]            = $rx;
                 $items{$id}[i_y]            = $ry;
@@ -784,32 +785,32 @@ sub item_update_loop {
                 $items{$id}[i_vtable_const] = $vtable;
                 $items{$id}[i_vtable_id]    = $vtables{$vtable};
                 warn sprintf "UNKNOWN ITEM VTABLE: %x\n", $vtable unless $items{$id}[i_vtable_id];
-    
-    #say "X: $rx Y: $ry Z: $rz ST: $state T: $type" if ( !$full_loop_completed && $state & (1 << 0) && ( 0 || $state & (1 << 2) ));
-    
+
+#say "X: $rx Y: $ry Z: $rz ST: $state T: $type" if ( !$full_loop_completed && $state & (1 << 0) && ( 0 || $state & (1 << 2) ));
+
                 # get old and new cell location and compare
                 my $old_x = $items{$id}[i_cell_x];
                 my $old_y = $items{$id}[i_cell_y];
                 my $old_z = $items{$id}[i_z];
                 my $bx    = int $rx / 16;
                 my $by    = int $ry / 16;
-                
+
                 # if creature moved to other cell or is newly added
                 if ( !defined $old_x || $bx != $old_x || $by != $old_y || $rz != $old_z ) {
-    
+
                     # if creature moved: get creature list of old cell then cycle through it and remove the old entry
                     if ( defined $old_x ) {
                         $redraw_needed = 1;
                         my $item_list = $cells[$old_x][$old_y][item_list][$old_z];
-                        
-                        for my $entry ( 0 .. @{$item_list}-1 ) {
+
+                        for my $entry ( 0 .. @{$item_list} - 1 ) {
                             if ( $item_list->[$entry] == $id ) {
                                 splice @{$item_list}, $entry, 1;
                                 last;
                             }
                         }
                     }
-    
+
                     # add entry to new cell and update cell coordinates
                     push @{ $cells[$bx][$by][item_list][$rz] }, $id;
                     $items{$id}[i_cell_x] = $bx;
@@ -818,11 +819,11 @@ sub item_update_loop {
                 }
             }
         }
-        
+
         $full_loop_completed = 1;
-        
+
         my $t1 = time;
-        $time{item} = sprintf("%.3f", $t1-$t0);
+        $time{item} = sprintf( "%.3f", $t1 - $t0 );
         $redraw_needed = 1;
     }
 }
@@ -833,7 +834,7 @@ sub location_update_loop {
         $next_cursor_time = time + $c{cursor_update_delay} - $time{cursor};
         schedule();
         $entry_time = time;
-        
+
         my $t0 = time;
 
         my $old_ceiling_slice = $ceiling_slice;
@@ -910,9 +911,9 @@ sub location_update_loop {
             $max_y_range = $ycell + $c{view_range};
             $max_y_range = $ycount - 1 if $max_y_range > $ycount - 1;
         }
-        
+
         my $t1 = time;
-        $time{cursor} = sprintf("%.3f", $t1-$t0);
+        $time{cursor} = sprintf( "%.3f", $t1 - $t0 );
     }
 }
 
@@ -924,16 +925,19 @@ sub landscape_update_loop {
         schedule();
         $entry_time = time;
         my $buf = "";
-        my $t0 = time;
+        my $t0  = time;
 
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
         for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
-            next if ( $bx < 0 || $bx > $xcount - 1 ); # skip if block is outside the map
-            next if ( $bx < $min_x_range - 1 || $bx > $max_x_range + 1 ); # skip if block is outside the current view range
+            next if ( $bx < 0 || $bx > $xcount - 1 );    # skip if block is outside the map
+            next
+              if ( $bx < $min_x_range - 1 || $bx > $max_x_range + 1 ); # skip if block is outside the current view range
             for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
-                next if ( $by < 0 || $by > $ycount - 1 ); # skip if block is outside the map
-                next if ( $by < $min_y_range - 1 || $by > $max_y_range + 1 ); # skip if block is outside the current view range
+                next if ( $by < 0 || $by > $ycount - 1 );              # skip if block is outside the map
+                next
+                  if ( $by < $min_y_range - 1 || $by > $max_y_range + 1 )
+                  ;                                                    # skip if block is outside the current view range
 
                 # cycle through slices in cell
                 _ReadMemory( $df_proc_handle, $cells[$bx][$by][offset], 4 * $zcount, $buf );
@@ -944,7 +948,7 @@ sub landscape_update_loop {
 
                     # go to the next block if this one is not allocated
                     next if ( $zoffsets[$bz] == 0 );
-                    
+
                     #say $zoffsets[$bz] unless $full_land_run;
 
                     # process slice in cell and set slice to changed
@@ -961,7 +965,7 @@ sub landscape_update_loop {
                         $cells[$bx][$by][changed] = 1;    # cell was changed
                     }
 
-                    if ( (time-$entry_time) > $time_slice ) {
+                    if ( ( time - $entry_time ) > $time_slice ) {
                         schedule();
                         $entry_time = time;
                     }
@@ -992,7 +996,7 @@ sub landscape_update_loop {
                                 @{$slices}[$slice] = 0;
                             }
                             $redraw_needed = 1;
-                            if ( (time-$entry_time) > $time_slice ) {
+                            if ( ( time - $entry_time ) > $time_slice ) {
                                 schedule();
                                 $entry_time = time;
                             }
@@ -1030,7 +1034,7 @@ sub landscape_update_loop {
                             @{$slices}[$slice] = 0;
                         }
                         $redraw_needed = 1;
-                        if ( (time-$entry_time) > $time_slice ) {
+                        if ( ( time - $entry_time ) > $time_slice ) {
                             schedule();
                             $entry_time = time;
                         }
@@ -1043,11 +1047,11 @@ sub landscape_update_loop {
 
         $max_data_proc_tasks    = $current_data_proc_task;
         $current_data_proc_task = 0;
-        
+
         my $t1 = time;
-        $time{landscape} = sprintf("%.3f", $t1-$t0);
-        $redraw_needed = 1;
-        $full_land_run = 1;
+        $time{landscape} = sprintf( "%.3f", $t1 - $t0 );
+        $redraw_needed   = 1;
+        $full_land_run   = 1;
     }
     return;
 }
@@ -1382,57 +1386,57 @@ sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
     my $changed = 0;
     my $buf     = "";
-    
-    my ($type_changed, $desig_changed, $occup_changed) = (0,0,0);
-    
-    my $cell_string = $cell_strings[$bx][$by][$bz] ||= ['','',''];
+
+    my ( $type_changed, $desig_changed, $occup_changed ) = ( 0, 0, 0 );
+
+    my $cell_string = $cell_strings[$bx][$by][$bz] ||= [ '', '', '' ];
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256, $buf );
     if ( $cell_string->[type] ne $buf ) {
         $cell_string->[type] = $buf;
-        $type_changed = 1;
-        $changed = 1;
+        $type_changed        = 1;
+        $changed             = 1;
     }
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256, $buf );
     if ( $cell_string->[desig] ne $buf ) {
         $cell_string->[desig] = $buf;
-        $desig_changed = 1;
-        $changed = 1;
+        $desig_changed        = 1;
+        $changed              = 1;
     }
 
     _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256, $buf );
     if ( $cell_string->[occup] ne $buf ) {
         $cell_string->[occup] = $buf;
-        $occup_changed = 1;
-        $changed = 1;
+        $occup_changed        = 1;
+        $changed              = 1;
     }
-    
-    if ( $changed ) {
-        my @type_data = unpack( 'S' x 256, $cell_string->[type] ) if $type_changed;
+
+    if ($changed) {
+        my @type_data        = unpack( 'S' x 256, $cell_string->[type] )  if $type_changed;
         my @designation_data = unpack( 'L' x 256, $cell_string->[desig] ) if $desig_changed;
-        my @occupation_data = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
-    
+        my @occupation_data  = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
+
         my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
-    
+
         my $bx_scaled  = $bx * 16;
         my $by_scaled  = $by * 16;
         my $tile_index = 0;
-    
-        for my $rx ( $bx_scaled .. $bx_scaled+15 ) {
-    
+
+        for my $rx ( $bx_scaled .. $bx_scaled + 15 ) {
+
             # this calculates the real x and y values
             # of this tile on the overall map_base
-            $tile        = $tiles[$bz][type][$rx] ||= [];
-            $desig       = $tiles[$bz][desig][$rx] ||= [];
+            $tile        = $tiles[$bz][type][$rx]        ||= [];
+            $desig       = $tiles[$bz][desig][$rx]       ||= [];
             $desig_below = $tiles[ $bz - 1 ][desig][$rx] ||= [];
-            $occup       = $tiles[$bz][occup][$rx] ||= [];
-    
+            $occup       = $tiles[$bz][occup][$rx]       ||= [];
+
             # cycle through 16 x and 16 y values,
             # which generate a total of 256 tile indexes
-            for my $ry ( $by_scaled .. $by_scaled+15 ) {
+            for my $ry ( $by_scaled .. $by_scaled + 15 ) {
                 my $hideflag = 0;
-                
+
                 # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
                 $hideflag = $designation_data[$tile_index] & 512 if $desig_changed;
                 $hideflag = $desig->[$ry] & 512 if !$desig_changed;
@@ -1446,11 +1450,11 @@ sub new_process_block {
                     ++$tile_index;
                     next;
                 }
-    
-                $tile->[$ry] = $type_data[$tile_index] if $type_changed;
+
+                $tile->[$ry]  = $type_data[$tile_index]        if $type_changed;
                 $desig->[$ry] = $designation_data[$tile_index] if $desig_changed;
-                $occup->[$ry] = $occupation_data[$tile_index] if $occup_changed;
-            
+                $occup->[$ry] = $occupation_data[$tile_index]  if $occup_changed;
+
                 ++$tile_index;
             }
         }
@@ -1554,25 +1558,24 @@ sub menu {
 
 sub idle_tasks {
     my $time = time;
-    
-    
-    if ($time > $next_creature_time) {
+
+    if ( $time > $next_creature_time ) {
         $creature_loop->ready;
     }
-    
-    if ($time > $next_landscape_time) {
+
+    if ( $time > $next_landscape_time ) {
         $land_loop->ready;
     }
-    
-    if ($time > $next_building_time) {
+
+    if ( $time > $next_building_time ) {
         $buil_loop->ready;
     }
-    
-    if ($time > $next_item_time) {
+
+    if ( $time > $next_item_time ) {
         $item_loop->ready;
     }
-    
-    if ($time > $next_cursor_time) {
+
+    if ( $time > $next_cursor_time ) {
         $loc_loop->ready;
     }
 
@@ -1681,10 +1684,9 @@ sub render_scene {
         glPopMatrix();        # Done with this special projection matrix.  Throw it away.
         glutSwapBuffers();    # All done drawing.  Let's show it.
 
-        
         my $t1 = time;
-        $time{render} = $t1-$t0;
-        
+        $time{render} = $t1 - $t0;
+
         $next_render_time = time + $c{redraw_delay} - $time{render};
         $redraw_needed    = 0;
         schedule();
@@ -1947,7 +1949,7 @@ sub render_ui {
     $buf = sprintf 'Working threads: %d', Coro::nready;
     glRasterPos2i( 2, 146 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-    
+
     $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
     glRasterPos2i( 2, 172 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
@@ -1976,11 +1978,10 @@ sub render_ui {
     glRasterPos2i( 2, 250 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    my $timesum = $time{landscape}+$time{creature}+$time{building}+$time{item};
+    my $timesum = $time{landscape} + $time{creature} + $time{building} + $time{item};
     $buf = "Time: $timesum secs";
     glRasterPos2i( 2, 262 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-    
 
     #$buf = "Crea: $creature_length";
     #glRasterPos2i( 2, 222 );
