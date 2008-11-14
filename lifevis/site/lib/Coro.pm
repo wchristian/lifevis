@@ -58,7 +58,7 @@ variables (see L<Coro::State> for more configuration).
 
 package Coro;
 
-use strict;
+use strict qw(vars subs);
 no warnings "uninitialized";
 
 use Coro::State;
@@ -69,7 +69,7 @@ our $idle;    # idle handler
 our $main;    # main coroutine
 our $current; # current coroutine
 
-our $VERSION = 4.804;
+our $VERSION = 4.911;
 
 our @EXPORT = qw(async async_pool cede schedule terminate current unblock_sub);
 our %EXPORT_TAGS = (
@@ -154,7 +154,7 @@ sub _cancel {
 
    # call all destruction callbacks
    $_->(@{$self->{_status}})
-      for @{(delete $self->{_on_destroy}) || []};
+      for @{ delete $self->{_on_destroy} || [] };
 }
 
 # this coroutine is necessary because a coroutine

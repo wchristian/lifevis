@@ -92,7 +92,7 @@ sub warnhook { &$WARNHOOK }
 use XSLoader;
 
 BEGIN {
-   our $VERSION = 4.804;
+   our $VERSION = 4.91;
 
    # must be done here because the xs part expects it to exist
    # it might exist already because Coro::Specific created it.
@@ -211,10 +211,14 @@ in the code below, and use it in your coroutines:
 # this is called for each newly created C coroutine,
 # and is being artificially injected into the opcode flow.
 # its sole purpose is to call transfer() once so it knows
-# the stop level stack frame for stack sharing.
+# the top level stack frame for stack sharing.
 sub _cctx_init {
-   _set_stacklevel $_[0];
+   &_set_stacklevel;
 }
+
+=item $state->throw ([$scalar])
+
+See L<< Coro->throw >>.
 
 =item $state->call ($coderef)
 
@@ -249,31 +253,38 @@ coroutine saved in C<$next>.
 The "state" of a subroutine includes the scope, i.e. lexical variables and
 the current execution state (subroutine, stack).
 
+=item $bytes = $state->rss
+
+Returns the memory allocated by the coroutine (which includes static
+structures, various perl stacks but NOT local variables, arguments or any
+C context data). This is a rough indication of how much memory it might
+use.
+
 =item $state->has_cctx
 
-Returns whether the state currently uses a cctx/C coroutine. An active
+Returns whether the state currently uses a cctx/C context. An active
 state always has a cctx, as well as the main program. Other states only
 use a cctxts when needed.
 
-=item $bytes = $state->rss
+=item Coro::State::force_cctx
 
-Returns the memory allocated by the coroutine (which includes
-static structures, various perl stacks but NOT local variables,
-arguments or any C stack).
+Forces the allocation of a C context for the currently running coroutine
+(if not already done). Apart from benchmarking there is little point
+in doing so, however.
 
-=item Coro::State::cctx_count
+=item $ncctx = Coro::State::cctx_count
 
 Returns the number of C-level coroutines allocated. If this number is
 very high (more than a dozen) it might help to identify points of C-level
 recursion in your code and moving this into a separate coroutine.
 
-=item Coro::State::cctx_idle
+=item $nidle = Coro::State::cctx_idle
 
 Returns the number of allocated but idle (free for reuse) C level
 coroutines. Currently, Coro will limit the number of idle/unused cctxs to
 8.
 
-=item Coro::State::cctx_stacksize [$new_stacksize]
+=item $old = Coro::State::cctx_stacksize [$new_stacksize]
 
 Returns the current C stack size and optionally sets the new I<minimum>
 stack size to C<$new_stacksize> I<long>s. Existing stacks will not
@@ -285,11 +296,14 @@ Please note that Coroutines will only need to use a C-level stack if the
 interpreter recurses or calls a function in a module that calls back into
 the interpreter, so use of this feature is usually never needed.
 
-=item Coro::State::force_cctx
+=item $old = Coro::State::cctx_max_idle [$new_count]
 
-Forces the allocation of a C context for the currently running coroutine
-(if not already done). Apart from benchmarking there is little point
-in doing so, however.
+Coro caches C contexts that are not in use currently, as creating them
+from scratch has some overhead.
+
+This function returns the current maximum number of idle C contexts and
+optionally sets the new amount. The count must be at least C<1>, with the
+default being C<4>.
 
 =item @states = Coro::State::list
 
