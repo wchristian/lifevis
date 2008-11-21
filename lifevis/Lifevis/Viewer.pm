@@ -74,13 +74,6 @@ $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
 
-use lib '.';
-use lib '..';
-use Lifevis::constants;
-use Lifevis::df_internals;
-use Lifevis::ProcessConnection;
-use Lifevis::Vtables;
-
 use threads;
 use threads::shared;
 
@@ -104,7 +97,20 @@ use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw( :FUNC );
 use Math::Vec qw(:terse);
 
-my $full_loop_completed;
+=cut
+use Devel::AutoProfiler 
+                ( 
+                -pkg_exception => [ 'OpenGL', 'constants', 'df_internals' ],
+                -sub_exception => [ 'GL_', '[a-z]st$', 'GLUT_' ],
+                );
+=cut
+
+use lib '.';
+use lib '..';
+use Lifevis::constants;
+use Lifevis::df_internals;
+use Lifevis::ProcessConnection;
+use Lifevis::Vtables;
 
 my $memory_use;
 $memory_use = 0;
@@ -115,10 +121,12 @@ my %DRAW_MODEL;
 my %model_display_lists;
 my @ramps   = get_ramp_bitmasks();
 my %vtables = get_vtables();
+
 my $config_loaded;
 my %c;
 tie %c, 'Config::Simple', 'lifevis.cfg';
 $c{redraw_delay} = 0.5 / $c{fps_limit};
+
 my $memory_limit;
 $memory_limit  = $c{memory_limit};
 $config_loaded = 1;
@@ -126,7 +134,6 @@ my $time_slice = $c{time_slice};
 
 my ( $xcount, $ycount, $zcount );    # dimensions of the map data we're dealing with, counts in cells
 my ( $x_max, $y_max );               # dimensions of the map data we're dealing with, counts in tiles
-my $map_base;                        # offset of the address where the map blocks start
 
 my @cells;
 my @cell_strings;
@@ -150,17 +157,14 @@ my %bucket_strings;
 
 my ( $mouse_cursor_x, $mouse_cursor_y );
 
-# cursor coordinates  in tiles at last refresh
+# cursor coordinates at last refresh, in tiles
 my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
 
-# current cursor coordinates in tiles
+# current cursor coordinates, in tiles
 my ( $xmouse, $ymouse, $zmouse ) = ( 0, 0, 15 );
 
 # Camera position and rotation variables.
 my ( $x_pos, $y_pos, $z_pos, $x_off, $y_off, $z_off, $x_rot, $y_rot );
-
-# current cursor coordinates in cells
-my ( $xcell, $ycell ) = ( $c{view_range}, $c{view_range} );
 
 my $min_x_range = 0;
 my $max_x_range = 0;
@@ -173,9 +177,6 @@ my @cache;
 my @cache_bucket;
 
 my @texture_ID;
-my @creature_display_lists;
-my %building_display_lists;
-my @item_display_lists;
 my @tiles;
 
 # Settings for our light.  Try playing with these (or add more lights).
@@ -195,8 +196,6 @@ my $last_mouse_x;
 my $last_mouse_y;
 my $mouse_dist = 100;
 my $cam_angle  = 45;
-
-my ( %sin_cache, %cos_cache );
 
 my $rotating = 0;
 my $changing_ceiling;
@@ -236,11 +235,13 @@ my $item_loop;
 my $force_rt = 0;
 my $pixels   = '';
 
-my %time = ( landscape => 0, creature => 0, building => 0, item => 0 );
+my %time = ( landscape => 0, creature => 0, building => 0, item => 0, cursor => 0 );
 
 my @offsets;
 my $df_proc_handle;
 my $proc;
+
+my $occlusion_supported = 1;
 
 __PACKAGE__->run(@ARGV) unless caller();
 
@@ -313,6 +314,9 @@ sub run {
     check_for_new_version() if $c{update_checks};
 
     use OpenGL qw/ :all /;
+    
+
+    
     use Lifevis::models;
     %DRAW_MODEL = get_model_subs();
 
@@ -432,6 +436,7 @@ sub run {
 
 sub extract_base_memory_data {
     my $buf = '';
+    my $map_base;# offset of the address where the map blocks start
     $xcount = $proc->get_u32( $offsets[x_count] );    # map size in cells
     $ycount = $proc->get_u32( $offsets[y_count] );
     $zcount = $proc->get_u32( $offsets[z_count] );
@@ -481,8 +486,8 @@ sub creature_update_loop {
         _ReadMemory( $df_proc_handle, $creature_vector_offsets[0], 4 * $creature_list_length, $buf );
         my @creature_offsets = unpack( 'L' x $creature_list_length, $buf );
 
-        while ( my ($key) = each %creatures_present ) {
-            $creatures_present{$key} = 0;
+        for my $creature ( values %creatures_present ) {
+            $creature = 0;
         }
 
         for my $creature (@creature_offsets) {
@@ -500,7 +505,7 @@ sub creature_update_loop {
             $current_creat_proc_task++;
 
             if ( ( time - $entry_time ) > $time_slice ) {
-                schedule();
+                cede();
                 $entry_time = time;
             }
 
@@ -592,8 +597,8 @@ sub building_update_loop {
         _ReadMemory( $df_proc_handle, $building_vector_offsets[0], 4 * $building_list_length, $buf );
         my @building_offsets = unpack( 'L' x $building_list_length, $buf );
 
-        while ( my ($key) = each %building_present ) {
-            $building_present{$key} = 0;
+        for my $building ( values %building_present ) {
+            $building = 0;
         }
 
         for my $building (@building_offsets) {
@@ -610,7 +615,7 @@ sub building_update_loop {
 
             $current_buil_proc_task++;
             if ( ( time - $entry_time ) > $time_slice ) {
-                schedule();
+                cede();
                 $entry_time = time;
             }
 
@@ -673,6 +678,7 @@ sub building_update_loop {
 }
 
 sub item_update_loop {
+    my $full_loop_completed;
     my $largest_id = 0;
     my $entry_time;
     while (1) {
@@ -712,28 +718,21 @@ sub item_update_loop {
 
         for my $bucket (@buckets) {
             if ( ( time - $entry_time ) > $time_slice ) {
-                schedule();
+                cede();
                 $entry_time = time;
             }
 
             my $string = "";
             _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + 24, $string );
 
-            next if ( $string eq "" );    # skip if the returned string is for some reason empty
-
-            # skip if string is stored and unchanged, otherwise store new string and move on
-            #if ( defined $bucket_strings{$bucket->[0]} and $bucket_strings{$bucket->[0]} eq $string ) {
-            #    $current_item_proc_task += @{$bucket->[2]};
-            #    next;
-            #}
-            #$bucket_strings{$bucket->[0]} = $string;
+            next if ( $string eq "" );
 
             # cycle through items in bucket
             for my $item_address ( @{ $bucket->[2] } ) {
 
                 $current_item_proc_task++;
                 if ( ( time - $entry_time ) > $time_slice ) {
-                    schedule();
+                    cede();
                     $entry_time = time;
                 }
 
@@ -744,7 +743,7 @@ sub item_update_loop {
                 my $id = unpack( "L", substr( $buf, 20, 4 ) );
 
                 if ( $id > $largest_id ) {
-                    say $largest_id;
+                    #say $largest_id;
                     $largest_id = $id;
                 }
 
@@ -892,8 +891,8 @@ sub location_update_loop {
             reposition_camera();    # sets up initial camera position offsets
 
             # calculate cell coords from mouse coords
-            $xcell = int $xmouse / 16;
-            $ycell = int $ymouse / 16;
+            my $xcell = int $xmouse / 16;
+            my $ycell = int $ymouse / 16;
             $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
             $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
             $xcell = $xcount - $c{view_range} - 1
@@ -966,7 +965,7 @@ sub landscape_update_loop {
                     }
 
                     if ( ( time - $entry_time ) > $time_slice ) {
-                        schedule();
+                        cede();
                         $entry_time = time;
                     }
                     $current_data_proc_task++;
@@ -997,7 +996,7 @@ sub landscape_update_loop {
                             }
                             $redraw_needed = 1;
                             if ( ( time - $entry_time ) > $time_slice ) {
-                                schedule();
+                                cede();
                                 $entry_time = time;
                             }
                             $current_data_proc_task++;
@@ -1035,7 +1034,7 @@ sub landscape_update_loop {
                         }
                         $redraw_needed = 1;
                         if ( ( time - $entry_time ) > $time_slice ) {
-                            schedule();
+                            cede();
                             $entry_time = time;
                         }
                         $current_data_proc_task++;
@@ -1126,6 +1125,7 @@ sub memory_control_loop {
     }
 }
 
+# TODO : comment this better
 sub generate_model_display_lists {
     for my $model ( keys %DRAW_MODEL ) {
         for my $part ( 0 .. $#{ $DRAW_MODEL{$model} } ) {
@@ -1302,6 +1302,8 @@ sub generate_display_list {
 
                                 glColor3f( $brightness, $brightness, $brightness );
                                 glTranslatef( $rx, $z, $ry );
+                                
+                                # TODO : remove unneeded checks for definedness
                                 for my $part ( 0 .. $#{ $DRAW_MODEL{$func} } ) {
                                     next if !defined $model_display_lists{$func}[$part];
                                     glCallList( $model_display_lists{$func}[$part] );
@@ -1482,6 +1484,9 @@ sub ask {
 
 sub initialize_opengl {
     my ( $width, $height ) = @_;
+    
+    eval 'glDeleteQueries([0])';
+    $occlusion_supported = 0 if $@ =~ /is not supported by this renderer/;
 
     build_textures();
 
@@ -1559,6 +1564,10 @@ sub menu {
 sub idle_tasks {
     my $time = time;
 
+    if ( $time > $next_cursor_time ) {
+        $loc_loop->ready;
+    }
+
     if ( $time > $next_creature_time ) {
         $creature_loop->ready;
     }
@@ -1567,16 +1576,12 @@ sub idle_tasks {
         $land_loop->ready;
     }
 
-    if ( $time > $next_building_time ) {
-        $buil_loop->ready;
-    }
-
     if ( $time > $next_item_time ) {
         $item_loop->ready;
     }
 
-    if ( $time > $next_cursor_time ) {
-        $loc_loop->ready;
+    if ( $time > $next_building_time ) {
+        $buil_loop->ready;
     }
 
     $render_loop->ready if $force_rt or ( $redraw_needed and $time > $next_render_time );
@@ -1656,6 +1661,8 @@ sub render_scene {
         glPolygonMode( GL_FRONT, GL_LINE );
         glColor3f( 1, 1, 1 );
         glTranslatef( $x_pos, $y_pos, $z_pos );
+        
+        # TODO : remove unneeded checks for definedness
         for my $part ( 0 .. $#{ $DRAW_MODEL{Cursor} } ) {
             next if !defined $model_display_lists{Cursor}[$part];
             glCallList( $model_display_lists{Cursor}[$part] );
@@ -1695,6 +1702,7 @@ sub render_scene {
 }
 
 sub render_models {
+    my @query_cells;
 
     for my $z ( 0 .. $ceiling_slice ) {
 
@@ -1708,63 +1716,61 @@ sub render_models {
 
                 # draw landscape
                 my $slices = $cache[$cache_ptr][display_lists];
-                glCallList( $slices->[$z] ) if $slices->[$z];
-
-            }
-        }
-    }
-
-    my @query_cells;
-    my @cells_to_draw;
-
-    $pixels = '';
-    my @queries;
-    glDepthMask(GL_FALSE);
-    glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-    glDisable(GL_CULL_FACE);
-    for my $z ( 0 .. $ceiling_slice ) {
-
-        # cycle through cells in range around cursor to render
-        for my $bx ( $min_x_range .. $max_x_range ) {
-            for my $by ( $min_y_range .. $max_y_range ) {
-
-                my $cache_ptr = $cells[$bx][$by][cache_ptr];
-                next if !defined $cache_ptr;
-                next if !defined $cache[$cache_ptr];
-
-                # draw landscape masks
-                my $slices = $cache[$cache_ptr][mask_lists];
-                if ( $slices->[$z] ) {
-                    my ($query) = glGenQueries_p(1);
-                    glBeginQuery( GL_SAMPLES_PASSED, $query );
+                if ($slices->[$z]) {
                     glCallList( $slices->[$z] );
-                    glEndQuery(GL_SAMPLES_PASSED);
-                    push @queries, $query;
-                    $query_cells[$query] = [ $bx, $by, $z ];
+                    push @query_cells, [ $bx, $by, $z ];
                 }
 
             }
         }
     }
-    glEnable(GL_CULL_FACE);
-    glDepthMask(GL_TRUE);
-    glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-
-    for my $query (@queries) {
-        while ( !glGetQueryObjectiv( $query, GL_QUERY_RESULT_AVAILABLE ) ) { }
-        my $pixel = glGetQueryObjectuiv( $query, GL_QUERY_RESULT );
-        $pixels .= "$pixel:";
-        push @cells_to_draw, $query_cells[$query] if $pixel > 0;
+    
+    my @cells_to_draw;
+    
+    if ($occlusion_supported) {
+        my @queries;
+        glDepthMask(GL_FALSE);
+        glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+        glDisable(GL_CULL_FACE);
+         
+        @queries = glGenQueries_p( scalar @query_cells );
+        my $id = 0;
+        
+        for my $cell ( @query_cells ) {
+            my $bx         = $cell->[0];
+            my $by         = $cell->[1];
+            my $z          = $cell->[2];
+            my $cache_ptr = $cells[$bx][$by][cache_ptr];
+            my $slices = $cache[$cache_ptr][mask_lists];
+            $cell->[3] = $queries[$id];
+            glBeginQuery( GL_SAMPLES_PASSED, $cell->[3] );
+            glCallList( $slices->[$z] );
+            glEndQuery(GL_SAMPLES_PASSED);
+            $id++;
+        }
+        
+        glEnable(GL_CULL_FACE);
+        glDepthMask(GL_TRUE);
+        glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+    
+        for my $cell ( @query_cells ) {
+            while ( !glGetQueryObjectiv( $cell->[3], GL_QUERY_RESULT_AVAILABLE ) ) { }
+            my $pixel = glGetQueryObjectuiv( $cell->[3], GL_QUERY_RESULT );
+            push @cells_to_draw, $cell if $pixel > 0;
+        }
+        glDeleteQueries(@queries);
     }
-    glDeleteQueries(@queries);
+    else {
+        @cells_to_draw = @query_cells;
+    }
 
-    $pixels = $#cells_to_draw . "/" . $#query_cells . " = " . $pixels;
+    $pixels = $#cells_to_draw . "/" . $#query_cells;
 
     for my $cell (@cells_to_draw) {
-        my $z          = $cell->[2];
-        my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
         my $bx         = $cell->[0];
         my $by         = $cell->[1];
+        my $z          = $cell->[2];
+        my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
 
         my $cache_ptr = $cells[$bx][$by][cache_ptr];
         next if !defined $cache_ptr;
@@ -1794,6 +1800,8 @@ sub render_models {
                 }
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
+                
+                # TODO : remove unneeded checks for definedness
                 for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
                     next if !defined $model_display_lists{$model_name}[$part];
                     glCallList( $model_display_lists{$model_name}[$part] );
@@ -1820,6 +1828,8 @@ sub render_models {
                 my $model_name = $building_visuals{$vtable_id}[0];
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
+                
+                # TODO : remove unneeded checks for definedness
                 for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
                     next if !defined $model_display_lists{$model_name}[$part];
                     glCallList( $model_display_lists{$model_name}[$part] );
@@ -1849,6 +1859,8 @@ sub render_models {
                 }
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
+                
+                # TODO : remove unneeded checks for definedness
                 for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
                     next if !defined $model_display_lists{$model_name}[$part];
                     glCallList( $model_display_lists{$model_name}[$part] );
@@ -2235,15 +2247,15 @@ sub process_special_key_press {
         print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";
         say "\n\n--------------------------------";
         say "X: $xmouse Y: $ymouse Z: $zmouse\n";
-        for my $item ( keys %items ) {
-            next if !defined $items{$item}[i_x];
-            next if !defined $items{$item}[i_y];
-            next if !defined $items{$item}[i_z];
-            if (   $items{$item}[i_x] == $xmouse
-                && $items{$item}[i_y] == $ymouse
-                && $items{$item}[i_z] == $zmouse )
+        for my $item ( values %items ) {
+            next if !defined $item->[i_x];
+            next if !defined $item->[i_y];
+            next if !defined $item->[i_z];
+            if (   $item->[i_x] == $xmouse
+                && $item->[i_y] == $ymouse
+                && $item->[i_z] == $zmouse )
             {
-                my $hex_dump = $proc->hexdump( $items{$item}[i_address], 0x88 );
+                my $hex_dump = $proc->hexdump( $item->[i_address], 0x88 );
                 print $OUT "Item:\n$hex_dump\n\n";
                 say "Item:\n$hex_dump\n";
             }
@@ -2465,10 +2477,10 @@ sub process_active_mouse_motion {
 sub reposition_camera {
     my $radial_x_rotation = $x_rot * PIOVER180;
     my $radial_y_rotation = $y_rot * PIOVER180;
-    my $cos_y             = $cos_cache{$y_rot} ||= cos $radial_y_rotation;
-    my $sin_y             = $sin_cache{$y_rot} ||= sin $radial_y_rotation;
-    my $sin_x             = $sin_cache{$x_rot} ||= sin $radial_x_rotation;
-    my $cos_x             = $cos_cache{$x_rot} ||= cos $radial_x_rotation;
+    my $cos_y             = cos $radial_y_rotation;
+    my $sin_y             = sin $radial_y_rotation;
+    my $sin_x             = sin $radial_x_rotation;
+    my $cos_x             = cos $radial_x_rotation;
 
     $x_off = ( $sin_y * $cos_x ) * $mouse_dist;
     $y_off = ( -$sin_x ) * $mouse_dist;
