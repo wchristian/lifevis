@@ -115,6 +115,7 @@ glBeginQuery
 glEndQuery
 glGetQueryObjectiv
 glGetQueryObjectuiv
+glGetQueryiv
 
 glAccum
 glAlphaFunc

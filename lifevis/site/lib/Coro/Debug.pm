@@ -107,6 +107,7 @@ use Time::HiRes ();
 use Scalar::Util ();
 
 use AnyEvent ();
+use AnyEvent::Util ();
 use AnyEvent::Socket ();
 
 use Coro ();
@@ -114,7 +115,7 @@ use Coro::Handle ();
 use Coro::State ();
 use Coro::AnyEvent ();
 
-our $VERSION = 4.91;
+our $VERSION = "5.0";
 
 our %log;
 our $SESLOGLEVEL = exists $ENV{PERL_CORO_DEFAULT_LOGLEVEL} ? $ENV{PERL_CORO_DEFAULT_LOGLEVEL} : -1;
@@ -272,10 +273,10 @@ sub command($) {
    if ($cmd =~ /^ps (?:\s* (\S+))? $/x) {
       my $flags = $1;
       my $desc = $flags =~ /w/ ? "%-24s" : "%-24.24s";
+      my $verbose = $flags =~ /v/;
       my $buf = sprintf "%20s %s%s %4s %4s $desc %s\n",
                         "PID", "S", "C", "RSS", "USES", "Description", "Where";
       for my $coro (reverse Coro::State::list) {
-         Coro::cede;
          my @bt;
          Coro::State::call ($coro, sub {
             # we try to find *the* definite frame that gives msot useful info
@@ -286,6 +287,7 @@ sub command($) {
                last unless $bt[0] =~ /^Coro/;
             }
          });
+         $bt[1] =~ s/^.*[\/\\]// if @bt && !$verbose;
          $buf .= sprintf "%20s %s%s %4s %4s $desc %s\n",
                          $coro+0,
                          $coro->is_new ? "N" : $coro->is_running ? "U" : $coro->is_ready ? "R" : "-",
@@ -295,7 +297,6 @@ sub command($) {
                          $coro->debug_desc,
                          (@bt ? sprintf "[%s:%d]", $bt[1], $bt[2] : "-");
       }
-      Coro::cede;
       print $buf;
 
    } elsif ($cmd =~ /^bt\s+(\d+)$/) {
@@ -349,7 +350,7 @@ sub command($) {
 
    } elsif ($cmd =~ /^help$/) {
       print <<EOF;
-ps                      show the list of all coroutines
+ps [w|v]                show the list of all coroutines (wide, verbose)
 bt <pid>                show a full backtrace of coroutine <pid>
 eval <pid> <perl>       evaluate <perl> expression in context of <pid>
 trace <pid>             enable tracing for this coroutine
@@ -384,7 +385,6 @@ EOF
       my @res = eval $cmd;
       print $@ ? $@ : (join " ", @res) . "\n";
    }
-   Coro::cede;
 }
 
 =item session $fh
@@ -426,6 +426,8 @@ EOF
       } else {
          command $cmd;
       }
+
+      Coro::cede;
    }
 }
 
@@ -453,8 +455,11 @@ sub new_unix_server {
    my ($class, $path) = @_;
 
    unlink $path;
+   my $unlink_guard = AnyEvent::Util::guard { unlink $path };
+
    AnyEvent::Socket::tcp_server "unix/", $path, sub {
       my ($fh) = @_;
+      $unlink_guard; # mention it
       Coro::async_pool {
          $Coro::current->desc ("[Coro::Debug session]");
          session $fh;

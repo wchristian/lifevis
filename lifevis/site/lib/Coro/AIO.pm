@@ -43,11 +43,11 @@ will be exported by default by Coro::AIO, too.
 Functions that can be optionally imported from IO::AIO can be imported
 from Coro::AIO or can be called directly, e.g. C<Coro::AIO::nreqs>.
 
-You cannot specify priorities with C<aioreq_pri>, as this module
-overwrites the request priority with the current coroutine priority at all
-times.
+You cannot specify priorities with C<aioreq_pri> if your coroutine has a
+non-zero priority, as this module overwrites the request priority with the
+current coroutine priority in that case.
 
-For your convienience, here are the changed function signatures for most
+For your convenience, here are the changed function signatures for most
 of the requests, for documentation of these functions please have a look
 at L<IO::AIO|the IO::AIO manual>. Note that requests added by newer
 versions of L<IO::AIO> will be automatically wrapped as well.
@@ -68,7 +68,7 @@ use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = 4.91;
+our $VERSION = "5.0";
 
 our @EXPORT    = (@IO::AIO::EXPORT, qw(aio_wait));
 our @EXPORT_OK = @IO::AIO::EXPORT_OK;
@@ -86,31 +86,16 @@ our $AUTOLOAD;
 
    for my $sub (@reqs) {
       push @EXPORT, $sub;
-      
+
       my $iosub = "IO::AIO::$sub";
       my $proto = prototype $iosub;
 
       $proto =~ s/;?\$$// or die "$iosub: unable to remove callback slot from prototype";
 
-      eval qq{
-#line 1 "Coro::AIO::$sub($proto)"
-         sub $sub($proto) {
-            my (\$current, \$state) = \$Coro::current;
-
-            push \@_, sub {
-               \$state = _get_state \$current;
-            };
-
-            aioreq_pri \$Coro::current->prio;
-            &$iosub;
-
-            do { &Coro::schedule } while !\$state;
-
-            _set_state \$state
-         }
-      };
-      die if $@;
+      _register "Coro::AIO::$sub", $proto, \&{$iosub};
    }
+
+   _register "Coro::AIO::aio_wait", '$', \&IO::AIO::REQ::cb;
 }
 
 sub AUTOLOAD {
@@ -125,22 +110,8 @@ This is not originally an IO::AIO request: what it does is to wait for
 C<$req> to finish and return the results. This is most useful with
 C<aio_group> requests.
 
-Is currently implemented by replacing the C<$req> callback.
-
-=cut
-
-sub aio_wait($) {
-   my ($current, $state, $cb) = $Coro::current;
-
-   $cb = $_[0]->cb (sub {
-      $state = _get_state $current;
-      &$cb if $cb;
-   });
-
-   do { &Coro::schedule } while !$state;
-
-   _set_state $state
-}
+Is currently implemented by replacing the C<$req> callback (and is very
+much like a wrapper around C<< $req->cb () >>).
 
 =item $fh = aio_open $pathname, $flags, $mode
 

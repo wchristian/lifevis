@@ -46,7 +46,7 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK WSAEINPROGRESS);
 
 use base 'Exporter';
 
-our $VERSION = 4.91;
+our $VERSION = "5.0";
 our @EXPORT = qw(unblock);
 
 =item $fh = new_from_fh Coro::Handle $fhandle [, arg => value...]
@@ -318,7 +318,7 @@ sub PRINT {
 }
 
 sub PRINTF {
-   WRITE (shift, sprintf shift,@_)
+   WRITE (shift, sprintf shift, @_)
 }
 
 sub GETC {
@@ -455,6 +455,7 @@ for my $rw (qw(readable writable)) {
       } elsif ($AnyEvent::MODEL eq "AnyEvent::Impl::CoroEV" or $AnyEvent::MODEL eq "AnyEvent::Impl::EV") {
          require Coro::EV;
          *$rw = \&{"Coro::EV::$rw\_ev"};
+         return &$rw; # Coro 5.0+ doesn't support goto &SLF
       } else {
          *$rw = \&{"$rw\_anyevent"};
       }
@@ -534,7 +535,7 @@ sub READLINE {
             return $res;
          }
 
-         $ofs = length $_[0][3] - length $irs;
+         $ofs = (length $_[0][3]) - (length $irs);
       }
 
       $len = sysread $_[0][0], $_[0][3], $len + 4096, length $_[0][3];

@@ -94,6 +94,24 @@ glEndQuery(target)
 	INIT:
 		loadProc(glEndQuery,"glEndQuery");
 
+
+#// 1.0
+#//# $result = glGetQueryiv($target, $pname);
+GLint
+glGetQueryiv(target, pname)
+	GLenum	target
+	GLenum	pname
+	INIT:
+		loadProc(glGetQueryiv,"glGetQueryiv");
+	CODE:
+		{
+		GLint result;
+		glGetQueryiv(target, pname, &result);
+		RETVAL = result;
+		}
+	OUTPUT:
+	    RETVAL
+
 ################################################################
 
 in OpenGL.pm:
@@ -106,5 +124,6 @@ glBeginQuery
 glEndQuery
 glGetQueryObjectiv
 glGetQueryObjectuiv
+glGetQueryiv
 
 ################################################################

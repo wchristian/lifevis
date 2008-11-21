@@ -30,11 +30,12 @@ identifier.
 
 package Coro::SemaphoreSet;
 
+use strict qw(vars subs);
 no warnings;
 
-use Coro ();
+our $VERSION = "5.0";
 
-$VERSION = 4.91;
+use Coro::Semaphore ();
 
 =item new [inital count]
 
@@ -47,77 +48,66 @@ sub new {
    bless [defined $_[1] ? $_[1] : 1], $_[0];
 }
 
-=item $sem->down ($id)
+=item $semset->down ($id)
 
 Decrement the counter, therefore "locking" the named semaphore. This
 method waits until the semaphore is available if the counter is zero.
 
-=item $status = $sem->timed_down ($id, $timeout)
-
-Like C<down>, but returns false if semaphore couldn't be acquired within
-$timeout seconds, otherwise true.
-
 =cut
 
 sub down {
-   while () {
-      my $sem = ($_[0][1]{$_[1]} ||= [$_[0][0]]);
-
-      if ($sem->[0] > 0) {
-         --$sem->[0];
-         return 1;
-      }
-
-      push @{$sem->[1]}, $Coro::current;
-      &Coro::schedule;
-   }
+   package Coro::Semaphore;
+   down ($_[0][1]{$_[1]} ||= new undef, $_[0][0]);
 }
 
-sub timed_down {
-   require Coro::Timer;
-   my $timeout = Coro::Timer::timeout ($_[2]);
+#ub timed_down {
+#  require Coro::Timer;
+#  my $timeout = Coro::Timer::timeout ($_[2]);
+#
+#  while () {
+#     my $sem = ($_[0][1]{$_[1]} ||= [$_[0][0]]);
+#
+#     if ($sem->[0] > 0) {
+#        --$sem->[0];
+#        return 1;
+#     }
+#
+#     if ($timeout) {
+#        # ugly as hell.
+#        for (0..$#{$sem->[1]}) {
+#           if ($sem->[1][$_] == $Coro::current) {
+#              splice @{$sem->[1]}, $_, 1;
+#              return 0;
+#           }
+#        }
+#        die;
+#     }
+#
+#     push @{$sem->[1]}, $Coro::current;
+#     &Coro::schedule;
+#  }
+#
 
-   while () {
-      my $sem = ($_[0][1]{$_[1]} ||= [$_[0][0]]);
+=item $semset->up ($id)
 
-      if ($sem->[0] > 0) {
-         --$sem->[0];
-         return 1;
-      }
-
-      if ($timeout) {
-         # ugly as hell.
-         for (0..$#{$sem->[1]}) {
-            if ($sem->[1][$_] == $Coro::current) {
-               splice @{$sem->[1]}, $_, 1;
-               return 0;
-            }
-         }
-         die;
-      }
-
-      push @{$sem->[1]}, $Coro::current;
-      &Coro::schedule;
-   }
-}
-
-=item $sem->up ($id)
-
-Unlock the semaphore again.
+Unlock the semaphore again. If the semaphore then reaches the default
+count for this set and has no waiters, the space allocated for it will be
+freed.
 
 =cut
 
 sub up {
-   my $sem = $_[0][1]{$_[1]};
+   my ($self, $id) = @_;
 
-   if (++$sem->[0] > 0) {
-      (shift @{$sem->[1]})->ready if @{$sem->[1]};
-   }
+   package Coro::Semaphore;
+   my $sem = $self->[1]{$id} ||= new undef, $self->[0];
 
-   delete $_[0][1]{$_[1]} if $sem->[0] == $_[0][0] && !@{$sem->[1] || []};
+   up $sem;
+
+   delete $self->[1]{$id} if $self->[0] == count $sem and !waiters $sem;
 }
 
-=item $sem->try
+=item $semset->try
 
 Try to C<down> the semaphore. Returns true when this was possible,
 otherwise return false and leave the semaphore unchanged.
@@ -125,37 +115,14 @@ otherwise return false and leave the semaphore unchanged.
 =cut
 
 sub try {
-   my $sem = ($_[0][1]{$_[1]} ||= [$_[0][0]]);
-   if ($sem->[0] > 0) {
-      --$sem->[0];
-      return 1;
-   } else {
-      return 0;
-   }
+   package Coro::Semaphore;
+   try ($_[0][1]{$_[1]} ||= new undef, $_[0][0]);
 }
 
-=item $sem->waiters ($id)
-
-In scalar context, returns the number of coroutines waiting for this
-semaphore.
-
-=cut
-
-sub waiters {
-   my $sem = $_[0][1]{$_[1]}
-      or return;
-   @{ $_[0][1]{$_[1]}[1] || []}
-}
-
-=item $guard = $sem->guard ($id)
+=item $guard = $semset->guard ($id)
 
 This method calls C<down> and then creates a guard object. When the guard
 object is destroyed it automatically calls C<up>.
-
-=item $guard = $sem->timed_guard ($id, $timeout)
-
-Like C<guard>, but returns undef if semaphore couldn't be acquired within
-$timeout seconds, otherwise the guard object.
 
 =cut
 
@@ -164,14 +131,28 @@ sub guard {
    bless [@_], Coro::SemaphoreSet::guard::;
 }
 
-sub timed_guard {
-   &timed_down
-      ? bless [$_[0], $_[1]], Coro::SemaphoreSet::guard::
-      : ();
-}
+#ub timed_guard {
+#  &timed_down
+#     ? bless [$_[0], $_[1]], Coro::SemaphoreSet::guard::
+#     : ();
+#
 
 sub Coro::SemaphoreSet::guard::DESTROY {
-   &up(@{$_[0]});
+   up @{$_[0]};
+}
+
+=item $semaphore = $semset->sem ($id)
+
+This SemaphoreSet version is based on Coro::Semaphore's. This function
+creates (if necessary) the underlying Coro::Semaphore object and returns
+it. You may legally call any Coro::Semaphore method on it, but note that
+calling C<< $semset->up >> can invalidate the returned semaphore.
+
+=cut
+
+sub sem {
+   package Coro::Semaphore;
+   $_[0][1]{$_[1]} ||= new undef, $_[0][0]
 }
 
 1;

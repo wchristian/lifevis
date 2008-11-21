@@ -46,21 +46,14 @@ use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = 4.91;
+our $VERSION = "5.0";
 our $WATCHER;
 
 BDB::set_sync_prepare {
-   my $status;
-   my $current = $Coro::current;
+   my $cb = Coro::rouse_cb;
    (
-      sub {
-         $status = $!;
-         $current->ready; undef $current;
-      },
-      sub {
-         Coro::schedule while defined $current;
-         $! = $status;
-      },
+      sub { $cb->($!) },
+      sub { $! = Coro::rouse_wait },
    )
 };
 

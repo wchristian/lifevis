@@ -45,7 +45,7 @@ When Perl code calls a C function (e.g. in an extension module) and that
 C function then calls back into Perl or does a coroutine switch the C
 coroutine can no longer execute other Perl coroutines, so it stays tied to
 the specific coroutine until it returns to the original Perl caller, after
-which it is again avaikable to run other Perl coroutines.
+which it is again available to run other Perl coroutines.
 
 The main program always has its own "C coroutine" (which really is
 *the* Perl interpreter running the whole program), so there will always
@@ -92,7 +92,7 @@ sub warnhook { &$WARNHOOK }
 use XSLoader;
 
 BEGIN {
-   our $VERSION = 4.91;
+   our $VERSION = "5.0";
 
    # must be done here because the xs part expects it to exist
    # it might exist already because Coro::Specific created it.
@@ -131,6 +131,9 @@ main program, too, unless they have been overwritten already.
 The default handlers provided will behave like the built-in ones (as if
 they weren't there).
 
+If you don't want to exit your program on uncaught exceptions, you can
+must not return from your die hook - terminate instead.
+
 Note 1: You I<must> store a valid code reference in these variables,
 C<undef> will I<not> do.
 
@@ -151,7 +154,16 @@ Similar to above die hook, but augments C<$SIG{__WARN__}>.
 =item $coro = new Coro::State [$coderef[, @args...]]
 
 Create a new coroutine and return it. The first C<transfer> call to this
-coroutine will start execution at the given coderef.
+coroutine will start execution at the given coderef, with the given
+arguments.
+
+Note that the arguments will not be copied. Instead, as with normal
+function calls, the coroutine receives passed arguments by reference, so
+make sure you don't change them in unexpected ways.
+
+Returning from such a coroutine is I<NOT> supported. Neither is calling
+C<exit> or throwing an uncaught exception. The following paragraphs
+describe what happens in current versions of Coro.
 
 If the subroutine returns the program will be terminated as if execution
 of the main program ended.
@@ -207,14 +219,6 @@ in the code below, and use it in your coroutines:
   }
 
 =cut
-
-# this is called for each newly created C coroutine,
-# and is being artificially injected into the opcode flow.
-# its sole purpose is to call transfer() once so it knows
-# the top level stack frame for stack sharing.
-sub _cctx_init {
-   &_set_stacklevel;
-}
 
 =item $state->throw ([$scalar])
 
@@ -314,6 +318,25 @@ Returns a list of all states currently allocated.
 # used by Coro::Debug only atm.
 sub debug_desc {
    $_[0]{desc}
+}
+
+# for very deep reasons, we must initialise $Coro::main here.
+
+{
+   package Coro;
+
+   our $main;    # main coroutine
+   our $current; # current coroutine
+
+   $main = Coro::State::new Coro::;
+
+   $main->{desc} = "[main::]";
+
+   # maybe some other module used Coro::Specific before...
+   $main->{_specific} = $current->{_specific}
+      if $current;
+
+   _set_current $main;
 }
 
 1;

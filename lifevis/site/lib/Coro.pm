@@ -69,7 +69,7 @@ our $idle;    # idle handler
 our $main;    # main coroutine
 our $current; # current coroutine
 
-our $VERSION = 4.911;
+our $VERSION = "5.0";
 
 our @EXPORT = qw(async async_pool cede schedule terminate current unblock_sub);
 our %EXPORT_TAGS = (
@@ -88,27 +88,19 @@ whether you are running in the main program or not.
 
 =cut
 
-$main = new Coro;
+# $main is now being initialised by Coro::State
 
 =item $Coro::current
 
 The coroutine object representing the current coroutine (the last
 coroutine that the Coro scheduler switched to). The initial value is
-C<$main> (of course).
+C<$Coro::main> (of course).
 
 This variable is B<strictly> I<read-only>. You can take copies of the
 value stored in it and use it as any other coroutine object, but you must
 not otherwise modify the variable itself.
 
 =cut
-
-$main->{desc} = "[main::]";
-
-# maybe some other module used Coro::Specific before...
-$main->{_specific} = $current->{_specific}
-   if $current;
-
-_set_current $main;
 
 sub current() { $current } # [DEPRECATED]
 
@@ -145,26 +137,14 @@ $idle = sub {
    Carp::croak ("FATAL: deadlock detected");
 };
 
-sub _cancel {
-   my ($self) = @_;
-
-   # free coroutine data and mark as destructed
-   $self->_destroy
-      or return;
-
-   # call all destruction callbacks
-   $_->(@{$self->{_status}})
-      for @{ delete $self->{_on_destroy} || [] };
-}
-
 # this coroutine is necessary because a coroutine
 # cannot destroy itself.
-my @destroy;
-my $manager;
+our @destroy;
+our $manager;
 
 $manager = new Coro sub {
    while () {
-      (shift @destroy)->_cancel
+      Coro::_cancel shift @destroy
          while @destroy;
 
       &schedule;
@@ -222,9 +202,9 @@ terminate or join on it (although you are allowed to), and you get a
 coroutine that might have executed other code already (which can be good
 or bad :).
 
-On the plus side, this function is faster than creating (and destroying)
-a completly new coroutine, so if you need a lot of generic coroutines in
-quick successsion, use C<async_pool>, not C<async>.
+On the plus side, this function is about twice as fast as creating (and
+destroying) a completely new coroutine, so if you need a lot of generic
+coroutines in quick successsion, use C<async_pool>, not C<async>.
 
 The code block is executed in an C<eval> context and a warning will be
 issued in case of an exception instead of terminating the program, as
@@ -257,33 +237,13 @@ our $POOL_RSS  = 16 * 1024;
 our @async_pool;
 
 sub pool_handler {
-   my $cb;
-
    while () {
       eval {
-         while () {
-            _pool_1 $cb;
-            &$cb;
-            _pool_2 $cb;
-            &schedule;
-         }
+         &{&_pool_handler} while 1;
       };
 
-      if ($@) {
-         last if $@ eq "\3async_pool terminate\2\n";
-         warn $@;
-      }
+      warn $@ if $@;
    }
-}
-
-sub async_pool(&@) {
-   # this is also inlined into the unlock_scheduler
-   my $coro = (pop @async_pool) || new Coro \&pool_handler;
-
-   $coro->{_invoke} = [@_];
-   $coro->ready;
-
-   $coro
 }
 
 =back
@@ -315,24 +275,7 @@ yourself to sleep. Note that a lot of things can wake your coroutine up,
 so you need to check whether the event indeed happened, e.g. by storing the
 status in a variable.
 
-The canonical way to wait on external events is this:
-
-   {
-      # remember current coroutine
-      my $current = $Coro::current;
-
-      # register a hypothetical event handler
-      on_event_invoke sub {
-         # wake up sleeping coroutine
-         $current->ready;
-         undef $current;
-      };
-
-      # call schedule until event occurred.
-      # in case we are woken up for other reasons
-      # (current still defined), loop.
-      Coro::schedule while $current;
-   }
+See B<HOW TO WAIT FOR A CALLBACK>, below, for some ways to wait for callbacks.
 
 =item cede
 
@@ -366,10 +309,6 @@ program calls this function, there will be some one-time resource leak.
 
 =cut
 
-sub terminate {
-   $current->cancel (@_);
-}
-
 sub killall {
    for (Coro::State::list) {
       $_->cancel
@@ -398,14 +337,8 @@ coroutine environment.
 
 =cut
 
-sub _run_coro {
+sub _terminate {
    terminate &{+shift};
-}
-
-sub new {
-   my $class = shift;
-
-   $class->SUPER::new (\&_run_coro, @_)
 }
 
 =item $success = $coroutine->ready
@@ -432,23 +365,44 @@ current coroutine.
 
 sub cancel {
    my $self = shift;
-   $self->{_status} = [@_];
 
    if ($current == $self) {
-      push @destroy, $self;
-      $manager->ready;
-      &schedule while 1;
+      terminate @_;
    } else {
+      $self->{_status} = [@_];
       $self->_cancel;
    }
 }
 
+=item $coroutine->schedule_to
+
+Puts the current coroutine to sleep (like C<Coro::schedule>), but instead
+of continuing with the next coro from the ready queue, always switch to
+the given coroutine object (regardless of priority etc.). The readyness
+state of that coroutine isn't changed.
+
+This is an advanced method for special cases - I'd love to hear about any
+uses for this one.
+
+=item $coroutine->cede_to
+
+Like C<schedule_to>, but puts the current coroutine into the ready
+queue. This has the effect of temporarily switching to the given
+coroutine, and continuing some time later.
+
+This is an advanced method for special cases - I'd love to hear about any
+uses for this one.
+
 =item $coroutine->throw ([$scalar])
 
 If C<$throw> is specified and defined, it will be thrown as an exception
-inside the coroutine at the next convenient point in time (usually after
-it gains control at the next schedule/transfer/cede). Otherwise clears the
-exception object.
+inside the coroutine at the next convenient point in time. Otherwise
+clears the exception object.
+
+Coro will check for the exception each time a schedule-like-function
+returns, i.e. after each C<schedule>, C<cede>, C<< Coro::Semaphore->down
+>>, C<< Coro::Handle->readable >> and so on. Most of these functions
+detect this case and return early in case an exception is pending.
 
 The exception object will be thrown "as is" with the specified scalar in
 C<$@>, i.e. if it is a string, no line number or newline will be appended
@@ -638,12 +592,12 @@ our @unblock_queue;
 our $unblock_scheduler = new Coro sub {
    while () {
       while (my $cb = pop @unblock_queue) {
-         # this is an inlined copy of async_pool
-         my $coro = (pop @async_pool) || new Coro \&pool_handler;
+         &async_pool (@$cb);
 
-         $coro->{_invoke} = $cb;
-         $coro->ready;
-         cede; # for short-lived callbacks, this reduces pressure on the coro pool
+         # for short-lived callbacks, this reduces pressure on the coro pool
+         # as the chance is very high that the async_poll coro will be back
+         # in the idle state when cede returns
+         cede;
       }
       schedule; # sleep well
    }
@@ -659,19 +613,129 @@ sub unblock_sub(&) {
    }
 }
 
+=item $cb = Coro::rouse_cb
+
+Create and return a "rouse callback". That's a code reference that, when
+called, will save its arguments and notify the owner coroutine of the
+callback.
+
+See the next function.
+
+=item @args = Coro::rouse_wait [$cb]
+
+Wait for the specified rouse callback (or the last one tht was created in
+this coroutine).
+
+As soon as the callback is invoked (or when the calback was invoked before
+C<rouse_wait>), it will return a copy of the arguments originally passed
+to the rouse callback.
+
+See the section B<HOW TO WAIT FOR A CALLBACK> for an actual usage example.
+
 =back
 
 =cut
 
 1;
 
+=head1 HOW TO WAIT FOR A CALLBACK
+
+It is very common for a coroutine to wait for some callback to be
+called. This occurs naturally when you use coroutines in an otherwise
+event-based program, or when you use event-based libraries.
+
+These typically register a callback for some event, and call that callback
+when the event occured.  In a coroutine, however, you typically want to
+just wait for the event, simplyifying things.
+
+For example C<< AnyEvent->child >> registers a callback to be called when
+a specific child has exited:
+
+   my $child_watcher = AnyEvent->child (pid => $pid, cb => sub { ... });
+
+But from withina coroutine, you often just want to write this:
+
+   my $status = wait_for_child $pid;
+
+Coro offers two functions specifically designed to make this easy,
+C<Coro::rouse_cb> and C<Coro::rouse_wait>.
+
+The first function, C<rouse_cb>, generates and returns a callback that,
+when invoked, will save it's arguments and notify the coroutine that
+created the callback.
+
+The second function, C<rouse_wait>, waits for the callback to be called
+(by calling C<schedule> to go to sleep) and returns the arguments
+originally passed to the callback.
+
+Using these functions, it becomes easy to write the C<wait_for_child>
+function mentioned above:
+
+   sub wait_for_child($) {
+      my ($pid) = @_;
+
+      my $watcher = AnyEvent->child (pid => $pid, cb => Coro::rouse_cb);
+
+      my ($rpid, $rstatus) = Coro::rouse_wait;
+      $rstatus
+   }
+
+In the case where C<rouse_cb> and C<rouse_wait> are not flexible enough,
+you can roll your own, using C<schedule>:
+
+   sub wait_for_child($) {
+      my ($pid) = @_;
+
+      # store the current coroutine in $current,
+      # and provide result variables for the closure passed to ->child
+      my $current = $Coro::current;
+      my ($done, $rstatus);
+
+      # pass a closure to ->child
+      my $watcher = AnyEvent->child (pid => $pid, cb => sub {
+         $rstatus = $_[1]; # remember rstatus
+         $done = 1; # mark $rstatus as valud
+      });
+
+      # wait until the closure has been called
+      schedule while !$done;
+
+      $rstatus
+   }
+
+
 =head1 BUGS/LIMITATIONS
+
+=over 4
+
+=item fork with pthread backend
+
+When Coro is compiled using the pthread backend (which isn't recommended
+but required on many BSDs as their libcs are completely broken), then
+coroutines will not survive a fork. There is no known workaround except to
+fix your libc and use a saner backend.
+
+=item perl process emulation ("threads")
 
 This module is not perl-pseudo-thread-safe. You should only ever use this
 module from the same thread (this requirement might be removed in the
 future to allow per-thread schedulers, but Coro::State does not yet allow
-this). I recommend disabling thread support and using processes, as this
-is much faster and uses less memory.
+this). I recommend disabling thread support and using processes, as having
+the windows process emulation enabled under unix roughly halves perl
+performance, even when not used.
+
+=item coroutine switching not signal safe
+
+You must not switch to another coroutine from within a signal handler
+(only relevant with %SIG - most event libraries provide safe signals).
+
+That means you I<MUST NOT> call any function that might "block" the
+current coroutine - C<cede>, C<schedule> C<< Coro::Semaphore->down >> or
+anything that calls those. Everything else, including calling C<ready>,
+works.
+
+=back
+
 
 =head1 SEE ALSO
 
