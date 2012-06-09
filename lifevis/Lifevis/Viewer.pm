@@ -1,7 +1,7 @@
-# $Id$
-# $Revision$
-# $HeadURL$
-# $Date$
+# $Id: Viewer.pm 257 2008-11-21 16:03:33Z xenofur $
+# $Revision: 257 $
+# $HeadURL: https://dwarvis.googlecode.com/svn/trunk/lifevis/Lifevis/Viewer.pm $
+# $Date: 2008-11-21 17:03:33 +0100 (Fr, 21 Nov 2008) $
 # $Source$
 
 # Lifevis
@@ -35,7 +35,7 @@ use 5.010;
 use strict;
 use warnings;
 
-our ($VERSION) = '$Revision$' =~ m{ \$Revision: \s+ (\S+) }x;    # define minor version
+our ($VERSION) = '$Revision: 257 $' =~ m{ \$Revision: \s+ (\S+) }x;    # define minor version
 $VERSION = 0 + $VERSION / 1000;                                        # define major version
 
 #use warnings::unused;
