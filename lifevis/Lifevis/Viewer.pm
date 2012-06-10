@@ -112,6 +112,8 @@ use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
 
+*_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
+
 my $memory_use;
 $memory_use = 0;
 
