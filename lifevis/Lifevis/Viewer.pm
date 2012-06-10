@@ -526,19 +526,18 @@ sub creature_update_loop {
             next if $flags & 2;
 
             # extract coordinates of current creature and skip if out of bounds
-            my $rx = unpack( "S", substr( $buf, 148, 2 ) );
+            my $rx = unpack( "S", substr( $buf, 0x90, 2 ) );
             next if ( $rx > $xcount * 16 );
-            my $rz = unpack( "S", substr( $buf, 152, 2 ) );
+            my $rz = unpack( "S", substr( $buf, 0x94, 2 ) );
             next if ( $rz > $zcount + 1 );
-            my $ry = unpack( "S", substr( $buf, 150, 2 ) );
+            my $ry = unpack( "S", substr( $buf, 0x92, 2 ) );
 
             # get name and race, but only if we don't have them yet, since they're unlikely to change
             if ( !defined $creatures{$creature}[name] ) {
-                my $name_length = unpack( "L", substr( $buf, 120, 4 ) );
-                $creatures{$creature}[name] = substr( $buf, 4, $name_length );
+                $creatures{$creature}[name] = substr( $buf, 4, 0x6c );
             }
             if ( !defined $creatures{$creature}[race] ) {
-                my $race = unpack( "L", substr( $buf, 140, 4 ) );
+                my $race = unpack( "L", substr( $buf, 0x8c, 0x4 ) );
                 $creatures{$creature}[race] = $race;
             }
 
@@ -625,17 +624,17 @@ sub building_update_loop {
             }
 
             #say $proc->hexdump( $building, 0xD8 );
-            _ReadMemory( $df_proc_handle, $building, 30, $buf );
+            _ReadMemory( $df_proc_handle, $building, 0xe8, $buf );
 
             next if ( defined $buildings{$building}[string] and $buildings{$building}[string] eq $buf );
             $buildings{$building}[string] = $buf;
 
             # extract coordinates of current creature and skip if out of bounds
-            my $rx = unpack( "S", substr( $buf, 4, 2 ) );
+            my $rx = unpack( "S", substr( $buf, 0x4, 0x4 ) );
             next if ( $rx > $xcount * 16 );
-            my $rz = unpack( "S", substr( $buf, 28, 2 ) );
+            my $rz = unpack( "S", substr( $buf, 0x1c, 0x4 ) );
             next if ( $rz > $zcount + 1 );
-            my $ry     = unpack( "S", substr( $buf, 8, 2 ) );
+            my $ry     = unpack( "S", substr( $buf, 0x10, 0x4 ) );
             my $vtable = unpack( "L", substr( $buf, 0, 4 ) );
 
             # update record of current creature
@@ -721,6 +720,8 @@ sub item_update_loop {
             }
         }
 
+        my $item_size = 0x64;
+
         for my $bucket (@buckets) {
             if ( ( time - $entry_time ) > $time_slice ) {
                 cede();
@@ -728,7 +729,7 @@ sub item_update_loop {
             }
 
             my $string = "";
-            _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + 24, $string );
+            _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + $item_size, $string );
 
             next if ( $string eq "" );
 
@@ -742,10 +743,10 @@ sub item_update_loop {
                 }
 
                 my $new_offset = $item_address - $bucket->[0];
-                my $buf = substr( $string, $new_offset, 24 );
+                my $buf = substr( $string, $new_offset, $item_size );
 
                 # extract DF item id
-                my $id = unpack( "L", substr( $buf, 20, 4 ) );
+                my $id = unpack( "L", substr( $buf, 0x18, 0x4 ) );
 
                 if ( $id > $largest_id ) {
                     #say $largest_id;
@@ -756,7 +757,7 @@ sub item_update_loop {
                 $items{$id}[string] = $buf;
 
                 # extract state of current item and skip applicable items
-                my $state = unpack( "L", substr( $buf, 12, 4 ) );
+                my $state = unpack( "L", substr( $buf, 0xc, 4 ) );
                 if (
                     !( $state & 0x1 )    # is not lying on the ground
                     || ( $state & 0x1000000 )    # is hidden
@@ -767,14 +768,14 @@ sub item_update_loop {
                 }
 
                 # extract coordinates of current creature and skip if out of bounds
-                my $rx = unpack( "S", substr( $buf, 4, 2 ) );
+                my $rx = unpack( "S", substr( $buf, 0x4, 2 ) );
                 if ( $rx > $xcount * 16 ) {
                     $items{$id}[invisible] = 1;
                     next;
                 }
-                my $rz = unpack( "S", substr( $buf, 8, 2 ) );
+                my $rz = unpack( "S", substr( $buf, 0x8, 2 ) );
                 next if ( $rz > $zcount + 1 );
-                my $ry   = unpack( "S", substr( $buf, 6, 2 ) );
+                my $ry   = unpack( "S", substr( $buf, 0x6, 2 ) );
                 my $type = unpack( "L", substr( $buf, 0, 4 ) );
                 my $vtable = $type;
 
