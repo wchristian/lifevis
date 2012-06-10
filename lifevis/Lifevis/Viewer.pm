@@ -641,8 +641,8 @@ sub building_update_loop {
             $buildings{$building}[b_x]            = $rx;
             $buildings{$building}[b_y]            = $ry;
             $buildings{$building}[b_vtable_const] = $vtable;
-            $buildings{$building}[b_vtable_id]    = $vtables{$vtable};
-            warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
+            $buildings{$building}[b_vtable_id]    = $vtables{$vtable} || 0;
+            #warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
 
             # get old and new cell location and compare
             my $old_x = $buildings{$building}[b_cell_x];
@@ -789,7 +789,7 @@ sub item_update_loop {
                 $items{$id}[i_address]      = $item_address;
                 $items{$id}[i_vtable_const] = $vtable;
                 $items{$id}[i_vtable_id]    = $vtables{$vtable};
-                warn sprintf "UNKNOWN ITEM VTABLE: %x\n", $vtable unless $items{$id}[i_vtable_id];
+                #warn sprintf "UNKNOWN ITEM VTABLE: %x\n", $vtable unless $items{$id}[i_vtable_id];
 
 #say "X: $rx Y: $ry Z: $rz ST: $state T: $type" if ( !$full_loop_completed && $state & (1 << 0) && ( 0 || $state & (1 << 2) ));
 
