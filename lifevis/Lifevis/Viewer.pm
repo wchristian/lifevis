@@ -483,7 +483,7 @@ sub creature_update_loop {
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[creature_vector] + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[creature_vector], 4 * 2, $buf );
         my @creature_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $creature_list_length = ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
@@ -594,7 +594,7 @@ sub building_update_loop {
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[building_vector] + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[building_vector], 4 * 2, $buf );
         my @building_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $building_list_length = ( $building_vector_offsets[1] - $building_vector_offsets[0] ) / 4;
@@ -694,7 +694,7 @@ sub item_update_loop {
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[item_vector] + 4, 4 * 2, $buf );
+        _ReadMemory( $df_proc_handle, $offsets[item_vector], 4 * 2, $buf );
         my @item_vector_offsets = unpack( 'L' x 2, $buf );
 
         my $item_list_length = ( $item_vector_offsets[1] - $item_vector_offsets[0] ) / 4;
