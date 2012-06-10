@@ -69,7 +69,7 @@ sub init_process_connection {
     ### get dwarf process id #######################################################
     my %list = Win32::Process::List->new()->GetProcesses();
     for my $key ( keys %list ) {
-        $dwarf_pid = $key if ( $list{$key} =~ /dwarfort.exe/ );
+        $dwarf_pid = $key if ( $list{$key} =~ /(dwarfort|Dwarf Fortress)\.exe/ );
     }
     fatal_error( 'Could not find process ID, make sure DF is running and' . ' a savegame is loaded.' )
       unless ($dwarf_pid);
