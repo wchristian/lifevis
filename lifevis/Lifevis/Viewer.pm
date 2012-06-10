@@ -35,6 +35,9 @@ use 5.010;
 use strict;
 use warnings;
 
+use Cwd 'getcwd';
+chdir '..' if getcwd =~ /Lifevis/;
+
 our ($VERSION) = '$Revision: 257 $' =~ m{ \$Revision: \s+ (\S+) }x;    # define minor version
 $VERSION = 0 + $VERSION / 1000;                                        # define major version
 
