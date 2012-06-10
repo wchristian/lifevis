@@ -36,7 +36,7 @@ my @OFFSETS = get_df_offsets();
 sub connect_to_DF {
     $ver = init_process_connection();
 
-    refresh_datastore() unless $ver;
+    refresh_datastore() unless defined $ver;
 
     my @offsets;
     $offsets[version]             = $OFFSETS[$ver]{'version'};
