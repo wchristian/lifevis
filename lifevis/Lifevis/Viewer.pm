@@ -372,7 +372,7 @@ sub run {
         or $bottom + $c{window_height} > $screen_height );
     glutInitWindowPosition( $right - $c{window_width}, $bottom );
 
-    $window_ID = glutCreateWindow( PROGRAM_TITLE . " v$VERSION" );    # Open a window
+    $window_ID = glutCreateWindow( PROGRAM_TITLE . " v$VERSION - DF Version: " . $offsets[version] );    # Open a window
     glutSetOption( GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION );
     glutIgnoreKeyRepeat(1);
 
