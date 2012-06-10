@@ -1,0 +1,3 @@
+[submodule "lifevis/df-structures"]
+	path = lifevis/df-structures
+	url = git://github.com/angavrilov/df-structures.git
