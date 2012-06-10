@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Carp;
 use English;
+use Win32::API;
 
 use lib '.';
 use lib '..';
@@ -12,6 +13,8 @@ use Win32;
 use Win32::Process;
 use Lifevis::constants;
 use Lifevis::df_offsets;
+
+Win32::API->Import("psapi",    "EnumProcessModules",       "NPNP", "I");
 
 use base 'Exporter';
 our @EXPORT    = qw( connect_to_DF );
@@ -26,6 +29,7 @@ my $pe_timestamp;
 
 my $VERSION;
 my $detached;
+our $master_offset;
 
 my @OFFSETS = get_df_offsets();
 
@@ -98,12 +102,25 @@ sub init_process_connection {
     $df_proc_handle = $proc->{hProcess};
 
     ### Let's Pla... erm, figure out what version this is ##########################
+    $master_offset = enum_win($df_proc_handle);
+
+    my $pe_offset = $proc->get_u32( $master_offset + 0x3C );
 
     for my $i ( 0 .. $#OFFSETS ) {
-        $pe_timestamp = $proc->get_u32( $OFFSETS[$i]{pe_timestamp_offset} );
+        $pe_timestamp = $proc->get_u32( $master_offset + $pe_offset + 8 );
         return $i if ( $OFFSETS[$i]{PE} == $pe_timestamp );
     }
     return;
+}
+
+sub enum_win {
+    my ($pid) = @_;
+
+    my $cb         = Win32::API::Type->sizeof( 'HMODULE' ) * 1024;
+    my $lphmodule  = "\x0" x $cb;
+    EnumProcessModules($pid, $lphmodule, $cb, "");
+
+    return Win32::API::Type::Unpack('HMODULE', $lphmodule);
 }
 
 sub refresh_datastore {

@@ -8,7 +8,6 @@ our @EXPORT = (qw( get_df_offsets ));
 my @OFFSETS = (
     {
         version             => "v0.34.10 SDL",
-        pe_timestamp_offset => 0x130,
         PE                  => 0x4fba073a,
         map_loc             => 0x186A738,
         x_count             => 0x186a750,
