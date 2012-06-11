@@ -288,7 +288,7 @@ sub process_xml {
 ### helpers
 
 sub initialize {
-    ( $VERSION, $detached ) = $_[1];
+    ( $VERSION, $detached ) = @_;
 }
 
 sub fatal_error {
