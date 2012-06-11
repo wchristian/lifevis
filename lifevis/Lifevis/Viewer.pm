@@ -99,7 +99,7 @@ my $detached;
 
 chdir '..' if getcwd =~ /Lifevis/;
 
-our $VERSION = "0.257_002";
+our $VERSION = "0.258_002";
 
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
