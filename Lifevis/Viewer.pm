@@ -1133,11 +1133,6 @@ sub generate_model_display_lists {
 
 sub generate_display_list {
     my ( $id, $z, $y, $x ) = @_;
-    my $type;
-    my $type_below;
-    my $type_above;
-    my $brightness_mod;
-
     my $dl = $cache[$id][display_lists][$z] ||= glGenLists( 1 );
 
     glNewList( $dl, GL_COMPILE );
@@ -1154,16 +1149,16 @@ sub generate_display_list {
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
 
                 next if !defined $tile->[$rx][$ry];               # skip tile if undefined
-                $type = $tile->[$rx][$ry];                        # store type of current tile
+                my $type = $tile->[$rx][$ry];                     # store type of current tile
                 next if $type == 32;                              # skip if tile is air
                 next
                   if !defined $TILE_TYPES[$type][base_texture];    # skip if tile type doesn't have associated texture
                 next
                   if $TILE_TYPES[$type][base_texture] !=
                       $texture;    # skip if tile type texture doesn't match current texture
-                $type_below     = $tile_below->[$rx][$ry];
-                $type_above     = $tile_above->[$rx][$ry];
-                $brightness_mod = $TILE_TYPES[$type][brightness_mod];
+                my $type_below     = $tile_below->[$rx][$ry];
+                my $type_above     = $tile_above->[$rx][$ry];
+                my $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
                 my ( $above, $below, $north, $south, $west, $east ) = ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
                 my ( $northeast, $southeast, $southwest, $northwest ) = ( EMPTY, EMPTY, EMPTY, EMPTY );
