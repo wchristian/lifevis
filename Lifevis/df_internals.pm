@@ -17,12 +17,16 @@ my @light_variance = ( 0.03, 0, -0.03, -0.06 );
 
 $TILE_TYPES[1]   = [ RAMP_TOP,   unknown,           0 ];                  #   MAPTILE_RAMPSPACE,
 $TILE_TYPES[2]   = [ WALL,       pool,              0 ];                  #   MAPTILE_POOL,
+
 $TILE_TYPES[19]  = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_DRIFTWOOD_STACK,
+
 $TILE_TYPES[24]  = [ TREE,       tree,              0 ];                  #   MAPTILE_TREE,
 $TILE_TYPES[25]  = [ STAIR,      unknown,           0 ];                  #   MAPTILE_STAIR_UPDOWN_FROZEN_LIQUID,
 $TILE_TYPES[26]  = [ STAIR_DOWN, unknown,           0 ];                  #   MAPTILE_STAIR_DOWN_FROZEN_LIQUID,
 $TILE_TYPES[27]  = [ STAIR_UP,   unknown,           0 ];                  #   MAPTILE_STAIR_UP_FROZEN_LIQUID,
+
 $TILE_TYPES[32]  = [ EMPTY,      unknown,           0 ];                  #   MAPTILE_AIR,
+
 $TILE_TYPES[34]  = [ SHRUB,      shrub,             0 ];                  #   MAPTILE_SHRUB,
 $TILE_TYPES[35]  = [ EMPTY,      unknown,           0 ];                  #   MAPTILE_CHASM,
 $TILE_TYPES[36]  = [ STAIR,      obsidian,          0 ];                  #   MAPTILE_STAIR_UPDOWN_LAVASTONE,
@@ -37,6 +41,7 @@ $TILE_TYPES[44]  = [ FLOOR,      unknown,           0 ];                  #   MA
 $TILE_TYPES[45]  = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_FEATSTONE_FLOOR_DETAILED,
 $TILE_TYPES[46]  = [ FLOOR,      minstone_detailed, 0 ];                  #   MAPTILE_MINSTONE_FLOOR_DETAILED,
 $TILE_TYPES[47]  = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_FLOOR_DETAILED,
+
 $TILE_TYPES[49]  = [ STAIR,      grass,             0 ];                  #   MAPTILE_STAIR_UPDOWN_GRASS1,
 $TILE_TYPES[50]  = [ STAIR_DOWN, grass,             0 ];                  #   MAPTILE_STAIR_DOWN_GRASS1,//50
 $TILE_TYPES[51]  = [ STAIR_UP,   grass,             0 ];                  #   MAPTILE_STAIR_UP_GRASS1,
@@ -52,21 +57,30 @@ $TILE_TYPES[60]  = [ STAIR_UP,   minstone,          0 ];                  #   MA
 $TILE_TYPES[61]  = [ STAIR,      unknown,           0 ];                  #   MAPTILE_STAIR_UPDOWN_FEATSTONE,
 $TILE_TYPES[62]  = [ STAIR_DOWN, unknown,           0 ];                  #   MAPTILE_STAIR_DOWN_FEATSTONE,
 $TILE_TYPES[63]  = [ STAIR_UP,   unknown,           0 ];                  #   MAPTILE_STAIR_UP_FEATSTONE,
+
 $TILE_TYPES[65]  = [ FORTIF,     stone,             0 ];                  #   MAPTILE_STONE_FORTIFICATION,
+
 $TILE_TYPES[67]  = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_CAMPFIRE,
+
 $TILE_TYPES[70]  = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_FIRE,
+
 $TILE_TYPES[79]  = [ PILLAR,     stone,             0 ];                  #   MAPTILE_STONE_PILLAR,
 $TILE_TYPES[80]  = [ PILLAR,     obsidian,          0 ];                  #   MAPTILE_LAVASTONE_PILLAR,
 $TILE_TYPES[81]  = [ PILLAR,     unknown,           0 ];                  #   MAPTILE_FEATSTONE_PILLAR,
 $TILE_TYPES[82]  = [ PILLAR,     minstone,          0 ];                  #   MAPTILE_MINSTONE_PILLAR,
 $TILE_TYPES[83]  = [ PILLAR,     unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_PILLAR,
+
 $TILE_TYPES[89]  = [ EMPTY,      unknown,           0 ];                  #   MAPTILE_WATERFALL_LANDING,
 $TILE_TYPES[90]  = [ EMPTY,      unknown,           0 ];                  #   MAPTILE_RIVER_SOURCE,//
+
 $TILE_TYPES[176] = [ WALL,       stone,             0 ];                  #   MAPTILE_STONE_WALL_WORN1,
 $TILE_TYPES[177] = [ WALL,       stone,             0 ];                  #   MAPTILE_STONE_WALL_WORN2,
 $TILE_TYPES[178] = [ WALL,       stone,             0 ];                  #   MAPTILE_STONE_WALL_WORN3,
+
 $TILE_TYPES[219] = [ WALL,       stone,             0 ];                  #   MAPTILE_STONE_WALL,
+
 $TILE_TYPES[231] = [ SAPLING,    sapling,           0 ];                  #   MAPTILE_SAPLING,
+
 $TILE_TYPES[233] = [ RAMP,       grass_dry,         0 ];                  #   MAPTILE_RAMP_GRASS_DRY,
 $TILE_TYPES[234] = [ RAMP,       unknown,           0 ];                  #   MAPTILE_RAMP_GRASS_DEAD,
 $TILE_TYPES[235] = [ RAMP,       grass,             0 ];                  #   MAPTILE_RAMP_GRASS1,
@@ -80,6 +94,7 @@ $TILE_TYPES[242] = [ FLOOR,      unknown,           0 ];                  #   MA
 $TILE_TYPES[243] = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_ASH2,
 $TILE_TYPES[244] = [ FLOOR,      unknown,           0 ];                  #   MAPTILE_ASH3,
 $TILE_TYPES[245] = [ RAMP,       unknown,           0 ];                  #   MAPTILE_RAMP_FROZEN_LIQUID,
+
 $TILE_TYPES[258] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_1,
 $TILE_TYPES[259] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_2,
 $TILE_TYPES[260] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_3,
@@ -87,6 +102,7 @@ $TILE_TYPES[261] = [ FLOOR,      unknown,           0 ];                  #   MA
 $TILE_TYPES[262] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_0,
 $TILE_TYPES[264] = [ WALL,       lava,              0 ];                  #   MAPTILE_LAVA,
 $TILE_TYPES[265] = [ WALL,       soil,              0 ];                  #   MAPTILE_SOIL_WALL,
+
 $TILE_TYPES[269] = [ WALL,       obsidian,          0 ];                  #   MAPTILE_LAVASTONE_WALL_DET_RD2,
 $TILE_TYPES[270] = [ WALL,       obsidian,          0 ];                  #   MAPTILE_LAVASTONE_WALL_DET_R2D,
 $TILE_TYPES[271] = [ WALL,       obsidian,          0 ];                  #   MAPTILE_LAVASTONE_WALL_DET_R2U,
@@ -200,6 +216,7 @@ $TILE_TYPES[378] = [ WALL,       water,             0 ];                  #   MA
 $TILE_TYPES[379] = [ WALL,       water,             0 ];                  #   MAPTILE_STREAM_BED_WALL_SW,
 $TILE_TYPES[380] = [ WALL,       water,             0 ];                  #   MAPTILE_STREAM_BED_WALL_SE,
 $TILE_TYPES[381] = [ FLOOR,      water,             0 ];                  #   MAPTILE_STREAM_BED_TOP,
+
 $TILE_TYPES[387] = [ FLOOR,      grass_dry,         0 ];                  #   MAPTILE_GRASS_FLOOR1_DRY,
 $TILE_TYPES[388] = [ FLOOR,      grass_dry,         0 ];                  #   MAPTILE_GRASS_FLOOR2_DRY,
 $TILE_TYPES[389] = [ FLOOR,      grass_dry,         0 ];                  #   MAPTILE_GRASS_FLOOR3_DRY,
@@ -282,6 +299,7 @@ $TILE_TYPES[465] = [ WALL,       unknown,           0 ];                  #   MA
 $TILE_TYPES[466] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_WALL_DET_LD,
 $TILE_TYPES[467] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_WALL_DET_UD,
 $TILE_TYPES[468] = [ WALL,       unknown,           0 ];                  #   MAPTILE_FROZEN_LIQUID_WALL_DET_LR,
+
 $TILE_TYPES[493] = [ FLOOR,      constructed_floor_detailed, 0 ];         #   MAPTILE_CONSTRUCTED_FLOOR_DETAILED,
 $TILE_TYPES[494] = [ FORTIF,     constructed_wall,           0 ];         #   MAPTILE_CONSTRUCTED_FORTIFICATION,
 $TILE_TYPES[495] = [ PILLAR,     constructed_wall,           0 ];         #   MAPTILE_CONSTRUCTED_PILLAR,
