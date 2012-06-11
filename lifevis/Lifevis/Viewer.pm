@@ -32,8 +32,6 @@ use warnings;
 use Cwd 'getcwd';
 chdir '..' if getcwd =~ /Lifevis/;
 
-our ($VERSION) = '$Revision: 257 $' =~ m{ \$Revision: \s+ (\S+) }x;    # define minor version
-$VERSION = 0 + $VERSION / 1000;                                        # define major version
 
 #use warnings::unused;
 #use diagnostics;
@@ -99,6 +97,8 @@ use Lifevis::constants;
 use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
+
+our $VERSION = "0.257_002";
 
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
