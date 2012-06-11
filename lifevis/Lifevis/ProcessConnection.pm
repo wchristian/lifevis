@@ -45,7 +45,6 @@ sub connect_to_DF {
     $offsets[x_count]             = $OFFSETS[$ver]{'x_count'} + $master_offset - 0x400000;
     $offsets[y_count]             = $OFFSETS[$ver]{'y_count'} + $master_offset - 0x400000;
     $offsets[z_count]             = $OFFSETS[$ver]{'z_count'} + $master_offset - 0x400000;
-    $offsets[pe_timestamp_offset] = $OFFSETS[$ver]{'pe_timestamp_offset'} + $master_offset;
     $offsets[type_off]            = $OFFSETS[$ver]{'type_off'};
     $offsets[designation_off]     = $OFFSETS[$ver]{'designation_off'};
     $offsets[occupancy_off]       = $OFFSETS[$ver]{'occupancy_off'};
