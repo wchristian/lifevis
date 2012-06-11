@@ -29,7 +29,10 @@ use 5.010;
 use strict;
 use warnings;
 
-use Cwd 'getcwd';
+BEGIN {
+    use Cwd 'getcwd';
+    chdir '..' if getcwd =~ /Lifevis/;
+}
 
 #use warnings::unused;
 #use diagnostics;
@@ -96,8 +99,6 @@ use Lifevis::Vtables;
 $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
-
-chdir '..' if getcwd =~ /Lifevis/;
 
 our $VERSION = "0.258_002";
 
