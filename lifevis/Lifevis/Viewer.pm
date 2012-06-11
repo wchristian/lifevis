@@ -95,7 +95,6 @@ use Win32;
 use Win32::Process::List;
 use Win32::Process;
 use Win32::Process::Memory;
-use Image::Magick;
 use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw( :FUNC );
 use Math::Vec qw(:terse);
@@ -114,6 +113,15 @@ use Lifevis::constants;
 use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
+
+if ( !eval { require Image::Magick; 1 } ) {
+    print "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"
+        . "ImageMagick binaries not found. Please download and install from this URL:\n"
+        . "http://www.imagemagick.org/download/binaries/ImageMagick-6.7.7-7-Q16-windows-dll.exe\n\n"
+        . "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+    close STDERR;
+    exit;
+}
 
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
