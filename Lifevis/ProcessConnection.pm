@@ -14,7 +14,7 @@ use Win32::Process;
 use Lifevis::constants;
 use Lifevis::df_offsets;
 
-Win32::API->Import("psapi",    "EnumProcessModules",       "NPNP", "I");
+Win32::API->Import( "psapi", "EnumProcessModules", "NPNP", "I" );
 
 use base 'Exporter';
 our @EXPORT    = qw( connect_to_DF );
@@ -39,31 +39,31 @@ sub connect_to_DF {
     refresh_datastore() unless defined $ver;
 
     my @offsets;
-    $offsets[version]             = $OFFSETS[$ver]{'version'};
-    $offsets[PE]                  = $OFFSETS[$ver]{'PE'};
-    $offsets[map_loc]             = $OFFSETS[$ver]{'map_loc'} + $master_offset - 0x400000;
-    $offsets[x_count]             = $OFFSETS[$ver]{'x_count'} + $master_offset - 0x400000;
-    $offsets[y_count]             = $OFFSETS[$ver]{'y_count'} + $master_offset - 0x400000;
-    $offsets[z_count]             = $OFFSETS[$ver]{'z_count'} + $master_offset - 0x400000;
-    $offsets[type_off]            = $OFFSETS[$ver]{'type_off'};
-    $offsets[designation_off]     = $OFFSETS[$ver]{'designation_off'};
-    $offsets[occupancy_off]       = $OFFSETS[$ver]{'occupancy_off'};
-    $offsets[mouse_x]             = $OFFSETS[$ver]{'mouse_x'} + $master_offset - 0x400000;
-    $offsets[mouse_y]             = $OFFSETS[$ver]{'mouse_y'} + $master_offset - 0x400000;
-    $offsets[mouse_z]             = $OFFSETS[$ver]{'mouse_z'} + $master_offset - 0x400000;
-    $offsets[creature_vector]     = $OFFSETS[$ver]{'creature_vector'} + $master_offset - 0x400000;
-    $offsets[creature_race]       = $OFFSETS[$ver]{'creature_race'};
-    $offsets[creature_x]          = $OFFSETS[$ver]{'creature_x'};
-    $offsets[creature_y]          = $OFFSETS[$ver]{'creature_y'};
-    $offsets[viewport_x]          = $OFFSETS[$ver]{'viewport_x'} + $master_offset - 0x400000;
-    $offsets[viewport_y]          = $OFFSETS[$ver]{'viewport_y'} + $master_offset - 0x400000;
-    $offsets[viewport_z]          = $OFFSETS[$ver]{'viewport_z'} + $master_offset - 0x400000;
-    $offsets[window_grid_x]       = $OFFSETS[$ver]{'window_grid_x'} + $master_offset - 0x400000;
-    $offsets[window_grid_y]       = $OFFSETS[$ver]{'window_grid_y'} + $master_offset - 0x400000;
-    $offsets[menu_state]          = $OFFSETS[$ver]{'menu_state'} + $master_offset - 0x400000;
-    $offsets[view_state]          = $OFFSETS[$ver]{'view_state'} + $master_offset - 0x400000;
-    $offsets[building_vector]     = $OFFSETS[$ver]{'building_vector'} + $master_offset - 0x400000;
-    $offsets[item_vector]         = $OFFSETS[$ver]{'item_vector'} + $master_offset - 0x400000;
+    $offsets[version]         = $OFFSETS[$ver]{'version'};
+    $offsets[PE]              = $OFFSETS[$ver]{'PE'};
+    $offsets[map_loc]         = $OFFSETS[$ver]{'map_loc'} + $master_offset - 0x400000;
+    $offsets[x_count]         = $OFFSETS[$ver]{'x_count'} + $master_offset - 0x400000;
+    $offsets[y_count]         = $OFFSETS[$ver]{'y_count'} + $master_offset - 0x400000;
+    $offsets[z_count]         = $OFFSETS[$ver]{'z_count'} + $master_offset - 0x400000;
+    $offsets[type_off]        = $OFFSETS[$ver]{'type_off'};
+    $offsets[designation_off] = $OFFSETS[$ver]{'designation_off'};
+    $offsets[occupancy_off]   = $OFFSETS[$ver]{'occupancy_off'};
+    $offsets[mouse_x]         = $OFFSETS[$ver]{'mouse_x'} + $master_offset - 0x400000;
+    $offsets[mouse_y]         = $OFFSETS[$ver]{'mouse_y'} + $master_offset - 0x400000;
+    $offsets[mouse_z]         = $OFFSETS[$ver]{'mouse_z'} + $master_offset - 0x400000;
+    $offsets[creature_vector] = $OFFSETS[$ver]{'creature_vector'} + $master_offset - 0x400000;
+    $offsets[creature_race]   = $OFFSETS[$ver]{'creature_race'};
+    $offsets[creature_x]      = $OFFSETS[$ver]{'creature_x'};
+    $offsets[creature_y]      = $OFFSETS[$ver]{'creature_y'};
+    $offsets[viewport_x]      = $OFFSETS[$ver]{'viewport_x'} + $master_offset - 0x400000;
+    $offsets[viewport_y]      = $OFFSETS[$ver]{'viewport_y'} + $master_offset - 0x400000;
+    $offsets[viewport_z]      = $OFFSETS[$ver]{'viewport_z'} + $master_offset - 0x400000;
+    $offsets[window_grid_x]   = $OFFSETS[$ver]{'window_grid_x'} + $master_offset - 0x400000;
+    $offsets[window_grid_y]   = $OFFSETS[$ver]{'window_grid_y'} + $master_offset - 0x400000;
+    $offsets[menu_state]      = $OFFSETS[$ver]{'menu_state'} + $master_offset - 0x400000;
+    $offsets[view_state]      = $OFFSETS[$ver]{'view_state'} + $master_offset - 0x400000;
+    $offsets[building_vector] = $OFFSETS[$ver]{'building_vector'} + $master_offset - 0x400000;
+    $offsets[item_vector]     = $OFFSETS[$ver]{'item_vector'} + $master_offset - 0x400000;
 
     return ( $proc, $df_proc_handle, \@offsets );
 }
@@ -75,20 +75,20 @@ sub init_process_connection {
         $dwarf_pid = $key if ( $list{$key} =~ /(dwarfort|Dwarf Fortress)\.exe/ );
     }
     fatal_error( 'Could not find process ID, make sure DF is running and' . ' a savegame is loaded.' )
-      unless ($dwarf_pid);
+      unless ( $dwarf_pid );
 
     ### lower priority of dwarf fortress ###########################################
     Win32::Process::Open( my $dwarf_process, $dwarf_pid, 1 );
-    $dwarf_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
+    $dwarf_process->SetPriorityClass( IDLE_PRIORITY_CLASS );
     croak 'Could not lower DF process priority, this is really odd and'
       . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ($dwarf_process);
+      unless ( $dwarf_process );
 
     Win32::Process::Open( my $self_process, $PROCESS_ID, 1 );
-    $self_process->SetPriorityClass(IDLE_PRIORITY_CLASS);
+    $self_process->SetPriorityClass( IDLE_PRIORITY_CLASS );
     croak 'Could not lower own process priority, this is really odd and'
       . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ($self_process);
+      unless ( $self_process );
 
     ### actually read stuff from memory ############################################
     $proc =
@@ -97,11 +97,11 @@ sub init_process_connection {
     croak 'Could not open memory access to Dwarf Fortress, this is really odd'
       . ' and should not happen, try running as'
       . ' administrator or poke Mithaldu/Xenofur.'
-      unless ($proc);
+      unless ( $proc );
     $df_proc_handle = $proc->{hProcess};
 
     ### Let's Pla... erm, figure out what version this is ##########################
-    $master_offset = enum_win($df_proc_handle);
+    $master_offset = enum_win( $df_proc_handle );
 
     my $pe_offset = $proc->get_u32( $master_offset + 0x3C );
 
@@ -113,13 +113,13 @@ sub init_process_connection {
 }
 
 sub enum_win {
-    my ($pid) = @_;
+    my ( $pid ) = @_;
 
-    my $cb         = Win32::API::Type->sizeof( 'HMODULE' ) * 1024;
-    my $lphmodule  = "\x0" x $cb;
-    EnumProcessModules($pid, $lphmodule, $cb, "");
+    my $cb        = Win32::API::Type->sizeof( 'HMODULE' ) * 1024;
+    my $lphmodule = "\x0" x $cb;
+    EnumProcessModules( $pid, $lphmodule, $cb, "" );
 
-    return Win32::API::Type::Unpack('HMODULE', $lphmodule);
+    return Win32::API::Type::Unpack( 'HMODULE', $lphmodule );
 }
 
 sub refresh_datastore {
@@ -140,7 +140,7 @@ sub import_remote_xml {
     my $source = 'http://www.geocities.com/jifodus/tables/dwarvis/';
     my @xml_list;
 
-    my $list = get($source);
+    my $list = get( $source );
     croak 'Could not download the index of the online offset stores!'
       unless defined $list;
 
@@ -150,13 +150,13 @@ sub import_remote_xml {
 
     say '    Found ' . ( $#xml_list + 1 ) . ' memory data files...';
 
-    for my $file (@xml_list) {
+    for my $file ( @xml_list ) {
         my $known = 0;
         for my $i ( 0 .. $#OFFSETS ) {
             $known = 1 if $file =~ m/$OFFSETS[$i]{version}/;
         }
 
-        if ($known) {
+        if ( $known ) {
             say "    One file ($file) discarded," . ' memory data inside already known.';
             next;
         }
@@ -249,11 +249,11 @@ sub process_xml {
     push @OFFSETS, \%config_hash;
 
     open my $HANDLE, '<', 'Lifevis/df_offsets.pm'
-      or croak("horribly: $OS_ERROR");
+      or croak( "horribly: $OS_ERROR" );
     @data_store = <$HANDLE>;
-    close $HANDLE or croak("horribly: $OS_ERROR");
+    close $HANDLE or croak( "horribly: $OS_ERROR" );
 
-    for my $line (@data_store) {
+    for my $line ( @data_store ) {
         if ( $line =~ m/OFFSETS\ END\ HERE/ ) {
             push @new_data_store, "    {\n";
             push @new_data_store, "        version => \"$config_hash{version}\",\n";
@@ -277,11 +277,11 @@ sub process_xml {
         push @new_data_store, $line;
     }
 
-    open $HANDLE, '>', 'Lifevis/df_offsets.pm' or croak("horribly: $OS_ERROR");
-    for my $line (@new_data_store) {
+    open $HANDLE, '>', 'Lifevis/df_offsets.pm' or croak( "horribly: $OS_ERROR" );
+    for my $line ( @new_data_store ) {
         print {$HANDLE} $line;
     }
-    close $HANDLE or croak("horribly: $OS_ERROR");
+    close $HANDLE or croak( "horribly: $OS_ERROR" );
     return;
 }
 
@@ -292,8 +292,8 @@ sub initialize {
 }
 
 sub fatal_error {
-    my ($error) = @_;
-    if ($detached) {
+    my ( $error ) = @_;
+    if ( $detached ) {
         Win32::MsgBox( $error, MB_ICONSTOP, "Lifevis - $VERSION" );
         exit;
     }
@@ -303,8 +303,8 @@ sub fatal_error {
 }
 
 sub notify_user {
-    my ($message) = @_;
-    if ($detached) {
+    my ( $message ) = @_;
+    if ( $detached ) {
         Win32::MsgBox( $message, MB_ICONINFORMATION, "Lifevis - $VERSION" );
     }
     else {
