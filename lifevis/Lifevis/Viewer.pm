@@ -99,14 +99,6 @@ use Win32::GUI::Constants qw ( :window :accelerator );
 use Win32::GuiTest qw( :FUNC );
 use Math::Vec qw(:terse);
 
-=cut
-use Devel::AutoProfiler 
-                ( 
-                -pkg_exception => [ 'OpenGL', 'constants', 'df_internals' ],
-                -sub_exception => [ 'GL_', '[a-z]st$', 'GLUT_' ],
-                );
-=cut
-
 use lib '.';
 use lib '..';
 use Lifevis::constants;
