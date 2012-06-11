@@ -27,7 +27,9 @@ $Coro::BDB::WATCHER>. Please notify the author of when and why you think
 this was necessary.
 
 This module does not export anything (unlike L<Coro::AIO>), as BDB already
-supports leaving out the callback.
+supports leaving out the callback. (Unfortunately, it ties a C context
+to each coroutine executing such a callback, so in the future, it might
+export more efficient wrappers).
 
 =over 4
 
@@ -35,8 +37,7 @@ supports leaving out the callback.
 
 package Coro::BDB;
 
-no warnings;
-use strict;
+use common::sense;
 
 use BDB ();
 use AnyEvent::BDB ();
@@ -46,7 +47,7 @@ use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 our $WATCHER;
 
 BDB::set_sync_prepare {

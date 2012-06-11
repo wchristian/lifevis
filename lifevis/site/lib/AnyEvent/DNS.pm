@@ -28,18 +28,43 @@ virtual circuit mode for large responses.
 
 package AnyEvent::DNS;
 
-no warnings;
-use strict;
-
+use Carp ();
 use Socket qw(AF_INET SOCK_DGRAM SOCK_STREAM);
 
-use AnyEvent ();
-use AnyEvent::Handle ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(AF_INET6);
 
-our $VERSION = 4.32;
+our $VERSION = $AnyEvent::VERSION;
+our @DNS_FALLBACK; # some public dns servers as fallback
 
-our @DNS_FALLBACK = (v208.67.220.220, v208.67.222.222);
+{
+   my $prep = sub {
+      $_ = $_->[rand @$_] for @_;
+      push @_, splice @_, rand $_, 1 for reverse 1..@_; # shuffle
+      $_ = pack "H*", $_ for @_;
+      \@_
+   };
+
+   my $ipv4 = $prep->(
+      ["08080808", "08080404"], # 8.8.8.8, 8.8.4.4 - google public dns
+#      ["d1f40003", "d1f30004"], # v209.244.0.3/4 - resolver1/2.level3.net - status unknown
+      ["04020201", "04020203", "04020204", "04020205", "04020206"], # v4.2.2.1/3/4/5/6 - vnsc-pri.sys.gtei.net - effectively public
+      ["cdd22ad2", "4044c8c8"], # 205.210.42.205, 64.68.200.200 - cache1/2.dnsresolvers.com - verified public
+#      ["8d010101"], # 141.1.1.1 - cable&wireless - status unknown
+   );
+
+   my $ipv6 = $prep->(
+      ["20014860486000000000000000008888", "20014860486000000000000000008844"], # 2001:4860:4860::8888/8844 - google ipv6
+   );
+
+   undef $ipv4 unless $AnyEvent::PROTOCOL{ipv4};
+   undef $ipv6 unless $AnyEvent::PROTOCOL{ipv6};
+
+   ($ipv6, $ipv4) = ($ipv4, $ipv6)
+      if $AnyEvent::PROTOCOL{ipv6} > $AnyEvent::PROTOCOL{ipv4};
+
+   @DNS_FALLBACK = (@$ipv4, @$ipv6);
+}
 
 =item AnyEvent::DNS::a $domain, $cb->(@addrs)
 
@@ -60,7 +85,16 @@ Tries to resolve the given domain name into a list of name servers.
 
 =item AnyEvent::DNS::txt $domain, $cb->(@hostnames)
 
-Tries to resolve the given domain name into a list of text records.
+Tries to resolve the given domain name into a list of text records. Only
+the first text string per record will be returned. If you want all
+strings, you need to call the resolver manually:
+
+   resolver->resolve ($domain => "txt", sub {
+      for my $record (@_) {
+         my (undef, undef, undef, @txt) = @$record;
+         # strings now in @txt
+      }
+   });
 
 =item AnyEvent::DNS::srv $service, $proto, $domain, $cb->(@srv_rr)
 
@@ -78,21 +112,21 @@ Example:
    AnyEvent::DNS::srv "sip", "udp", "schmorp.de", sub { ...
    # @_ = ( [10, 10, 5060, "sip1.schmorp.de" ] )
 
+=item AnyEvent::DNS::any $domain, $cb->(@rrs)
+
+Tries to resolve the given domain and passes all resource records found to
+the callback.
+
 =item AnyEvent::DNS::ptr $domain, $cb->(@hostnames)
 
 Tries to make a PTR lookup on the given domain. See C<reverse_lookup>
 and C<reverse_verify> if you want to resolve an IP address to a hostname
 instead.
 
-=item AnyEvent::DNS::any $domain, $cb->(@rrs)
-
-Tries to resolve the given domain and passes all resource records found to
-the callback.
-
 =item AnyEvent::DNS::reverse_lookup $ipv4_or_6, $cb->(@hostnames)
 
 Tries to reverse-resolve the given IPv4 or IPv6 address (in textual form)
-into it's hostname(s). Handles V4MAPPED and V4COMPAT IPv6 addresses
+into its hostname(s). Handles V4MAPPED and V4COMPAT IPv6 addresses
 transparently.
 
 =item AnyEvent::DNS::reverse_verify $ipv4_or_6, $cb->(@hostnames)
@@ -108,7 +142,7 @@ address you originally resolved.
 
 Example:
 
-   AnyEvent::DNS::ptr "2001:500:2f::f", sub { print shift };
+   AnyEvent::DNS::reverse_verify "2001:500:2f::f", sub { print shift };
    # => f.root-servers.net
 
 =cut
@@ -117,13 +151,13 @@ sub MAX_PKT() { 4096 } # max packet size we advertise and accept
 
 sub DOMAIN_PORT() { 53 } # if this changes drop me a note
 
-sub resolver;
+sub resolver ();
 
 sub a($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "a", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -131,7 +165,7 @@ sub aaaa($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "aaaa", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -139,7 +173,7 @@ sub mx($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "mx", sub {
-      $cb->(map $_->[4], sort { $a->[3] <=> $b->[3] } @_);
+      $cb->(map $_->[5], sort { $a->[4] <=> $b->[4] } @_);
    });
 }
 
@@ -147,7 +181,7 @@ sub ns($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "ns", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -155,7 +189,7 @@ sub txt($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "txt", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -168,7 +202,7 @@ sub srv($$$$) {
 
       # classify by priority
       my %pri;
-      push @{ $pri{$_->[3]} }, [ @$_[3,4,5,6] ]
+      push @{ $pri{$_->[4]} }, [ @$_[4,5,6,7] ]
          for @_;
 
       # order by priority
@@ -198,7 +232,7 @@ sub ptr($$) {
    my ($domain, $cb) = @_;
 
    resolver->resolve ($domain => "ptr", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -242,7 +276,7 @@ sub reverse_lookup($$) {
       or return $cb->();
 
    resolver->resolve ($ip => "ptr", sub {
-      $cb->(map $_->[3], @_);
+      $cb->(map $_->[4], @_);
    });
 }
 
@@ -270,7 +304,7 @@ sub reverse_verify($$) {
          resolver->resolve ("$name." => ($af == (AF_INET) ? "a" : "aaaa"), sub {
             for (@_) {
                push @res, $name
-                  if $_->[3] eq $ip;
+                  if $_->[4] eq $ip;
             }
             $cb->(@res) unless --$cnt;
          });
@@ -297,7 +331,7 @@ EDNS0 in all requests.
 
 =cut
 
-our $EDNS0 = $ENV{PERL_ANYEVENT_EDNS0} * 1; # set to 1 to enable (partial) edns0
+our $EDNS0 = $ENV{PERL_ANYEVENT_EDNS0}*1; # set to 1 to enable (partial) edns0
 
 our %opcode_id = (
    query  => 0,
@@ -354,6 +388,7 @@ our %type_id = (
    aaaa  =>  28,
    srv   =>  33,
    naptr =>  35, # rfc2915
+   dname =>  39, # rfc2672
    opt   =>  41,
    spf   =>  99,
    tkey  => 249,
@@ -380,10 +415,17 @@ sub _enc_name($) {
    pack "(C/a*)*", (split /\./, shift), ""
 }
 
+if ($] < 5.008) {
+   # special slower 5.6 version
+   *_enc_name = sub ($) {
+      join "", map +(pack "C/a*", $_), (split /\./, shift), ""
+   };
+}
+
 sub _enc_qd() {
    (_enc_name $_->[0]) . pack "nn",
      ($_->[1] > 0 ? $_->[1] : $type_id {$_->[1]}),
-     ($_->[2] > 0 ? $_->[2] : $class_id{$_->[2] || "in"})
+     ($_->[3] > 0 ? $_->[2] : $class_id{$_->[2] || "in"})
 }
 
 sub _enc_rr() {
@@ -505,7 +547,7 @@ our %dec_rr = (
     13 => sub { unpack "C/a* C/a*", $_ }, # hinfo
     15 => sub { local $ofs = $ofs + 2 - length; ((unpack "n", $_), _dec_name) }, # mx
     16 => sub { unpack "(C/a*)*", $_ }, # txt
-    28 => sub { AnyEvent::Socket::format_address ($_) }, # aaaa
+    28 => sub { AnyEvent::Socket::format_ipv6 ($_) }, # aaaa
     33 => sub { local $ofs = $ofs + 6 - length; ((unpack "nnn", $_), _dec_name) }, # srv
     35 => sub { # naptr
        # requires perl 5.10, sorry
@@ -513,6 +555,7 @@ our %dec_rr = (
        local $ofs = $ofs + $offset - length;
        ($order, $preference, $flags, $service, $regexp, _dec_name)
     },
+    39 => sub { local $ofs = $ofs - length; _dec_name }, # dname
     99 => sub { unpack "(C/a*)*", $_ }, # spf
 );
 
@@ -526,6 +569,7 @@ sub _dec_rr {
       $name,
       $type_str{$rt}  || $rt,
       $class_str{$rc} || $rc,
+      $ttl,
       ($dec_rr{$rt} || sub { $_ })->(),
    ]
 }
@@ -548,6 +592,7 @@ Examples:
                  'uni-karlsruhe.de',
                  'soa',
                  'in',
+                 600,
                  'netserv.rz.uni-karlsruhe.de',
                  'hostmaster.rz.uni-karlsruhe.de',
                  2008052201, 10800, 1800, 2592000, 86400
@@ -569,13 +614,13 @@ Examples:
      'qd' => [ [ 'www.google.de', 'a', 'in' ] ],
      'rc' => 0,
      'ar' => [
-               [ 'a.l.google.com', 'a', 'in', '209.85.139.9' ],
-               [ 'b.l.google.com', 'a', 'in', '64.233.179.9' ],
-               [ 'c.l.google.com', 'a', 'in', '64.233.161.9' ],
+               [ 'a.l.google.com', 'a', 'in', 3600, '209.85.139.9' ],
+               [ 'b.l.google.com', 'a', 'in', 3600, '64.233.179.9' ],
+               [ 'c.l.google.com', 'a', 'in', 3600, '64.233.161.9' ],
              ],
      'ns' => [
-               [ 'l.google.com', 'ns', 'in', 'a.l.google.com' ],
-               [ 'l.google.com', 'ns', 'in', 'b.l.google.com' ],
+               [ 'l.google.com', 'ns', 'in', 3600, 'a.l.google.com' ],
+               [ 'l.google.com', 'ns', 'in', 3600, 'b.l.google.com' ],
              ],
      'tc' => '',
      'ra' => 1,
@@ -583,10 +628,10 @@ Examples:
      'id' => 64265,
      'aa' => '',
      'an' => [
-               [ 'www.google.de', 'cname', 'in', 'www.google.com' ],
-               [ 'www.google.com', 'cname', 'in', 'www.l.google.com' ],
-               [ 'www.l.google.com', 'a', 'in', '66.249.93.104' ],
-               [ 'www.l.google.com', 'a', 'in', '66.249.93.147' ],
+               [ 'www.google.de', 'cname', 'in', 3600, 'www.google.com' ],
+               [ 'www.google.com', 'cname', 'in', 3600, 'www.l.google.com' ],
+               [ 'www.l.google.com', 'a', 'in', 3600, '66.249.93.104' ],
+               [ 'www.l.google.com', 'a', 'in', 3600, '66.249.93.147' ],
              ],
      'rd' => 1,
      'op' => 0
@@ -641,13 +686,33 @@ our $NOW;
 =item AnyEvent::DNS::resolver
 
 This function creates and returns a resolver that is ready to use and
-should mimic the default resolver for your system as good as possible.
+should mimic the default resolver for your system as good as possible. It
+is used by AnyEvent itself as well.
 
-It only ever creates one resolver and returns this one on subsequent
-calls.
+It only ever creates one resolver and returns this one on subsequent calls
+- see C<$AnyEvent::DNS::RESOLVER>, below, for details.
 
 Unless you have special needs, prefer this function over creating your own
 resolver object.
+
+The resolver is created with the following parameters:
+
+   untaint          enabled
+   max_outstanding  $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}
+
+C<os_config> will be used for OS-specific configuration, unless
+C<$ENV{PERL_ANYEVENT_RESOLV_CONF}> is specified, in which case that file
+gets parsed.
+
+=item $AnyEvent::DNS::RESOLVER
+
+This variable stores the default resolver returned by
+C<AnyEvent::DNS::resolver>, or C<undef> when the default resolver hasn't
+been instantiated yet.
+
+One can provide a custom resolver (e.g. one with caching functionality)
+by storing it in this variable, causing all subsequent resolves done via
+C<AnyEvent::DNS::resolver> to be done via the custom one.
 
 =cut
 
@@ -655,8 +720,15 @@ our $RESOLVER;
 
 sub resolver() {
    $RESOLVER || do {
-      $RESOLVER = new AnyEvent::DNS;
-      $RESOLVER->os_config;
+      $RESOLVER = new AnyEvent::DNS
+         untaint         => 1,
+         max_outstanding => $ENV{PERL_ANYEVENT_MAX_OUTSTANDING_DNS}*1 || 1,
+      ;
+
+      $ENV{PERL_ANYEVENT_RESOLV_CONF}
+         ? $RESOLVER->_load_resolv_conf_file ($ENV{PERL_ANYEVENT_RESOLV_CONF})
+         : $RESOLVER->os_config;
+
       $RESOLVER
    }
 }
@@ -671,9 +743,9 @@ The following options are supported:
 
 =item server => [...]
 
-A list of server addresses (default: C<v127.0.0.1>) in network format
-(i.e. as returned by C<AnyEvent::Socket::parse_address> - both IPv4 and
-IPv6 are supported).
+A list of server addresses (default: C<v127.0.0.1> or C<::1>) in network
+format (i.e. as returned by C<AnyEvent::Socket::parse_address> - both IPv4
+and IPv6 are supported).
 
 =item timeout => [...]
 
@@ -704,6 +776,11 @@ The number of seconds (default: C<300>) that a query id cannot be re-used
 after a timeout. If there was no time-out then query ids can be reused
 immediately.
 
+=item untaint => $boolean
+
+When true, then the resolver will automatically untaint results, and might
+also ignore certain environment variables.
+
 =back
 
 =cut
@@ -719,6 +796,7 @@ sub new {
       max_outstanding => 10,
       reuse   => 300,
       %arg,
+      inhibit => 0,
       reuse_q => [],
    }, $class;
 
@@ -731,28 +809,28 @@ sub new {
 
    Scalar::Util::weaken (my $wself = $self);
 
-   if (socket my $fh4, AF_INET , &Socket::SOCK_DGRAM, 0) {
+   if (socket my $fh4, AF_INET , Socket::SOCK_DGRAM(), 0) {
       ++$got_socket;
 
       AnyEvent::Util::fh_nonblocking $fh4, 1;
       $self->{fh4} = $fh4;
-      $self->{rw4} = AnyEvent->io (fh => $fh4, poll => "r", cb => sub {
+      $self->{rw4} = AE::io $fh4, 0, sub {
          if (my $peer = recv $fh4, my $pkt, MAX_PKT, 0) {
             $wself->_recv ($pkt, $peer);
          }
-      });
+      };
    }
 
-   if (AF_INET6 && socket my $fh6, AF_INET6, &Socket::SOCK_DGRAM, 0) {
+   if (AF_INET6 && socket my $fh6, AF_INET6, Socket::SOCK_DGRAM(), 0) {
       ++$got_socket;
 
       $self->{fh6} = $fh6;
       AnyEvent::Util::fh_nonblocking $fh6, 1;
-      $self->{rw6} = AnyEvent->io (fh => $fh6, poll => "r", cb => sub {
+      $self->{rw6} = AE::io $fh6, 0, sub {
          if (my $peer = recv $fh6, my $pkt, MAX_PKT, 0) {
             $wself->_recv ($pkt, $peer);
          }
-      });
+      };
    }
 
    $got_socket
@@ -763,12 +841,24 @@ sub new {
    $self
 }
 
-=item $resolver->parse_resolv_conv ($string)
+# called to start asynchronous configuration
+sub _config_begin {
+   ++$_[0]{inhibit};
+}
+
+# called when done with async config
+sub _config_done {
+   --$_[0]{inhibit};
+   $_[0]->_compile;
+   $_[0]->_scheduler;
+}
+
+=item $resolver->parse_resolv_conf ($string)
 
 Parses the given string as if it were a F<resolv.conf> file. The following
 directives are supported (but not necessarily implemented).
 
-C<#>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
+C<#>- and C<;>-style comments, C<nameserver>, C<domain>, C<search>, C<sortlist>,
 C<options> (C<timeout>, C<attempts>, C<ndots>).
 
 Everything else is silently ignored.
@@ -784,16 +874,16 @@ sub parse_resolv_conf {
    my $attempts;
 
    for (split /\n/, $resolvconf) {
-      if (/^\s*#/) {
-         # comment
-      } elsif (/^\s*nameserver\s+(\S+)\s*$/i) {
+      s/\s*[;#].*$//; # not quite legal, but many people insist
+
+      if (/^\s*nameserver\s+(\S+)\s*$/i) {
          my $ip = $1;
          if (my $ipn = AnyEvent::Socket::parse_address ($ip)) {
             push @{ $self->{server} }, $ipn;
          } else {
-            warn "nameserver $ip invalid and ignored\n";
+            AE::log 5 => "nameserver $ip invalid and ignored, while parsing resolver config.";
          }
-      } elsif (/^\s*domain\s+(\S*)\s+$/i) {
+      } elsif (/^\s*domain\s+(\S*)\s*$/i) {
          $self->{search} = [$1];
       } elsif (/^\s*search\s+(.*?)\s*$/i) {
          $self->{search} = [split /\s+/, $1];
@@ -811,6 +901,8 @@ sub parse_resolv_conf {
                # debug, rotate, no-check-names, inet6
             }
          }
+      } else {
+         # silently skip stuff we don't understand
       }
    }
 
@@ -820,21 +912,46 @@ sub parse_resolv_conf {
    $self->_compile;
 }
 
+sub _load_resolv_conf_file {
+   my ($self, $resolv_conf) = @_;
+
+   $self->_config_begin;
+
+   require AnyEvent::IO;
+   AnyEvent::IO::aio_load ($resolv_conf, sub {
+      if (my ($contents) = @_) {
+         $self->parse_resolv_conf ($contents);
+      } else {
+         AE::log 4 => "$resolv_conf: $!";
+      }
+
+      $self->_config_done;
+   });
+}
+
 =item $resolver->os_config
 
-Tries so load and parse F</etc/resolv.conf> on portable operating systems. Tries various
-egregious hacks on windows to force the DNS servers and searchlist out of the system.
+Tries so load and parse F</etc/resolv.conf> on portable operating
+systems. Tries various egregious hacks on windows to force the DNS servers
+and searchlist out of the system.
+
+This method must be called at most once before trying to resolve anything.
 
 =cut
 
 sub os_config {
    my ($self) = @_;
 
+   $self->_config_begin;
+
    $self->{server} = [];
    $self->{search} = [];
 
-   if (AnyEvent::WIN32 || $^O =~ /cygwin/i) {
-      no strict 'refs';
+   if ((AnyEvent::WIN32 || $^O =~ /cygwin/i)) {
+      # TODO: this blocks the program, but should not, but I
+      # am too lazy to implement and test it. need to boot windows. ugh.
+
+      #no strict 'refs';
 
       # there are many options to find the current nameservers etc. on windows
       # all of them don't work consistently:
@@ -843,53 +960,79 @@ sub os_config {
       # - calling windows api functions doesn't work on cygwin
       # - ipconfig uses locale-specific messages
 
-      # we use ipconfig parsing because, despite all its brokenness,
-      # it seems most stable in practise.
-      # for good measure, we append a fallback nameserver to our list.
+      # we use Net::DNS::Resolver first, and if it fails, will fall back to
+      # ipconfig parsing.
+      unless (eval {
+         # Net::DNS::Resolver uses a LOT of ram (~10mb), but what can we do :/
+         # (this seems mostly to be due to Win32::API).
+         require Net::DNS::Resolver;
+         my $r = Net::DNS::Resolver->new;
 
-      if (open my $fh, "ipconfig /all |") {
-         # parsing strategy: we go through the output and look for
-         # :-lines with DNS in them. everything in those is regarded as
-         # either a nameserver (if it parses as an ip address), or a suffix
-         # (all else).
+         $r->nameservers
+            or die;
 
-         my $dns;
-         while (<$fh>) {
-            if (s/^\s.*\bdns\b.*://i) {
-               $dns = 1;
-            } elsif (/^\S/ || /^\s[^:]{16,}: /) {
-               $dns = 0;
+         for my $s ($r->nameservers) {
+            if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
+               push @{ $self->{server} }, $ipn;
             }
-            if ($dns && /^\s*(\S+)\s*$/) {
-               my $s = $1;
-               $s =~ s/%\d+(?!\S)//; # get rid of ipv6 scope id
-               if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
-                  push @{ $self->{server} }, $ipn;
-               } else {
-                  push @{ $self->{search} }, $s;
+         }
+         $self->{search} = [$r->searchlist];
+
+         1
+      }) {
+         # we use ipconfig parsing because, despite all its brokenness,
+         # it seems quite stable in practise.
+         # unfortunately it wants a console window.
+         # for good measure, we append a fallback nameserver to our list.
+
+         if (open my $fh, "ipconfig /all |") {
+            # parsing strategy: we go through the output and look for
+            # :-lines with DNS in them. everything in those is regarded as
+            # either a nameserver (if it parses as an ip address), or a suffix
+            # (all else).
+
+            my $dns;
+            local $_;
+            while (<$fh>) {
+               if (s/^\s.*\bdns\b.*://i) {
+                  $dns = 1;
+               } elsif (/^\S/ || /^\s[^:]{16,}: /) {
+                  $dns = 0;
+               }
+               if ($dns && /^\s*(\S+)\s*$/) {
+                  my $s = $1;
+                  $s =~ s/%\d+(?!\S)//; # get rid of ipv6 scope id
+                  if (my $ipn = AnyEvent::Socket::parse_address ($s)) {
+                     push @{ $self->{server} }, $ipn;
+                  } else {
+                     push @{ $self->{search} }, $s;
+                  }
                }
             }
          }
-
-         # always add one fallback server
-         push @{ $self->{server} }, $DNS_FALLBACK[rand @DNS_FALLBACK];
-
-         $self->_compile;
       }
+
+      # always add the fallback servers on windows
+      push @{ $self->{server} }, @DNS_FALLBACK;
+
+      $self->_config_done;
    } else {
-      # try resolv.conf everywhere
+      # try /etc/resolv.conf everywhere else
 
-      if (open my $fh, "</etc/resolv.conf") {
-         local $/;
-         $self->parse_resolv_conf (<$fh>);
-      }
+      require AnyEvent::IO;
+      AnyEvent::IO::aio_stat ("/etc/resolv.conf", sub {
+         $self->_load_resolv_conf_file ("/etc/resolv.conf")
+            if @_;
+         $self->_config_done;
+      });
    }
 }
 
 =item $resolver->timeout ($timeout, ...)
 
-Sets the timeout values. See the C<timeout> constructor argument (and note
-that this method uses the values itself, not an array-reference).
+Sets the timeout values. See the C<timeout> constructor argument (and
+note that this method expects the timeout values themselves, not an
+array-reference).
 
 =cut
 
@@ -911,7 +1054,7 @@ sub max_outstanding {
    my ($self, $max) = @_;
 
    $self->{max_outstanding} = $max;
-   $self->_scheduler;
+   $self->_compile;
 }
 
 sub _compile {
@@ -921,8 +1064,10 @@ sub _compile {
    my %server; $self->{server} = [grep 0 < length, grep !$server{$_}++, @{ $self->{server} }];
 
    unless (@{ $self->{server} }) {
-      # use 127.0.0.1 by default, and one opendns nameserver as fallback
-      $self->{server} = [v127.0.0.1, $DNS_FALLBACK[rand @DNS_FALLBACK]];
+      # use 127.0.0.1/::1 by default, add public nameservers as fallback
+      my $default = $AnyEvent::PROTOCOL{ipv6} > $AnyEvent::PROTOCOL{ipv4}
+                    ? "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1" : "\x7f\x00\x00\x01";
+      $self->{server} = [$default, @DNS_FALLBACK];
    }
 
    my @retry;
@@ -938,6 +1083,9 @@ sub _compile {
 
 sub _feed {
    my ($self, $res) = @_;
+
+   ($res) = $res =~ /^(.*)$/s
+      if AnyEvent::TAINT && $self->{untaint};
 
    $res = dns_unpack $res
       or return;
@@ -996,7 +1144,7 @@ sub _exec {
 
       my ($server, $timeout) = @$retry_cfg;
       
-      $self->{id}{$req->[2]} = [AnyEvent->timer (after => $timeout, cb => sub {
+      $self->{id}{$req->[2]} = [(AE::timer $timeout, 0, sub {
          $NOW = time;
 
          # timeout, try next
@@ -1012,6 +1160,8 @@ sub _exec {
                my ($fh) = @_
                   or return &$do_retry;
 
+               require AnyEvent::Handle;
+
                my $handle; $handle = new AnyEvent::Handle
                   fh       => $fh,
                   timeout  => $timeout,
@@ -1022,7 +1172,7 @@ sub _exec {
                      &$do_retry;
                   };
 
-               $handle->push_write (pack "n/a", $req->[0]);
+               $handle->push_write (pack "n/a*", $req->[0]);
                $handle->push_read (chunk => 2, sub {
                   $handle->unshift_read (chunk => (unpack "n", $_[1]), sub {
                      undef $handle;
@@ -1041,7 +1191,7 @@ sub _exec {
       
       my $sa = AnyEvent::Socket::pack_sockaddr (DOMAIN_PORT, $server);
 
-      my $fh = AF_INET == Socket::sockaddr_family ($sa)
+      my $fh = AF_INET == AnyEvent::Socket::sockaddr_family ($sa)
                ? $self->{fh4} : $self->{fh6}
          or return &$do_retry;
 
@@ -1054,7 +1204,9 @@ sub _exec {
 sub _scheduler {
    my ($self) = @_;
 
-   no strict 'refs';
+   return if $self->{inhibit};
+
+   #no strict 'refs';
 
    $NOW = time;
 
@@ -1066,10 +1218,10 @@ sub _scheduler {
 
       if (@{ $self->{reuse_q} } >= 30000) {
          # we ran out of ID's, wait a bit
-         $self->{reuse_to} ||= AnyEvent->timer (after => $self->{reuse_q}[0][0] - $NOW, cb => sub {
+         $self->{reuse_to} ||= AE::timer $self->{reuse_q}[0][0] - $NOW, 0, sub {
             delete $self->{reuse_to};
             $self->_scheduler;
-         });
+         };
          last;
       }
 
@@ -1087,7 +1239,7 @@ sub _scheduler {
          $self->_exec ($req);
 
       } elsif (my $cb = shift @{ $self->{wait} }) {
-         # found a wait_for_slot callback, call that one first
+         # found a wait_for_slot callback
          $cb->($self);
 
       } else {
@@ -1104,7 +1256,9 @@ This is the main low-level workhorse for sending DNS requests.
 This function sends a single request (a hash-ref formated as specified
 for C<dns_pack>) to the configured nameservers in turn until it gets a
 response. It handles timeouts, retries and automatically falls back to
-virtual circuit mode (TCP) when it receives a truncated reply.
+virtual circuit mode (TCP) when it receives a truncated reply. It does not
+handle anything else, such as the domain searchlist or relative names -
+use C<< ->resolve >> for that.
 
 Calls the callback with the decoded response packet if a reply was
 received, or no arguments in case none of the servers answered.
@@ -1114,11 +1268,18 @@ received, or no arguments in case none of the servers answered.
 sub request($$) {
    my ($self, $req, $cb) = @_;
 
+   # _enc_name barfs on names that are too long, which is often outside
+   # program control, so check for too long names here.
+   for (@{ $req->{qd} }) {
+      return AE::postpone sub { $cb->(undef) }
+         if 255 < length $_->[0];
+   }
+
    push @{ $self->{queue} }, [dns_pack $req, $cb];
    $self->_scheduler;
 }
 
-=item $resolver->resolve ($qname, $qtype, %options, $cb->($rcode, @rr))
+=item $resolver->resolve ($qname, $qtype, %options, $cb->(@rr))
 
 Queries the DNS for the given domain name C<$qname> of type C<$qtype>.
 
@@ -1133,18 +1294,17 @@ none on any error or if the name could not be found.
 
 CNAME chains (although illegal) are followed up to a length of 10.
 
-The callback will be invoked with an result code in string form (noerror,
-formerr, servfail, nxdomain, notimp, refused and so on), or numerical
-form if the result code is not supported. The remaining arguments are
-arraryefs of the form C<[$name, $type, $class, @data>], where C<$name> is
-the domain name, C<$type> a type string or number, C<$class> a class name
-and @data is resource-record-dependent data. For C<a> records, this will
-be the textual IPv4 addresses, for C<ns> or C<cname> records this will be
-a domain name, for C<txt> records these are all the strings and so on.
+The callback will be invoked with arraryefs of the form C<[$name,
+$type, $class, $ttl, @data>], where C<$name> is the domain name,
+C<$type> a type string or number, C<$class> a class name, C<$ttl> is the
+remaining time-to-live and C<@data> is resource-record-dependent data, in
+seconds. For C<a> records, this will be the textual IPv4 addresses, for
+C<ns> or C<cname> records this will be a domain name, for C<txt> records
+these are all the strings and so on.
 
 All types mentioned in RFC 1035, C<aaaa>, C<srv>, C<naptr> and C<spf> are
-decoded. All resource records not known to this module will have
-the raw C<rdata> field as fourth entry.
+decoded. All resource records not known to this module will have the raw
+C<rdata> field as fifth array element.
 
 Note that this resolver is just a stub resolver: it requires a name server
 supporting recursive queries, will not do any recursive queries itself and
@@ -1187,15 +1347,15 @@ Examples:
 
    # shortened result:
    # [
-   #   [ 'google.com', 'soa', 'in', 'ns1.google.com', 'dns-admin.google.com',
+   #   [ 'google.com', 'soa', 'in', 3600, 'ns1.google.com', 'dns-admin.google.com',
    #     2008052701, 7200, 1800, 1209600, 300 ],
    #   [
-   #     'google.com', 'txt', 'in',
+   #     'google.com', 'txt', 'in', 3600,
    #     'v=spf1 include:_netblocks.google.com ~all'
    #   ],
-   #   [ 'google.com', 'a', 'in', '64.233.187.99' ],
-   #   [ 'google.com', 'mx', 'in', 10, 'smtp2.google.com' ],
-   #   [ 'google.com', 'ns', 'in', 'ns2.google.com' ],
+   #   [ 'google.com', 'a', 'in', 3600, '64.233.187.99' ],
+   #   [ 'google.com', 'mx', 'in', 3600, 10, 'smtp2.google.com' ],
+   #   [ 'google.com', 'ns', 'in', 3600, 'ns2.google.com' ],
    # ]
 
    # resolve a records:
@@ -1203,7 +1363,7 @@ Examples:
 
    # result:
    # [
-   #   [ 'ruth.schmorp.de', 'a', 'in', '129.13.162.95' ]
+   #   [ 'ruth.schmorp.de', 'a', 'in', 86400, '129.13.162.95' ]
    # ]
 
    # resolve any records, but return only a and aaaa records:
@@ -1216,8 +1376,8 @@ Examples:
 
    # result:
    # [
-   #   [ 'test1.laendle', 'a', 'in', '10.0.0.255' ],
-   #   [ 'test1.laendle', 'aaaa', 'in', '3ffe:1900:4545:0002:0240:0000:0000:f7e1' ]
+   #   [ 'test1.laendle', 'a', 'in', 86400, '10.0.0.255' ],
+   #   [ 'test1.laendle', 'aaaa', 'in', 60, '3ffe:1900:4545:0002:0240:0000:0000:f7e1' ]
    # ]
 
 =cut
@@ -1226,74 +1386,78 @@ sub resolve($%) {
    my $cb = pop;
    my ($self, $qname, $qtype, %opt) = @_;
 
-   my @search = $qname =~ s/\.$//
-      ? ""
-      : $opt{search}
-        ? @{ $opt{search} }
-        : ($qname =~ y/.//) >= $self->{ndots}
-          ? ("", @{ $self->{search} })
-          : (@{ $self->{search} }, "");
+   $self->wait_for_slot (sub {
+      my $self = shift;
 
-   my $class = $opt{class} || "in";
+      my @search = $qname =~ s/\.$//
+         ? ""
+         : $opt{search}
+           ? @{ $opt{search} }
+           : ($qname =~ y/.//) >= $self->{ndots}
+             ? ("", @{ $self->{search} })
+             : (@{ $self->{search} }, "");
 
-   my %atype = $opt{accept}
-      ? map +($_ => 1), @{ $opt{accept} }
-      : ($qtype => 1);
+      my $class = $opt{class} || "in";
 
-   # advance in searchlist
-   my ($do_search, $do_req);
-   
-   $do_search = sub {
-      @search
-         or (undef $do_search), (undef $do_req), return $cb->();
+      my %atype = $opt{accept}
+         ? map +($_ => 1), @{ $opt{accept} }
+         : ($qtype => 1);
 
-      (my $name = lc "$qname." . shift @search) =~ s/\.$//;
-      my $depth = 10;
+      # advance in searchlist
+      my ($do_search, $do_req);
+      
+      $do_search = sub {
+         @search
+            or (undef $do_search), (undef $do_req), return $cb->();
 
-      # advance in cname-chain
-      $do_req = sub {
-         $self->request ({
-            rd => 1,
-            qd => [[$name, $qtype, $class]],
-         }, sub {
-            my ($res) = @_
-               or return $do_search->();
+         (my $name = lc "$qname." . shift @search) =~ s/\.$//;
+         my $depth = 10;
 
-            my $cname;
+         # advance in cname-chain
+         $do_req = sub {
+            $self->request ({
+               rd => 1,
+               qd => [[$name, $qtype, $class]],
+            }, sub {
+               my ($res) = @_
+                  or return $do_search->();
 
-            while () {
-               # results found?
-               my @rr = grep $name eq lc $_->[0] && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
+               my $cname;
 
-               (undef $do_search), (undef $do_req), return $cb->(@rr)
-                  if @rr;
+               while () {
+                  # results found?
+                  my @rr = grep $name eq lc $_->[0] && ($atype{"*"} || $atype{$_->[1]}), @{ $res->{an} };
 
-               # see if there is a cname we can follow
-               my @rr = grep $name eq lc $_->[0] && $_->[1] eq "cname", @{ $res->{an} };
+                  (undef $do_search), (undef $do_req), return $cb->(@rr)
+                     if @rr;
 
-               if (@rr) {
-                  $depth--
-                     or return $do_search->(); # cname chain too long
+                  # see if there is a cname we can follow
+                  my @rr = grep $name eq lc $_->[0] && $_->[1] eq "cname", @{ $res->{an} };
 
-                  $cname = 1;
-                  $name = $rr[0][3];
+                  if (@rr) {
+                     $depth--
+                        or return $do_search->(); # cname chain too long
 
-               } elsif ($cname) {
-                  # follow the cname
-                  return $do_req->();
+                     $cname = 1;
+                     $name = lc $rr[0][4];
 
-               } else {
-                  # no, not found anything
-                  return $do_search->();
-               }
-             }
-         });
+                  } elsif ($cname) {
+                     # follow the cname
+                     return $do_req->();
+
+                  } else {
+                     # no, not found anything
+                     return $do_search->();
+                  }
+                }
+            });
+         };
+
+         $do_req->();
       };
 
-      $do_req->();
-   };
-
-   $do_search->();
+      $do_search->();
+   });
 }
 
 =item $resolver->wait_for_slot ($cb->($resolver))
@@ -1329,14 +1493,13 @@ sub wait_for_slot {
 
 use AnyEvent::Socket (); # circular dependency, so do not import anything and do it at the end
 
-1;
-
 =back
 
 =head1 AUTHOR
 
    Marc Lehmann <schmorp@schmorp.de>
-   http://home.schmorp.de/
+   http://anyevent.schmorp.de
 
 =cut
 
+1

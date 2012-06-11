@@ -6,6 +6,38 @@ Coro::LWP - make LWP non-blocking - as much as possible
 
  use Coro::LWP; # afterwards LWP should not block
 
+=head1 ALTERNATIVES
+
+Over the years, a number of less-invasive alternatives have popped up,
+which you might find more acceptable than this rather invasive and fragile
+module. All of them only support HTTP (and sometimes HTTPS).
+
+=over 4
+
+=item L<AnyEvent::HTTP>
+
+Works fine without Coro. Requires using a very different API than
+LWP. Probably the best choice I<iff> you can do with a completely
+different event-based API.
+
+=item L<LWP::Protocol::AnyEvent::http>
+
+Makes LWP use L<AnyEvent::HTTP>. Does not make LWP event-based, but allows
+Coro threads to schedule unimpeded through its AnyEvent integration.
+
+Let's you use the LWP API normally.
+
+=item L<LWP::Protocol::Coro::http>
+
+Basically the same as above, distinction unclear. :)
+
+=item L<AnyEvent::HTTP::LWP::UserAgent>
+
+A different user agent implementation, not completely transparent to
+users, requires Coro.
+
+=back
+
 =head1 DESCRIPTION
 
 This module is an L<AnyEvent> user, you need to make sure that you use and
@@ -17,6 +49,9 @@ coroutines as much as possible, and with whatever means it takes.
 LWP really tries very hard to be blocking (and relies on a lot of
 undocumented functionality in IO::Socket), so this module had to be very
 invasive and must be loaded very early to take the proper effect.
+
+Note that the module L<AnyEvent::HTTP> might offer an alternative to the
+full L<LWP> that is designed to be non-blocking.
 
 Here is what it currently does (future versions of LWP might require
 different tricks):
@@ -64,8 +99,7 @@ data globally.
 
 package Coro::LWP;
 
-use strict;
-no warnings;
+use common::sense;
 
 BEGIN {
    # suppress warnings
@@ -73,13 +107,16 @@ BEGIN {
    require Net::Config;
 }
 
-# import these so they cna grab Socket::inet_aton
+# do it as early as possible
+use Coro::Select;
+
+# import these so they can grab Socket::inet_aton
 use AnyEvent::Util ();
 use AnyEvent::DNS ();
 
-use Coro::Select ();
 use Coro::Util ();
 use Coro::Socket ();
+use Coro::AnyEvent ();
 
 use Socket ();
 
@@ -89,7 +126,7 @@ use Net::HTTP ();
 use Net::FTP ();
 use Net::NNTP ();
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 
 *Socket::inet_aton = \&Coro::Util::inet_aton;
 

@@ -1,15 +1,15 @@
 package Time::HiRes;
 
+{ use 5.006; }
 use strict;
-use vars qw($VERSION $XS_VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD);
 
 require Exporter;
 require DynaLoader;
 
-@ISA = qw(Exporter DynaLoader);
+our @ISA = qw(Exporter DynaLoader);
 
-@EXPORT = qw( );
-@EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
+our @EXPORT = qw( );
+our @EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
 		 getitimer setitimer nanosleep clock_gettime clock_getres
 		 clock clock_nanosleep
 		 CLOCK_HIGHRES CLOCK_MONOTONIC CLOCK_PROCESS_CPUTIME_ID
@@ -23,10 +23,11 @@ require DynaLoader;
 		 stat
 		);
 
-$VERSION = '1.9715';
-$XS_VERSION = $VERSION;
+our $VERSION = '1.9725';
+our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
+our $AUTOLOAD;
 sub AUTOLOAD {
     my $constname;
     ($constname = $AUTOLOAD) =~ s/.*:://;
@@ -275,7 +276,7 @@ if an error occurred.
 B<NOTE 1>: With some combinations of operating systems and Perl
 releases C<SIGALRM> restarts C<select()>, instead of interrupting it.
 This means that an C<alarm()> followed by a C<select()> may together
-take the sum of the times specified for the the C<alarm()> and the
+take the sum of the times specified for the C<alarm()> and the
 C<select()>, not just the time of the C<alarm()>.
 
 Note that the interaction between alarms and sleeps is unspecified.
@@ -299,9 +300,9 @@ In list context, both the remaining time and the interval are returned.
 There are usually three or four interval timers (signals) available: the
 C<$which> can be C<ITIMER_REAL>, C<ITIMER_VIRTUAL>, C<ITIMER_PROF>, or
 C<ITIMER_REALPROF>.  Note that which ones are available depends: true
-UNIX platforms usually have the first three, but (for example) Win32
-and Cygwin have only C<ITIMER_REAL>, and only Solaris seems to have
-C<ITIMER_REALPROF> (which is used to profile multithreaded programs).
+UNIX platforms usually have the first three, but only Solaris seems to
+have C<ITIMER_REALPROF> (which is used to profile multithreaded programs).
+Win32 unfortunately does not haveinterval timers.
 
 C<ITIMER_REAL> results in C<alarm()>-like behaviour.  Time is counted in
 I<real time>; that is, wallclock time.  C<SIGALRM> is delivered when
@@ -344,8 +345,8 @@ January 1, 1970 Greenwich Mean Time (GMT).  Do not assume that
 CLOCK_REALTIME is zero, it might be one, or something else.
 Another potentially useful (but not available everywhere) value is
 C<CLOCK_MONOTONIC>, which guarantees a monotonically increasing time
-value (unlike time(), which can be adjusted).  See your system
-documentation for other possibly supported values.
+value (unlike time() or gettimeofday(), which can be adjusted).
+See your system documentation for other possibly supported values.
 
 =item clock_getres ( $which )
 
@@ -560,6 +561,9 @@ seconds. Time::HiRes will notice this eventually and recalibrate.
 Note that since Time::HiRes 1.77 the clock_gettime(CLOCK_MONOTONIC)
 might help in this (in case your system supports CLOCK_MONOTONIC).
 
+Some systems have APIs but not implementations: for example QNX and Haiku
+have the interval timer APIs but not the functionality.
+
 =head1 SEE ALSO
 
 Perl modules L<BSD::Resource>, L<Time::TAI64>.
@@ -581,6 +585,8 @@ Copyright (c) 1996-2002 Douglas E. Wegscheid.  All rights reserved.
 
 Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Jarkko Hietaniemi.
 All rights reserved.
+
+Copyright (C) 2011, 2012 Andrew Main (Zefram) <zefram@fysh.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -42,7 +42,7 @@ available.
 
     my $cwd = cwd();
 
-The cwd() is the most natural form for the current architecture. For
+The cwd() is the most natural form for the current architecture.  For
 most systems it is identical to `pwd` (but without the trailing line
 terminator).
 
@@ -57,9 +57,9 @@ chdir() you back into.  If fastcwd encounters a problem it will return
 undef but will probably leave you in a different directory.  For a
 measure of extra security, if everything appears to have worked, the
 fastcwd() function will check that it leaves you in the same directory
-that it started in. If it has changed it will C<die> with the message
+that it started in.  If it has changed it will C<die> with the message
 "Unstable directory path, current directory changed
-unexpectedly". That should never happen.
+unexpectedly".  That should never happen.
 
 =item fastgetcwd
 
@@ -129,15 +129,15 @@ it from Cwd.
 
 =item *
 
-Since the path seperators are different on some operating systems ('/'
+Since the path separators are different on some operating systems ('/'
 on Unix, ':' on MacPerl, etc...) we recommend you use the File::Spec
 modules wherever portability is a concern.
 
 =item *
 
 Actually, on Mac OS, the C<getcwd()>, C<fastgetcwd()> and C<fastcwd()>
-functions  are all aliases for the C<cwd()> function, which, on Mac OS,
-calls `pwd`. Likewise, the C<abs_path()> function is an alias for
+functions are all aliases for the C<cwd()> function, which, on Mac OS,
+calls `pwd`.  Likewise, the C<abs_path()> function is an alias for
 C<fast_abs_path()>.
 
 =back
@@ -171,9 +171,9 @@ use strict;
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 
-$VERSION = '3.29';
+$VERSION = '3.39_02';
 my $xs_version = $VERSION;
-$VERSION = eval $VERSION;
+$VERSION =~ tr/_//;
 
 @ISA = qw/ Exporter /;
 @EXPORT = qw(cwd getcwd fastcwd fastgetcwd);
@@ -202,6 +202,45 @@ if ($^O eq 'os2') {
     return 1;
 }
 
+# Need to look up the feature settings on VMS.  The preferred way is to use the
+# VMS::Feature module, but that may not be available to dual life modules.
+
+my $use_vms_feature;
+BEGIN {
+    if ($^O eq 'VMS') {
+        if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+            $use_vms_feature = 1;
+        }
+    }
+}
+
+# Need to look up the UNIX report mode.  This may become a dynamic mode
+# in the future.
+sub _vms_unix_rpt {
+    my $unix_rpt;
+    if ($use_vms_feature) {
+        $unix_rpt = VMS::Feature::current("filename_unix_report");
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+    }
+    return $unix_rpt;
+}
+
+# Need to look up the EFS character set mode.  This may become a dynamic
+# mode in the future.
+sub _vms_efs {
+    my $efs;
+    if ($use_vms_feature) {
+        $efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $env_efs = $ENV{'DECC$EFS_CHARSET'} || '';
+        $efs = $env_efs =~ /^[ET1]/i; 
+    }
+    return $efs;
+}
+
+
 # If loading the XS stuff doesn't work, we can fall back to pure perl
 eval {
   if ( $] >= 5.006 ) {
@@ -213,9 +252,6 @@ eval {
     __PACKAGE__->bootstrap( $xs_version );
   }
 };
-
-# Must be after the DynaLoader stuff:
-$VERSION = eval $VERSION;
 
 # Big nasty table of function aliases
 my %METHOD_MAP =
@@ -250,6 +286,7 @@ my %METHOD_MAP =
     abs_path		=> 'fast_abs_path',
    },
 
+   # QNX4.  QNX6 has a $os of 'nto'.
    qnx =>
    {
     cwd			=> '_qnx_cwd',
@@ -288,7 +325,6 @@ my %METHOD_MAP =
   );
 
 $METHOD_MAP{NT} = $METHOD_MAP{MSWin32};
-$METHOD_MAP{nto} = $METHOD_MAP{qnx};
 
 
 # Find the pwd command in the expected locations.  We assume these
@@ -543,6 +579,7 @@ sub _perl_abs_path
 	unless (opendir(PARENT, $dotdots))
 	{
 	    # probably a permissions issue.  Try the native command.
+	    require File::Spec;
 	    return File::Spec->rel2abs( $start, _backtick_pwd() );
 	}
 	unless (@cst = stat($dotdots))
@@ -648,23 +685,36 @@ sub _vms_abs_path {
     return $ENV{'DEFAULT'} unless @_;
     my $path = shift;
 
-    if (-l $path) {
-        my $link_target = readlink($path);
-        die "Can't resolve link $path: $!" unless defined $link_target;
-	    
-        return _vms_abs_path($link_target);
-    }
+    my $efs = _vms_efs;
+    my $unix_rpt = _vms_unix_rpt;
 
-    if (defined &VMS::Filespec::vms_realpath) {
-        my $path = $_[0];
-        if ($path =~ m#(?<=\^)/# ) {
+    if (defined &VMS::Filespec::vmsrealpath) {
+        my $path_unix = 0;
+        my $path_vms = 0;
+
+        $path_unix = 1 if ($path =~ m#(?<=\^)/#);
+        $path_unix = 1 if ($path =~ /^\.\.?$/);
+        $path_vms = 1 if ($path =~ m#[\[<\]]#);
+        $path_vms = 1 if ($path =~ /^--?$/);
+
+        my $unix_mode = $path_unix;
+        if ($efs) {
+            # In case of a tie, the Unix report mode decides.
+            if ($path_vms == $path_unix) {
+                $unix_mode = $unix_rpt;
+            } else {
+                $unix_mode = 0 if $path_vms;
+            }
+        }
+
+        if ($unix_mode) {
             # Unix format
-            return VMS::Filespec::vms_realpath($path);
+            return VMS::Filespec::unixrealpath($path);
         }
 
 	# VMS format
 
-	my $new_path = VMS::Filespec::vms_realname($path); 
+	my $new_path = VMS::Filespec::vmsrealpath($path);
 
 	# Perl expects directories to be in directory format
 	$new_path = VMS::Filespec::pathify($new_path) if -d $path;
@@ -673,6 +723,13 @@ sub _vms_abs_path {
 
     # Fallback to older algorithm if correct ones are not
     # available.
+
+    if (-l $path) {
+        my $link_target = readlink($path);
+        die "Can't resolve link $path: $!" unless defined $link_target;
+
+        return _vms_abs_path($link_target);
+    }
 
     # may need to turn foo.dir into [.foo]
     my $pathified = VMS::Filespec::pathify($path);
@@ -688,8 +745,22 @@ sub _os2_cwd {
     return $ENV{'PWD'};
 }
 
+sub _win32_cwd_simple {
+    $ENV{'PWD'} = `cd`;
+    chomp $ENV{'PWD'};
+    $ENV{'PWD'} =~ s:\\:/:g ;
+    return $ENV{'PWD'};
+}
+
 sub _win32_cwd {
-    if (defined &DynaLoader::boot_DynaLoader) {
+    # Need to avoid taking any sort of reference to the typeglob or the code in
+    # the optree, so that this tests the runtime state of things, as the
+    # ExtUtils::MakeMaker tests for "miniperl" need to be able to fake things at
+    # runtime by deleting the subroutine. *foo{THING} syntax on a symbol table
+    # lookup avoids needing a string eval, which has been reported to cause
+    # problems (for reasons that we haven't been able to get to the bottom of -
+    # rt.cpan.org #56225)
+    if (*{$DynaLoader::{boot_DynaLoader}}{CODE}) {
 	$ENV{'PWD'} = Win32::GetCwd();
     }
     else { # miniperl
@@ -699,7 +770,7 @@ sub _win32_cwd {
     return $ENV{'PWD'};
 }
 
-*_NT_cwd = defined &Win32::GetCwd ? \&_win32_cwd : \&_os2_cwd;
+*_NT_cwd = defined &Win32::GetCwd ? \&_win32_cwd : \&_win32_cwd_simple;
 
 sub _dos_cwd {
     if (!defined &Dos::GetCwd) {

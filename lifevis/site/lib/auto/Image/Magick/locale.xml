@@ -17,7 +17,7 @@
   <include locale="et_EE.ISO-8859-1" file="estonian.xml"/>
   <include locale="fi_FI.ISO-8859-1" file="finnish.xml"/>
   <include locale="fr_FR.ISO-8859-1" file="francais.xml"/>
-  <include locale="fr_FR.ISO-8859-1" file="french.xml"/>
+  <include locale="fr_FR.ISO-8859-1" file="francais.xml"/>
   <include locale="fr_FR.UTF-8" file="francais.xml"/>
   <include locale="gl_ES.ISO-8859-1" file="galego.xml"/>
   <include locale="gl_ES.ISO-8859-1" file="galician.xml"/>

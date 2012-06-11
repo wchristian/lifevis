@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.08;
+our $VERSION = 0.19;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -18,15 +18,34 @@ sub carp {
     goto &Carp::carp;
 }
 
-## forward declaration(s) rather than wrapping the bootstrap call in BEGIN{}
-#sub reftype ($) ;
-#sub _fetch_attrs ($) ;
-#sub _guess_stash ($) ;
-#sub _modify_attrs ;
-#
-# The extra trips through newATTRSUB in the interpreter wipe out any savings
-# from avoiding the BEGIN block.  Just do the bootstrap now.
-BEGIN { bootstrap attributes }
+my %deprecated;
+$deprecated{CODE} = qr/\A-?(locked)\z/;
+$deprecated{ARRAY} = $deprecated{HASH} = $deprecated{SCALAR}
+    = qr/\A-?(unique)\z/;
+
+sub _modify_attrs_and_deprecate {
+    my $svtype = shift;
+    # Now that we've removed handling of locked from the XS code, we need to
+    # remove it here, else it ends up in @badattrs. (If we do the deprecation in
+    # XS, we can't control the warning based on *our* caller's lexical settings,
+    # and the warned line is in this package)
+    grep {
+	$deprecated{$svtype} && /$deprecated{$svtype}/ ? do {
+	    require warnings;
+	    warnings::warnif('deprecated', "Attribute \"$1\" is deprecated");
+	    0;
+	} : $svtype eq 'CODE' && /^-?lvalue\z/ ? do {
+	    require warnings;
+	    warnings::warnif(
+		'misc',
+		"lvalue attribute "
+		   . (/^-/ ? "removed from" : "applied to")
+		   . " already-defined subroutine"
+	    );
+	    0;
+	} : 1
+    } _modify_attrs(@_);
+}
 
 sub import {
     @_ > 2 && ref $_[2] or do {
@@ -41,7 +60,7 @@ sub import {
 	if defined $home_stash && $home_stash ne '';
     my @badattrs;
     if ($pkgmeth) {
-	my @pkgattrs = _modify_attrs($svref, @attrs);
+	my @pkgattrs = _modify_attrs_and_deprecate($svtype, $svref, @attrs);
 	@badattrs = $pkgmeth->($home_stash, $svref, @pkgattrs);
 	if (!@badattrs && @pkgattrs) {
             require warnings;
@@ -59,7 +78,7 @@ sub import {
 	}
     }
     else {
-	@badattrs = _modify_attrs($svref, @attrs);
+	@badattrs = _modify_attrs_and_deprecate($svtype, $svref, @attrs);
     }
     if (@badattrs) {
 	croak "Invalid $svtype attribute" .
@@ -73,8 +92,8 @@ sub get ($) {
     @_ == 1  && ref $_[0] or
 	croak 'Usage: '.__PACKAGE__.'::get $ref';
     my $svref = shift;
-    my $svtype = uc reftype $svref;
-    my $stash = _guess_stash $svref;
+    my $svtype = uc reftype($svref);
+    my $stash = _guess_stash($svref);
     $stash = caller unless defined $stash;
     my $pkgmeth;
     $pkgmeth = UNIVERSAL::can($stash, "FETCH_${svtype}_ATTRIBUTES")
@@ -86,6 +105,9 @@ sub get ($) {
 }
 
 sub require_version { goto &UNIVERSAL::VERSION }
+
+require XSLoader;
+XSLoader::load();
 
 1;
 __END__
@@ -157,44 +179,72 @@ C<eval>.)  Setting an attribute with a name that's all lowercase
 letters that's not a built-in attribute (such as "foo") will result in
 a warning with B<-w> or C<use warnings 'reserved'>.
 
+=head2 What C<import> does
+
+In the description it is mentioned that
+
+  sub foo : method;
+
+is equivalent to
+
+  use attributes __PACKAGE__, \&foo, 'method';
+
+As you might know this calls the C<import> function of C<attributes> at compile 
+time with these parameters: 'attributes', the caller's package name, the reference 
+to the code and 'method'.
+
+  attributes->import( __PACKAGE__, \&foo, 'method' );
+
+So you want to know what C<import> actually does?
+
+First of all C<import> gets the type of the third parameter ('CODE' in this case).
+C<attributes.pm> checks if there is a subroutine called C<< MODIFY_<reftype>_ATTRIBUTES >>
+in the caller's namespace (here: 'main').  In this case a
+subroutine C<MODIFY_CODE_ATTRIBUTES> is required.  Then this
+method is called to check if you have used a "bad attribute".
+The subroutine call in this example would look like
+
+  MODIFY_CODE_ATTRIBUTES( 'main', \&foo, 'method' );
+
+C<< MODIFY_<reftype>_ATTRIBUTES >> has to return a list of all "bad attributes".
+If there are any bad attributes C<import> croaks.
+
+(See L<"Package-specific Attribute Handling"> below.)
+
 =head2 Built-in Attributes
 
 The following are the built-in attributes for subroutines:
 
 =over 4
 
-=item locked
-
-B<5.005 threads only!  The use of the "locked" attribute currently
-only makes sense if you are using the deprecated "Perl 5.005 threads"
-implementation of threads.>
-
-Setting this attribute is only meaningful when the subroutine or
-method is to be called by multiple threads.  When set on a method
-subroutine (i.e., one marked with the B<method> attribute below),
-Perl ensures that any invocation of it implicitly locks its first
-argument before execution.  When set on a non-method subroutine,
-Perl ensures that a lock is taken on the subroutine itself before
-execution.  The semantics of the lock are exactly those of one
-explicitly taken with the C<lock> operator immediately after the
-subroutine is entered.
-
-=item method
-
-Indicates that the referenced subroutine is a method.
-This has a meaning when taken together with the B<locked> attribute,
-as described there.  It also means that a subroutine so marked
-will not trigger the "Ambiguous call resolved as CORE::%s" warning.
-
 =item lvalue
 
 Indicates that the referenced subroutine is a valid lvalue and can
-be assigned to. The subroutine must return a modifiable value such
+be assigned to.  The subroutine must return a modifiable value such
 as a scalar variable, as described in L<perlsub>.
 
-=back
+This module allows one to set this attribute on a subroutine that is
+already defined.  For Perl subroutines (XSUBs are fine), it may or may not
+do what you want, depending on the code inside the subroutine, with details
+subject to change in future Perl versions.  You may run into problems with
+lvalue context not being propagated properly into the subroutine, or maybe
+even assertion failures.  For this reason, a warning is emitted if warnings
+are enabled.  In other words, you should only do this if you really know
+what you are doing.  You have been warned.
 
-For global variables there is C<unique> attribute: see L<perlfunc/our>.
+=item method
+
+Indicates that the referenced subroutine
+is a method.  A subroutine so marked
+will not trigger the "Ambiguous call resolved as CORE::%s" warning.
+
+=item locked
+
+The "locked" attribute has no effect in
+5.10.0 and later.  It was used as part
+of the now-removed "Perl 5.005 threads".
+
+=back
 
 =head2 Available Subroutines
 
@@ -302,7 +352,7 @@ Some examples of syntactically valid attribute lists:
     switch(10,foo(7,3))  :  expensive
     Ugly('\(") :Bad
     _5x5
-    locked method
+    lvalue method
 
 Some examples of syntactically invalid attribute lists (with annotation):
 
@@ -366,22 +416,22 @@ Effect:
 Code:
 
     package X;
-    sub foo : locked ;
+    sub foo : lvalue ;
 
 Effect:
 
-    use attributes X => \&foo, "locked";
+    use attributes X => \&foo, "lvalue";
 
 =item 4.
 
 Code:
 
     package X;
-    sub Y::x : locked { 1 }
+    sub Y::x : lvalue { 1 }
 
 Effect:
 
-    use attributes Y => \&Y::x, "locked";
+    use attributes Y => \&Y::x, "lvalue";
 
 =item 5.
 
@@ -394,11 +444,11 @@ Code:
     BEGIN { *bar = \&X::foo; }
 
     package Z;
-    sub Y::bar : locked ;
+    sub Y::bar : lvalue ;
 
 Effect:
 
-    use attributes X => \&X::foo, "locked";
+    use attributes X => \&X::foo, "lvalue";
 
 =back
 
@@ -406,13 +456,58 @@ This last example is purely for purposes of completeness.  You should not
 be trying to mess with the attributes of something in a package that's
 not your own.
 
+=head1 MORE EXAMPLES
+
+=over 4
+
+=item 1.
+
+    sub MODIFY_CODE_ATTRIBUTES {
+       my ($class,$code,@attrs) = @_;
+
+       my $allowed = 'MyAttribute';
+       my @bad = grep { $_ ne $allowed } @attrs;
+
+       return @bad;
+    }
+
+    sub foo : MyAttribute {
+       print "foo\n";
+    }
+
+This example runs.  At compile time
+C<MODIFY_CODE_ATTRIBUTES> is called.  In that
+subroutine, we check if any attribute is disallowed and we return a list of
+these "bad attributes".
+
+As we return an empty list, everything is fine.
+
+=item 2.
+
+  sub MODIFY_CODE_ATTRIBUTES {
+     my ($class,$code,@attrs) = @_;
+
+     my $allowed = 'MyAttribute';
+     my @bad = grep{ $_ ne $allowed }@attrs;
+
+     return @bad;
+  }
+
+  sub foo : MyAttribute Test {
+     print "foo\n";
+  }
+
+This example is aborted at compile time as we use the attribute "Test" which
+isn't allowed.  C<MODIFY_CODE_ATTRIBUTES>
+returns a list that contains a single
+element ('Test').
+
+=back
+
 =head1 SEE ALSO
 
 L<perlsub/"Private Variables via my()"> and
 L<perlsub/"Subroutine Attributes"> for details on the basic declarations;
-L<attrs> for the obsolescent form of subroutine attribute specification
-which this module replaces;
 L<perlfunc/use> for details on the normal invocation mechanism.
 
 =cut
-

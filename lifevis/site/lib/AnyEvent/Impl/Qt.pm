@@ -23,6 +23,8 @@ autoprobed (but it will be autodetected when the main program uses Qt).
 Qt suffers from the same limitations as Event::Lib and Tk, the workaround
 is also the same (duplicating file descriptors).
 
+Qt doesn't support idle events, so they are being emulated.
+
 Avoid Qt if you can.
 
 =cut
@@ -66,22 +68,20 @@ sub NEW {
 }
 
 sub cb {
-   this->start (this->{interval}, 1);
-   (this->{cb})->();
+   this->start (this->{interval}, 1) if defined this->{interval};
+   this->{cb}->();
 }
 
 package AnyEvent::Impl::Qt;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
-
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use Qt;
+
 use AnyEvent::Impl::Qt::Timer;
 use AnyEvent::Impl::Qt::Io;
 
 our $app = Qt::Application \@ARGV; # REQUIRED!
+
 sub io {
    my ($class, %arg) = @_;
 
@@ -89,7 +89,7 @@ sub io {
    # - adding a callback might destroy other callbacks
    # - only one callback per fd/poll combination
    my ($fh, $qt) = AnyEvent::_dupfh $arg{poll}, $arg{fh},
-                      Qt::SocketNotifier::Read (), Qt::SocketNotifier::Write();
+                      Qt::SocketNotifier::Read (), Qt::SocketNotifier::Write ();
 
    AnyEvent::Impl::Qt::Io $fh, $qt, $arg{cb}
 }
@@ -97,14 +97,31 @@ sub io {
 sub timer {
    my ($class, %arg) = @_;
    
-   AnyEvent::Impl::Qt::Timer $arg{after} * 1000, $arg{interval} * 1000, $arg{cb}
+   # old Qt treats 0 timeout as "idle"
+   AnyEvent::Impl::Qt::Timer
+      $arg{after} * 1000 || 1,
+      $arg{interval} ? $arg{interval} * 1000 || 1 : undef,
+      $arg{cb}
 }
 
-sub one_event {
+# newer Qt have no idle mode for timers anymore...
+#sub idle {
+#   my ($class, %arg) = @_;
+#   
+#   AnyEvent::Impl::Qt::Timer 0, 0, $arg{cb}
+#}
+
+#sub loop {
+#   Qt::app->exec;
+#}
+
+sub _poll {
    Qt::app->processOneEvent;
 }
 
-1;
+sub AnyEvent::CondVar::Base::_wait {
+   Qt::app->processOneEvent until exists $_[0]{_ae_sent};
+}
 
 =head1 SEE ALSO
 
@@ -113,8 +130,9 @@ L<AnyEvent>, L<Qt>.
 =head1 AUTHOR
 
    Marc Lehmann <schmorp@schmorp.de>
-   http://home.schmorp.de/
+   http://anyevent.schmorp.de
 
 =cut
 
+1
 

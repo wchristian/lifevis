@@ -1,3 +1,4 @@
+
 # IO::Socket.pm
 #
 # Copyright (c) 1997-8 Graham Barr <gbarr@pobox.com>. All rights reserved.
@@ -23,7 +24,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.30_01";
+$VERSION = "1.34";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -118,7 +119,18 @@ sub connect {
 	    my $sel = new IO::Select $sock;
 
 	    undef $!;
-	    if (!$sel->can_write($timeout)) {
+	    my($r,$w,$e) = IO::Select::select(undef,$sel,$sel,$timeout);
+	    if(@$e[0]) {
+		# Windows return from select after the timeout in case of
+		# WSAECONNREFUSED(10061) if exception set is not used.
+		# This behavior is different from Linux.
+		# Using the exception
+		# set we now emulate the behavior in Linux
+		#    - Karthik Rajagopalan
+		$err = $sock->getsockopt(SOL_SOCKET,SO_ERROR);
+		$@ = "connect: $err";
+	    }
+	    elsif(!@$w[0]) {
 		$err = $! || (exists &Errno::ETIMEDOUT ? &Errno::ETIMEDOUT : 1);
 		$@ = "connect: timeout";
 	    }
@@ -493,6 +505,16 @@ an AF_INET socket the value of &AF_INET will be returned.
 Unified method to both set and get options in the SOL_SOCKET level. If called
 with one argument then getsockopt is called, otherwise setsockopt is called.
 
+=item getsockopt(LEVEL, OPT)
+
+Get option associated with the socket. Other levels than SOL_SOCKET
+may be specified here.
+
+=item setsockopt(LEVEL, OPT, VAL)
+
+Set option associated with the socket. Other levels than SOL_SOCKET
+may be specified here.
+
 =item socktype
 
 Returns the numerical number for the socket type. For example, for
@@ -500,9 +522,10 @@ a SOCK_STREAM socket the value of &SOCK_STREAM will be returned.
 
 =item timeout([VAL])
 
-Set or get the timeout value associated with this socket. If called without
-any arguments then the current setting is returned. If called with an argument
-the current setting is changed and the previous value returned.
+Set or get the timeout value (in seconds) associated with this socket.
+If called without any arguments then the current setting is returned. If
+called with an argument the current setting is changed and the previous
+value returned.
 
 =back
 
@@ -513,7 +536,7 @@ L<Socket>, L<IO::Handle>, L<IO::Socket::INET>, L<IO::Socket::UNIX>
 =head1 AUTHOR
 
 Graham Barr.  atmark() by Lincoln Stein.  Currently maintained by the
-Perl Porters.  Please report all bugs to <perl5-porters@perl.org>.
+Perl Porters.  Please report all bugs to <perlbug@perl.org>.
 
 =head1 COPYRIGHT
 

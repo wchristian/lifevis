@@ -1,6 +1,6 @@
 =head1 NAME
 
-Coro::Handle - non-blocking io with a blocking interface.
+Coro::Handle - non-blocking I/O with a blocking interface.
 
 =head1 SYNOPSIS
 
@@ -36,8 +36,7 @@ they would all have a costly C coroutine associated with them.
 
 package Coro::Handle;
 
-no warnings;
-use strict;
+use common::sense;
 
 use Carp ();
 use Errno qw(EAGAIN EINTR EINPROGRESS);
@@ -46,7 +45,7 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK WSAEINPROGRESS);
 
 use base 'Exporter';
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 our @EXPORT = qw(unblock);
 
 =item $fh = new_from_fh Coro::Handle $fhandle [, arg => value...]
@@ -63,14 +62,14 @@ sub new_from_fh {
    my $fh = shift or return;
    my $self = do { local *Coro::Handle };
 
-   tie $self, 'Coro::Handle::FH', fh => $fh, @_;
+   tie *$self, 'Coro::Handle::FH', fh => $fh, @_;
 
    bless \$self, ref $class ? ref $class : $class
 }
 
 =item $fh = unblock $fh
 
-This is a convinience function that just calls C<new_from_fh> on the
+This is a convenience function that just calls C<new_from_fh> on the
 given filehandle. Use it to replace a normal perl filehandle by a
 non-(coroutine-)blocking equivalent.
 
@@ -87,18 +86,19 @@ until an error condition happens (and return false).
 
 =cut
 
-sub readable	{ Coro::Handle::FH::readable (tied ${$_[0]}) }
-sub writable	{ Coro::Handle::FH::writable (tied ${$_[0]}) }
+sub readable	{ Coro::Handle::FH::readable (tied *${$_[0]}) }
+sub writable	{ Coro::Handle::FH::writable (tied *${$_[0]}) }
 
 =item $fh->readline ([$terminator])
 
-Like the builtin of the same name, but allows you to specify the input
-record separator in a coroutine-safe manner (i.e. not using a global
-variable).
+Similar to the builtin of the same name, but allows you to specify the
+input record separator in a coroutine-safe manner (i.e. not using a global
+variable). Paragraph mode is not supported, use "\n\n" to achieve the same
+effect.
 
 =cut
 
-sub readline	{ tied(${+shift})->READLINE (@_) }
+sub readline	{ tied(*${+shift})->READLINE (@_) }
 
 =item $fh->autoflush ([...])
 
@@ -117,17 +117,17 @@ work but it's not efficient).
 
 =cut
 
-sub read	{ Coro::Handle::FH::READ   (tied ${$_[0]}, $_[1], $_[2], $_[3]) }
-sub sysread	{ Coro::Handle::FH::READ   (tied ${$_[0]}, $_[1], $_[2], $_[3]) }
-sub syswrite	{ Coro::Handle::FH::WRITE  (tied ${$_[0]}, $_[1], $_[2], $_[3]) }
-sub print	{ Coro::Handle::FH::WRITE  (tied ${+shift}, join "", @_) }
-sub printf	{ Coro::Handle::FH::PRINTF (tied ${+shift}, @_) }
-sub fileno	{ Coro::Handle::FH::FILENO (tied ${$_[0]}) }
-sub close	{ Coro::Handle::FH::CLOSE  (tied ${$_[0]}) }
+sub read	{ Coro::Handle::FH::READ   (tied *${$_[0]}, $_[1], $_[2], $_[3]) }
+sub sysread	{ Coro::Handle::FH::READ   (tied *${$_[0]}, $_[1], $_[2], $_[3]) }
+sub syswrite	{ Coro::Handle::FH::WRITE  (tied *${$_[0]}, $_[1], $_[2], $_[3]) }
+sub print	{ Coro::Handle::FH::WRITE  (tied *${+shift}, join "", @_) }
+sub printf	{ Coro::Handle::FH::PRINTF (tied *${+shift}, @_) }
+sub fileno	{ Coro::Handle::FH::FILENO (tied *${$_[0]}) }
+sub close	{ Coro::Handle::FH::CLOSE  (tied *${$_[0]}) }
 sub blocking    { !0 } # this handler always blocks the caller
 
 sub partial     {
-   my $obj = tied ${$_[0]};
+   my $obj = tied *${$_[0]};
 
    my $retval = $obj->[8];
    $obj->[8] = $_[1] if @_ > 1;
@@ -142,16 +142,16 @@ true on EINPROGRESS). Remember that these must be method calls.
 
 =cut
 
-sub connect	{ connect     tied(${$_[0]})->[0], $_[1] or $! == EINPROGRESS or $! == WSAEINPROGRESS }
-sub bind	{ bind        tied(${$_[0]})->[0], $_[1] }
-sub listen	{ listen      tied(${$_[0]})->[0], $_[1] }
-sub getsockopt	{ getsockopt  tied(${$_[0]})->[0], $_[1], $_[2] }
-sub setsockopt	{ setsockopt  tied(${$_[0]})->[0], $_[1], $_[2], $_[3] }
-sub send	{ send        tied(${$_[0]})->[0], $_[1], $_[2], @_ > 2 ? $_[3] : () }
-sub recv	{ recv        tied(${$_[0]})->[0], $_[1], $_[2], @_ > 2 ? $_[3] : () }
-sub sockname	{ getsockname tied(${$_[0]})->[0] }
-sub peername	{ getpeername tied(${$_[0]})->[0] }
-sub shutdown	{ shutdown    tied(${$_[0]})->[0], $_[1] }
+sub connect	{ connect     tied(*${$_[0]})->[0], $_[1] or $! == EINPROGRESS or $! == EAGAIN or $! == WSAEWOULDBLOCK }
+sub bind	{ bind        tied(*${$_[0]})->[0], $_[1] }
+sub listen	{ listen      tied(*${$_[0]})->[0], $_[1] }
+sub getsockopt	{ getsockopt  tied(*${$_[0]})->[0], $_[1], $_[2] }
+sub setsockopt	{ setsockopt  tied(*${$_[0]})->[0], $_[1], $_[2], $_[3] }
+sub send	{ send        tied(*${$_[0]})->[0], $_[1], $_[2], @_ > 2 ? $_[3] : () }
+sub recv	{ recv        tied(*${$_[0]})->[0], $_[1], $_[2], @_ > 2 ? $_[3] : () }
+sub sockname	{ getsockname tied(*${$_[0]})->[0] }
+sub peername	{ getpeername tied(*${$_[0]})->[0] }
+sub shutdown	{ shutdown    tied(*${$_[0]})->[0], $_[1] }
 
 =item ($fh, $peername) = $listen_fh->accept
 
@@ -163,7 +163,7 @@ list context return the ($fh, $peername) pair (or nothing).
 sub accept {
    my ($peername, $fh);
    while () {
-      $peername = accept $fh, tied(${$_[0]})->[0]
+      $peername = accept $fh, tied(*${$_[0]})->[0]
          and return wantarray 
                     ? ($_[0]->new_from_fh($fh), $peername)
                     :  $_[0]->new_from_fh($fh);
@@ -184,7 +184,7 @@ C<0> is a valid timeout, use C<undef> to disable the timeout.
 =cut
 
 sub timeout {
-   my $self = tied ${$_[0]};
+   my $self = tied *${$_[0]};
    if (@_ > 1) {
       $self->[2] = $_[1];
       $self->[5]->timeout ($_[1]) if $self->[5];
@@ -226,11 +226,11 @@ readline nor sysread are viable candidates, like this:
 =cut
 
 sub fh {
-   (tied ${$_[0]})->[0];
+   (tied *${$_[0]})->[0];
 }
 
 sub rbuf : lvalue {
-   (tied ${$_[0]})->[3];
+   (tied *${$_[0]})->[3];
 }
 
 sub DESTROY {
@@ -240,7 +240,7 @@ sub DESTROY {
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-   my $self = tied ${$_[0]};
+   my $self = tied *${$_[0]};
 
    (my $func = $AUTOLOAD) =~ s/^(.*):://;
 
@@ -254,14 +254,14 @@ sub AUTOLOAD {
 
 package Coro::Handle::FH;
 
-no warnings;
-use strict;
+use common::sense;
 
 use Carp 'croak';
 use Errno qw(EAGAIN EINTR);
 
-use AnyEvent ();
 use AnyEvent::Util qw(WSAEWOULDBLOCK);
+
+use Coro::AnyEvent;
 
 # formerly a hash, but we are speed-critical, so try
 # to be faster even if it hurts.
@@ -271,8 +271,8 @@ use AnyEvent::Util qw(WSAEWOULDBLOCK);
 # 2 timeout
 # 3 rb
 # 4 wb # unused
-# 5 read watcher, if Coro::Event used
-# 6 write watcher, if Coro::Event used
+# 5 read watcher, if Coro::Event|EV used
+# 6 write watcher, if Coro::Event|EV used
 # 7 forward class
 # 8 blocking
 
@@ -294,8 +294,7 @@ sub TIEHANDLE {
 }
 
 sub cleanup {
-   $_[0][5]->cancel if $_[0][5];
-   $_[0][6]->cancel if $_[0][6];
+   # gets overriden for Coro::Event
    @{$_[0]} = ();
 }
 
@@ -344,8 +343,9 @@ sub EOF {
 }
 
 sub CLOSE {
+   my $fh = $_[0][0];
    &cleanup;
-   close $_[0][0]
+   close $fh
 }
 
 sub DESTROY {
@@ -362,62 +362,25 @@ sub FETCH {
    "$_[0]<$_[0][1]>"
 }
 
-sub readable_anyevent {
-   my $current = $Coro::current;
-   my $io = 1;
+sub _readable_anyevent {
+   my $cb = Coro::rouse_cb;
 
-   my $w = AnyEvent->io (
-      fh    => $_[0][0],
-      poll  => 'r',
-      cb    => sub {
-         $current->ready if $current;
-         undef $current;
-      },
-   );
+   my $w = AE::io $_[0][0], 0, sub { $cb->(1) };
+   my $t = (defined $_[0][2]) && AE::timer $_[0][2], 0, sub { $cb->(0) };
 
-   my $t = (defined $_[0][2]) && AnyEvent->timer (
-      after => $_[0][2],
-      cb    => sub {
-         $io = 0;
-         $current->ready if $current;
-         undef $current;
-      },
-   );
-
-   &Coro::schedule;
-   &Coro::schedule while $current;
-
-   $io
+   Coro::rouse_wait
 }
 
-sub writable_anyevent {
-   my $current = $Coro::current;
-   my $io = 1;
+sub _writable_anyevent {
+   my $cb = Coro::rouse_cb;
 
-   my $w = AnyEvent->io (
-      fh    => $_[0][0],
-      poll  => 'w',
-      cb    => sub {
-         $current->ready if $current;
-         undef $current;
-      },
-   );
+   my $w = AE::io $_[0][0], 1, sub { $cb->(1) };
+   my $t = (defined $_[0][2]) && AE::timer $_[0][2], 0, sub { $cb->(0) };
 
-   my $t = (defined $_[0][2]) && AnyEvent->timer (
-      after => $_[0][2],
-      cb    => sub {
-         $io = 0;
-         $current->ready if $current;
-         undef $current;
-      },
-   );
-
-   &Coro::schedule while $current;
-
-   $io
+   Coro::rouse_wait
 }
 
-sub readable_coro {
+sub _readable_coro {
    ($_[0][5] ||= "Coro::Event"->io (
       fd      => $_[0][0],
       desc    => "fh $_[0][1] read watcher",
@@ -426,7 +389,7 @@ sub readable_coro {
    ))->next->[4] & &Event::Watcher::R
 }
 
-sub writable_coro {
+sub _writable_coro {
    ($_[0][6] ||= "Coro::Event"->io (
       fd      => $_[0][0],
       desc    => "fh $_[0][1] write watcher",
@@ -435,29 +398,34 @@ sub writable_coro {
    ))->next->[4] & &Event::Watcher::W
 }
 
-#sub readable_ev {
+#sub _readable_ev {
 #   &EV::READ  == Coro::EV::timed_io_once (fileno $_[0][0], &EV::READ , $_[0][2])
 #}
 #
-#sub writable_ev {
+#sub _writable_ev {
 #   &EV::WRITE == Coro::EV::timed_io_once (fileno $_[0][0], &EV::WRITE, $_[0][2])
 #}
 
 # decide on event model at runtime
 for my $rw (qw(readable writable)) {
-   no strict 'refs';
-
    *$rw = sub {
       AnyEvent::detect;
-      if ($AnyEvent::MODEL eq "AnyEvent::Impl::Coro" or $AnyEvent::MODEL eq "AnyEvent::Impl::Event") {
-         require Coro::Event;
-         *$rw = \&{"$rw\_coro"};
-      } elsif ($AnyEvent::MODEL eq "AnyEvent::Impl::CoroEV" or $AnyEvent::MODEL eq "AnyEvent::Impl::EV") {
-         require Coro::EV;
-         *$rw = \&{"Coro::EV::$rw\_ev"};
-         return &$rw; # Coro 5.0+ doesn't support goto &SLF
+      if ($AnyEvent::MODEL eq "AnyEvent::Impl::Event" and eval { require Coro::Event }) {
+         *$rw = \&{"_$rw\_coro"};
+         *cleanup = sub {
+            eval {
+               $_[0][5]->cancel if $_[0][5];
+               $_[0][6]->cancel if $_[0][6];
+            };
+            @{$_[0]} = ();
+         };
+
+      } elsif ($AnyEvent::MODEL eq "AnyEvent::Impl::EV" and eval { require Coro::EV }) {
+         *$rw = \&{"Coro::EV::_$rw\_ev"};
+         return &$rw; # Coro 5.0+ doesn't support goto &SLF, and this line is executed once only
+
       } else {
-         *$rw = \&{"$rw\_anyevent"};
+         *$rw = \&{"_$rw\_anyevent"};
       }
       goto &$rw
    };
@@ -466,7 +434,7 @@ for my $rw (qw(readable writable)) {
 sub WRITE {
    my $len = defined $_[2] ? $_[2] : length $_[1];
    my $ofs = $_[3];
-   my $res = 0;
+   my $res;
 
    while () {
       my $r = syswrite ($_[0][0], $_[1], $len, $ofs);
@@ -481,13 +449,13 @@ sub WRITE {
       last unless &writable;
    }
 
-   return $res;
+   $res
 }
 
 sub READ {
    my $len = $_[2];
    my $ofs = $_[3];
-   my $res = 0;
+   my $res;
 
    # first deplete the read buffer
    if (length $_[0][3]) {
@@ -518,32 +486,50 @@ sub READ {
       last if $_[0][8] || !&readable;
    }
 
-   return $res;
+   $res
 }
 
 sub READLINE {
    my $irs = @_ > 1 ? $_[1] : $/;
-   my ($ofs, $len);
+   my ($ofs, $len, $pos);
+   my $bufsize = 1020;
 
-   while() {
-      if (defined $irs) {
-         my $pos = index $_[0][3], $irs, $ofs < 0 ? 0 : $ofs;
+   while () {
+      if (length $irs) {
+         $pos = index $_[0][3], $irs, $ofs < 0 ? 0 : $ofs;
+
+         return substr $_[0][3], 0, $pos + length $irs, ""
+            if $pos >= 0;
+
+         $ofs = (length $_[0][3]) - (length $irs);
+      } elsif (defined $irs) {
+         $pos = index $_[0][3], "\n\n", $ofs < 1 ? 1 : $ofs;
+
          if ($pos >= 0) {
-            $pos += length $irs;
-            my $res = substr $_[0][3], 0, $pos;
-            substr ($_[0][3], 0, $pos) = "";
+            my $res = substr $_[0][3], 0, $pos + 2, "";
+            $res =~ s/\A\n+//;
             return $res;
          }
 
-         $ofs = (length $_[0][3]) - (length $irs);
+         $ofs = (length $_[0][3]) - 1;
       }
 
-      $len = sysread $_[0][0], $_[0][3], $len + 4096, length $_[0][3];
-      if (defined $len) {
-         return length $_[0][3] ? delete $_[0][3] : undef
-            unless $len;
-      } elsif (($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) || !&readable) {
-         return length $_[0][3] ? delete $_[0][3] : undef;
+      $len = $bufsize - length $_[0][3];
+      $len = $bufsize *= 2 if $len < $bufsize * 0.5;
+      $len = sysread $_[0][0], $_[0][3], $len, length $_[0][3];
+
+      unless ($len) {
+         if (defined $len) {
+            # EOF
+            return undef unless length $_[0][3];
+
+            $_[0][3] =~ s/\A\n+//
+               if ! length $irs && defined $irs;
+
+            return delete $_[0][3];
+         } elsif (($! != EAGAIN && $! != EINTR && $! != WSAEWOULDBLOCK) || !&readable) {
+            return length $_[0][3] ? delete $_[0][3] : undef;
+         }
       }
    }
 }

@@ -1,0 +1,14 @@
+setting up OpenGL environment...   OpenGL environment ready.
+initializing OpenGL...
+loading textures..   textures loaded.
+
+OpenGL initialized.
+Lifevis - A real-time Dwarf Fortress world viewer
+switching to main loop...
+setting up OpenGL environment...   OpenGL environment ready.
+initializing OpenGL...
+loading textures..   textures loaded.
+
+OpenGL initialized.
+Lifevis - A real-time Dwarf Fortress world viewer
+switching to main loop...

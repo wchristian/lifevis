@@ -8,13 +8,13 @@ IO::Handle - supply object methods for I/O handles
 
     use IO::Handle;
 
-    $io = new IO::Handle;
+    $io = IO::Handle->new();
     if ($io->fdopen(fileno(STDIN),"r")) {
         print $io->getline;
         $io->close;
     }
 
-    $io = new IO::Handle;
+    $io = IO::Handle->new();
     if ($io->fdopen(fileno(STDOUT),"w")) {
         $io->print("Some text\n");
     }
@@ -63,9 +63,11 @@ corresponding built-in functions:
 
     $io->close
     $io->eof
+    $io->fcntl( FUNCTION, SCALAR )
     $io->fileno
     $io->format_write( [FORMAT_NAME] )
     $io->getc
+    $io->ioctl( FUNCTION, SCALAR )
     $io->read ( BUF, LEN, [OFFSET] )
     $io->print ( ARGS )
     $io->printf ( FMT, [ARGS] )
@@ -107,7 +109,8 @@ Furthermore, for doing normal I/O you might need these:
 
 C<fdopen> is like an ordinary C<open> except that its first parameter
 is not a filename but rather a file handle name, an IO::Handle object,
-or a file descriptor number.
+or a file descriptor number.  (For the documentation of the C<open>
+method, see L<IO::File>.)
 
 =item $io->opened
 
@@ -265,7 +268,7 @@ use IO ();	# Load the XS module
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = "1.27";
+$VERSION = "1.33";
 $VERSION = eval $VERSION;
 
 @EXPORT_OK = qw(
@@ -306,14 +309,25 @@ $VERSION = eval $VERSION;
 
 sub new {
     my $class = ref($_[0]) || $_[0] || "IO::Handle";
-    @_ == 1 or croak "usage: new $class";
+    if (@_ != 1) {
+	# Since perl will automatically require IO::File if needed, but
+	# also initialises IO::File's @ISA as part of the core we must
+	# ensure IO::File is loaded if IO::Handle is. This avoids effect-
+	# ively "half-loading" IO::File.
+	if ($] > 5.013 && $class eq 'IO::File' && !$INC{"IO/File.pm"}) {
+	    require IO::File;
+	    shift;
+	    return IO::File::->new(@_);
+	}
+	croak "usage: $class->new()";
+    }
     my $io = gensym;
     bless $io, $class;
 }
 
 sub new_from_fd {
     my $class = ref($_[0]) || $_[0] || "IO::Handle";
-    @_ == 3 or croak "usage: new_from_fd $class FD, MODE";
+    @_ == 3 or croak "usage: $class->new_from_fd(FD, MODE)";
     my $io = gensym;
     shift;
     IO::Handle::fdopen($io, @_)
@@ -412,16 +426,17 @@ sub printf {
 sub say {
     @_ or croak 'usage: $io->say(ARGS)';
     my $this = shift;
-    print $this @_, "\n";
+    local $\ = "\n";
+    print $this @_;
 }
 
+# Special XS wrapper to make them inherit lexical hints from the caller.
+_create_getline_subs( <<'END' ) or die $@;
 sub getline {
     @_ == 1 or croak 'usage: $io->getline()';
     my $this = shift;
     return scalar <$this>;
 } 
-
-*gets = \&getline;  # deprecated
 
 sub getlines {
     @_ == 1 or croak 'usage: $io->getlines()';
@@ -430,6 +445,10 @@ sub getlines {
     my $this = shift;
     return <$this>;
 }
+1; # return true for error checking
+END
+
+*gets = \&getline;  # deprecated
 
 sub truncate {
     @_ == 2 or croak 'usage: $io->truncate(LEN)';
@@ -587,22 +606,20 @@ sub format_write {
     }
 }
 
-# XXX undocumented
 sub fcntl {
     @_ == 3 || croak 'usage: $io->fcntl( OP, VALUE );';
     my ($io, $op) = @_;
     return fcntl($io, $op, $_[2]);
 }
 
-# XXX undocumented
 sub ioctl {
     @_ == 3 || croak 'usage: $io->ioctl( OP, VALUE );';
     my ($io, $op) = @_;
     return ioctl($io, $op, $_[2]);
 }
 
-# this sub is for compatability with older releases of IO that used
-# a sub called constant to detemine if a constant existed -- GMB
+# this sub is for compatibility with older releases of IO that used
+# a sub called constant to determine if a constant existed -- GMB
 #
 # The SEEK_* and _IO?BF constants were the only constants at that time
 # any new code should just chech defined(&CONSTANT_NAME)

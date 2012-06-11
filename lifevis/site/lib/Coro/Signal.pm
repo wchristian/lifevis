@@ -1,10 +1,10 @@
 =head1 NAME
 
-Coro::Signal - coroutine signals (binary semaphores)
+Coro::Signal - thread signals (binary semaphores)
 
 =head1 SYNOPSIS
 
- use Coro::Signal;
+ use Coro;
 
  $sig = new Coro::Signal;
 
@@ -25,18 +25,20 @@ It is recommended not to mix C<send> and C<broadcast> calls on the same
 C<Coro::Signal> - it should work as documented, but it can easily confuse
 you :->
 
+You don't have to load C<Coro::Signal> manually, it will be loaded 
+automatically when you C<use Coro> and call the C<new> constructor. 
+
 =over 4
 
 =cut
 
 package Coro::Signal;
 
-use strict qw(vars subs);
-no warnings;
+use common::sense;
 
 use Coro::Semaphore ();
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 
 =item $sig = new Coro::Signal;
 
@@ -46,6 +48,15 @@ Create a new signal.
 
 Wait for the signal to occur (via either C<send> or C<broadcast>). Returns
 immediately if the signal has been sent before.
+
+=item $sem->wait ($callback)
+
+If you pass a callback argument to C<wait>, it will not wait, but
+immediately return. The callback will be called under the same conditions
+as C<wait> without arguments would continue the thrad.
+
+The callback might wake up any number of threads, but is I<NOT> allowed to
+block (switch to other threads).
 
 =item $sig->send
 
@@ -89,11 +100,6 @@ Return true when the signal is being awaited by some process.
 1;
 
 =back
-
-=head1 BUGS
-
-This implementation is not currently very robust when the process is woken
-up by other sources, i.e. C<wait> might return early.
 
 =head1 AUTHOR
 

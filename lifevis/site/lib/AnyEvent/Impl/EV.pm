@@ -15,17 +15,33 @@ This module provides transparent support for AnyEvent. You don't have to
 do anything to make EV work with AnyEvent except by loading EV before
 creating the first AnyEvent watcher.
 
+EV is the fastest event library for perl, and best supported by
+AnyEvent. Most functions from the L<AE> API are implemented as direct
+aliases to EV functions, so using EV via AE is as fast as using EV
+directly.
+
 =cut
 
 package AnyEvent::Impl::EV;
 
-no warnings;
-use strict;
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
+use EV 4.00;
 
-use EV;
+*AE::time       = \&EV::time;
+*AE::now        = \&EV::now;
+*AE::now_update = \&EV::now_update;
+*AE::timer      = \&EV::timer;
+*AE::signal     = \&EV::signal;
+*AE::idle       = \&EV::idle;
 
-sub time { EV::time }
-sub now  { EV::now  }
+# cannot override directly, as EV doesn't allow arguments
+sub time       { EV::time       }
+sub now        { EV::now        }
+sub now_update { EV::now_update }
+
+*AE::io = defined &EV::_ae_io # 3.8+, but keep just in case it is dropped
+   ? \&EV::_ae_io
+   : sub($$$) { EV::io $_[0], $_[1] ? EV::WRITE : EV::READ, $_[2] };
 
 sub timer {
    my ($class, %arg) = @_;
@@ -36,12 +52,10 @@ sub timer {
 sub io {
    my ($class, %arg) = @_;
 
-   my $cb = $arg{cb};
-
    EV::io
-      fileno $arg{fh},
+      $arg{fh},
       $arg{poll} eq "r" ? EV::READ : EV::WRITE,
-      $cb
+      $arg{cb}
 }
 
 sub signal {
@@ -60,11 +74,23 @@ sub child {
    }
 }
 
-sub one_event {
-   EV::loop EV::LOOP_ONESHOT;
+sub idle {
+   my ($class, %arg) = @_;
+
+   EV::idle $arg{cb}
 }
 
-1;
+sub _poll {
+   EV::run EV::RUN_ONCE;
+}
+
+sub AnyEvent::CondVar::Base::_wait {
+   EV::run EV::RUN_ONCE until exists $_[0]{_ae_sent};
+}
+
+#sub loop {
+#   EV::run;
+#}
 
 =head1 SEE ALSO
 
@@ -73,7 +99,9 @@ L<AnyEvent>, L<EV>.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://anyevent.schmorp.de
 
 =cut
+
+1
 

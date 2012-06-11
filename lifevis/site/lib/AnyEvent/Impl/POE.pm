@@ -16,7 +16,7 @@ AnyEvent::Impl::POE - AnyEvent adaptor for POE
 This module provides transparent support for AnyEvent. You don't have to
 do anything to make POE work with AnyEvent except by loading POE before
 creating the first AnyEvent watcher. There are some cases where POE will
-issue spurious (and non-suppressable) warnings. These can be avoided by
+issue spurious (and non-suppressible) warnings. These can be avoided by
 loading AnyEvent::Impl::POE before loading any other modules using POE and
 AnyEvent, i.e. in your main program.
 
@@ -34,8 +34,8 @@ interoperable with POE:
 
 =item Weird messages
 
-If you only use C<run_one_timeslice> (as AnyEvent has to for it's
-condition variables), POE will print an ugly, unsupressable, message at
+If you only use C<run_one_timeslice> (as AnyEvent has to for its
+condition variables), POE will print an ugly, unsuppressible, message at
 program exit:
 
    Sessions were started, but POE::Kernel's run() method was never...
@@ -43,18 +43,12 @@ program exit:
 The message is correct, the question is why POE prints it in the first
 place in a correct program (this is not a singular case though).
 
-The only way I found to work around this bug was to call C<<
-->run >> at AnyEvent loading time and stop the kernel immediately
-again. Unfortunately, due to another design bug in POE, this cannot be
-done (by documented means at least) without throwing away events in the
-event queue.
+AnyEvent consequently patches the POE kernel so it thinks it already
+ran. Other workarounds, even the one cited in the POE documentation
+itself, have serious side effects, such as throwing away events.
 
 The author of POE verified that this is indeed true, and has no plans to
 change this.
-
-This means that you will either have to live with lost events or you have
-to make sure to load AnyEvent early enough (this is usually not that
-difficult in a main program, but hard in a module).
 
 POE has other weird messages, and sometimes weird behaviour, for example,
 it doesn't support overloaded code references as callbacks for no apparent
@@ -92,14 +86,14 @@ that say the program *might* be buggy.
 While this is not good to performance, at least regarding speed, with a
 modern Linux kernel, the overhead is actually quite small.
 
-=item Timing Deficiencies
+=item Timing deficiencies
 
 POE manages to not have a function that returns the current time. This is
 extremely problematic, as POE can use different time functions, which can
 differ by more than a second - and user code is left guessing which one is
 used.
 
-In addition, most timer functions in POE want an absoltue timestamp, which
+In addition, most timer functions in POE want an absolute timestamp, which
 is hard to create if all you have is a relative time and no function to
 return the "current time".
 
@@ -111,49 +105,58 @@ AnyEvent works around the unavailability of the current time using
 relative timers exclusively, in the hope that POE gets it right at least
 internally.
 
-=item Event Non-Ordering
+=item Lack of defined event ordering
 
-POE cannot guarentee the order of callback invocation for timers, and
+POE cannot guarantee the order of callback invocation for timers, and
 usually gets it wrong. That is, if you have two timers, one timing out
-after another (all els ebeing equal), the callbacks might be called in
+after another (all else being equal), the callbacks might be called in
 reverse order.
 
 How one manages to even implement stuff that way escapes me.
 
-=item Child Watchers
+=item Child watchers
 
 POE offers child watchers - which is a laudable thing, as few event loops
 do. Unfortunately, they cannot even implement AnyEvent's simple child
-watchers: they are not generic enough (even the POE implementation itself
-isn't generic enough to let properly designed event loops such as EV use
-their child watcher instead - it insist on doing it itself the slow way).
+watchers: they are not generic enough (the POE implementation isn't even
+generic enough to let properly designed back-end use their native child
+watcher instead - it insist on doing it itself the broken way).
 
-Of course, if POE reaps an unrelated child it will also output a message
-for it that you cannot suppress (which shouldn't be too surprising at this
-point). Very professional.
+Unfortunately, POE's child handling is inherently racy: if the child exits
+before the handler is created (because e.g. it crashes or simply is quick
+about it), then current versions of POE (1.352) will I<never> invoke the
+child watcher, and there is nothing that can be done about it. Older
+versions of POE only delayed in this case. The reason is that POE first
+checks if the child has already exited, and I<then> installs the signal
+handler - aa classical race.
+
+Your only hope is for the fork'ed process to not exit too quickly, in
+which case everything happens to work.
+
+Of course, whenever POE reaps an unrelated child it will also output a
+message for it that you cannot suppress (which shouldn't be too surprising
+at this point). Very professional.
 
 As a workaround, AnyEvent::Impl::POE will take advantage of undocumented
-behaviour in POE::Kernel to catch the status of all child processes.
-
-Unfortunately, POE's child handling is racy: if the child exits before the
-handler is created (which is impossible to avoid in general), one has to
-wait for another event to occur, which can take an indefinite amount of
-time (apparently POE does a busy-waiting loop every second, but this is
-not guarenteed or documented, so in practise child status events can be
-delayed for up to a second "only" at least in the current version).
+behaviour in POE::Kernel to catch the status of all child processes, but
+it cannot guarantee delivery.
 
 How one manages to have such a glaring bug in an event loop after ten
 years of development escapes me.
 
-=item Documentation Quality
+(There are more annoying bugs, for example, POE runs C<waitpid>
+unconditionally at finaliser time, so your program will hang until all
+child processes have exited.)
+
+=item Documentation quality
 
 At the time of this writing, POE was in its tenth year. Still, its
 documentation is extremely lacking, making it impossible to implement
 stuff as trivial as AnyEvent watchers without having to resort to
 undocumented behaviour or features.
 
-For example, the POE::Kernel manpage has nine occurances of the word TODO
-with an explanation of whats missing. In general, the POE manpages are
+For example, the POE::Kernel manpage has nine occurrences of the word TODO
+with an explanation of whats missing. In general, the POE man pages are
 littered with comments like "section not yet written".
 
 Some other gems:
@@ -181,17 +184,18 @@ the first name I came up with was silently ignored.
    get_next_event_time() returns the time the next event is due, in a form
    compatible with the UNIX time() function.
 
-And surely, one would hope that POE supports subsecond accuracy as
+And surely, one would hope that POE supports sub-second accuracy as
 documented elsewhere, unlike the explanation above implies. Yet:
 
    POE::Kernel timers support subsecond accuracy, but don’t expect too
    much here. Perl is not the right language for realtime programming.
 
-... of course, Perl is not the right language to expect subsecond accuray
-- the manpage author must hate Perl to spread so much FUD in so little
-space. The Deliantra game server logs with 100µs-accuracy because Perl is
-fast enough to require this, and is still able to deliver map updates with
-little jitter at exactly the right time. It does not, however, use POE.
+... of course, Perl is not the right language to expect sub-second
+accuracy - the manpage author must hate Perl to spread so much FUD in
+so little space. The Deliantra game server logs with 100µs-accuracy
+because Perl is fast enough to require this, and is still able to deliver
+map updates with little jitter at exactly the right time. It does not,
+however, use POE.
 
    Furthermore, since the Kernel keeps track of everything sessions do, it
    knows when a session has run out of tasks to perform.
@@ -244,6 +248,28 @@ rather bad.
 This is just one place where it gets obvious how little the author of the
 POE manpage understands.
 
+=item No idle events
+
+The POE-recommended workaround to this is apparently to use
+C<fork>. Consequently, idle watchers will have to be emulated by AnyEvent.
+
+=item Questionable maintainer behaviour
+
+The author of POE is known to fabricate statements and post these to
+public mailinglists - apparently, spreading FUD about competing (in his
+eyes) projects or their maintainers is acceptable to him.
+
+This has (I believe) zero effects on the quality or usefulness of his
+code, but it does completely undermine his trustworthyness - so don't
+blindly believe anything he says, he might have just made it up to suit
+his needs (benchmark results, the names of my ten wifes, the length of my
+penis, etc. etc.). When in doubt, double-check - not just him, anybody
+actually.
+
+Example: L<http://www.nntp.perl.org/group/perl.perl5.porters/2012/01/msg182141.html>.
+I challenged him in that thread to provide evidence for his statement by giving at
+least two examples, but of course since he just made it up, he couldn't provide any evidence.
+
 =back
 
 On the good side, AnyEvent allows you to write your modules in a 100%
@@ -251,61 +277,48 @@ POE-compatible way (bug-for-bug compatible even), without forcing your
 module to use POE - it is still open to better event models, of which
 there are plenty.
 
+Oh, and one other positive thing:
+
+   RUNNING_IN_HELL
+
+POE knows about the nature of the beast!
+
 =cut
 
 package AnyEvent::Impl::POE;
 
-no warnings;
-use strict;
-
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use POE;
 
-# if POE is already running
-if (${ $poe_kernel->[POE::Kernel::KR_RUN] } && POE::Kernel::KR_RUN_CALLED) {
-    print STDERR <<EOF;
-POE is going to complain about
- Sessions were started, but POE::Kernel's run() method was never...
-Try putting:
- use AnyEvent::Impl::POE;
-at the very top of your main program to suppress these spurious warnings.
-EOF
-} else {
-   # workaround to suppress noise
-   POE::Session->create (inline_states => { _start => sub { @_[KERNEL]->stop } });
-   POE::Kernel->run;
-}
+# suppress an idiotic warning inside POE
+${ POE::Kernel->new->[POE::Kernel::KR_RUN] } |= POE::Kernel::KR_RUN_CALLED;
 
 sub io {
    my ($class, %arg) = @_;
 
-   # cygwin requires the fh mode to be matching, unix doesn't
+   # POE itself might do the right thing, but some POE backends don't,
+   # so do the safe thing, it's not as if this will slow us down
+   # any further *g*
    my ($fh, $pee) = AnyEvent::_dupfh $arg{poll}, $arg{fh}, "select_read", "select_write";
 
-   my $cb = $arg{cb};
+   my $cb = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
 
    my $session = POE::Session->create (
       inline_states => {
-         _start => sub {
-            $_[KERNEL]->$pee ($fh => "ready");
-         },
-         ready => sub {
-            $cb->();
-         },
-         stop => sub {
-            $_[KERNEL]->$pee ($fh);
-         },
+         _start => sub { $_[KERNEL]->$pee ($fh => "ready") },
+         ready  => sub { $cb->() },
+         stop   => sub { $_[KERNEL]->$pee ($fh) },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub timer {
    my ($class, %arg) = @_;
 
-   my $after = $arg{after};
-   my $ival  = $arg{interval};
-   my $cb    = $arg{cb};
+   my $after = delete $arg{after};
+   my $ival  = delete $arg{interval};
+   my $cb    = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
 
    my $session = POE::Session->create (
       inline_states => {
@@ -318,16 +331,19 @@ sub timer {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub signal {
    my ($class, %arg) = @_;
-   my $signal = delete $arg{signal};
-   my $cb     = delete $arg{cb};
+   my $signal = AnyEvent::Base::sig2name delete $arg{signal};
+   my $cb     = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
+            # I suck - POE
+         },
+         start => sub {
             $_[KERNEL]->sig ($signal => "catch");
             $_[KERNEL]->refcount_increment ($_[SESSION]->ID => "poe");
          },
@@ -341,16 +357,20 @@ sub signal {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   POE::Kernel->call ($session, "start");
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub child {
    my ($class, %arg) = @_;
    my $pid = delete $arg{pid};
-   my $cb  = delete $arg{cb};
+   my $cb  = delete $arg{cb}; my $cb = sub { &$cb }; # POE doesn't like callable objects
    my $session = POE::Session->create (
       inline_states => {
          _start => sub {
+            # I suck - POE
+         },
+         start => sub {
             $_[KERNEL]->sig (CHLD => "child");
             $_[KERNEL]->refcount_increment ($_[SESSION]->ID => "poe");
          },
@@ -365,18 +385,26 @@ sub child {
          },
       },
    );
-   bless \\$session, AnyEvent::Impl::POE::
+   # newer POE versions lose signals unless we call ->sig early.
+   POE::Kernel->call ($session, "start");
+   bless \\$session, "AnyEvent::Impl::POE"
 }
 
 sub DESTROY {
-   POE::Kernel->post (${${$_[0]}}, "stop");
+   POE::Kernel->call (${${$_[0]}}, "stop");
 }
 
-sub one_event {
+#sub loop {
+#   POE::Kernel->run;
+#}
+
+sub _poll {
    POE::Kernel->loop_do_timeslice;
 }
 
-1;
+sub AnyEvent::CondVar::Base::_wait {
+   POE::Kernel->loop_do_timeslice until exists $_[0]{_ae_sent};
+}
 
 =head1 SEE ALSO
 
@@ -385,7 +413,9 @@ L<AnyEvent>, L<POE>.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://anyevent.schmorp.de
 
 =cut
+
+1
 

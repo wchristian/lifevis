@@ -7,12 +7,14 @@
 
 package Math::Complex;
 
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $Inf $ExpInf);
+{ use 5.006; }
+use strict;
 
-$VERSION = 1.54;
+our $VERSION = 1.59;
 
 use Config;
 
+our($Inf, $ExpInf);
 BEGIN {
     my %DBL_MAX =
 	(
@@ -66,7 +68,24 @@ BEGIN {
     # print "# On this machine, Inf = '$Inf'\n";
 }
 
-use strict;
+use Scalar::Util qw(set_prototype);
+
+use warnings;
+no warnings 'syntax';  # To avoid the (_) warnings.
+
+BEGIN {
+    # For certain functions that we override, in 5.10 or better
+    # we can set a smarter prototype that will handle the lexical $_
+    # (also a 5.10+ feature).
+    if ($] >= 5.010000) {
+        set_prototype \&abs, '_';
+        set_prototype \&cos, '_';
+        set_prototype \&exp, '_';
+        set_prototype \&log, '_';
+        set_prototype \&sin, '_';
+        set_prototype \&sqrt, '_';
+    }
+}
 
 my $i;
 my %LOGN;
@@ -77,7 +96,7 @@ my $gre = qr'\s*([\+\-]?(?:(?:(?:\d+(?:_\d+)*(?:\.\d*(?:_\d+)*)?|\.\d+(?:_\d+)*)
 
 require Exporter;
 
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
 my @trig = qw(
 	      pi
@@ -91,7 +110,7 @@ my @trig = qw(
 	      acsch acosech asech acoth acotanh
 	     );
 
-@EXPORT = (qw(
+our @EXPORT = (qw(
 	     i Re Im rho theta arg
 	     sqrt log ln
 	     log10 logn cbrt root
@@ -102,18 +121,24 @@ my @trig = qw(
 
 my @pi = qw(pi pi2 pi4 pip2 pip4 Inf);
 
-@EXPORT_OK = @pi;
+our @EXPORT_OK = @pi;
 
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
     'trig' => [@trig],
     'pi' => [@pi],
 );
 
 use overload
+	'='	=> \&_copy,
+	'+='	=> \&_plus,
 	'+'	=> \&_plus,
+	'-='	=> \&_minus,
 	'-'	=> \&_minus,
+	'*='	=> \&_multiply,
 	'*'	=> \&_multiply,
+	'/='	=> \&_divide,
 	'/'	=> \&_divide,
+	'**='	=> \&_power,
 	'**'	=> \&_power,
 	'=='	=> \&_numeq,
 	'<=>'	=> \&_spaceship,
@@ -125,7 +150,6 @@ use overload
 	'log'	=> \&log,
 	'sin'	=> \&sin,
 	'cos'	=> \&cos,
-	'tan'	=> \&tan,
 	'atan2'	=> \&atan2,
         '""'    => \&_stringify;
 
@@ -196,6 +220,19 @@ sub _emake {
     }
 
     return ($p, $q);
+}
+
+sub _copy {
+    my $self = shift;
+    my $clone = {%$self};
+    if ($self->{'cartesian'}) {
+	$clone->{'cartesian'} = [@{$self->{'cartesian'}}];
+    }
+    if ($self->{'polar'}) {
+	$clone->{'polar'} = [@{$self->{'polar'}}];
+    }
+    bless $clone,__PACKAGE__;
+    return $clone;
 }
 
 #
@@ -611,7 +648,7 @@ sub _conjugate {
 # Compute or set complex's norm (rho).
 #
 sub abs {
-	my ($z, $rho) = @_;
+	my ($z, $rho) = @_ ? @_ : $_;
 	unless (ref $z) {
 	    if (@_ == 2) {
 		$_[0] = $_[1];
@@ -672,7 +709,7 @@ sub arg {
 # Therefore if you want the two solutions use the root().
 #
 sub sqrt {
-	my ($z) = @_;
+	my ($z) = @_ ? $_[0] : $_;
 	my ($re, $im) = ref $z ? @{$z->_cartesian} : ($z, 0);
 	return $re < 0 ? cplx(0, CORE::sqrt(-$re)) : CORE::sqrt($re)
 	    if $im == 0;
@@ -805,9 +842,10 @@ sub theta {
 # Computes exp(z).
 #
 sub exp {
-	my ($z) = @_;
-	my ($x, $y) = @{$z->_cartesian};
-	return (ref $z)->emake(CORE::exp($x), $y);
+    my ($z) = @_ ? @_ : $_;
+    return CORE::exp($z) unless ref $z;
+    my ($x, $y) = @{$z->_cartesian};
+    return (ref $z)->emake(CORE::exp($x), $y);
 }
 
 #
@@ -837,7 +875,7 @@ sub _logofzero {
 # Compute log(z).
 #
 sub log {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	unless (ref $z) {
 	    _logofzero("log") if $z == 0;
 	    return $z > 0 ? CORE::log($z) : cplx(CORE::log(-$z), pi);
@@ -885,7 +923,7 @@ sub logn {
 # Compute cos(z) = (exp(iz) + exp(-iz))/2.
 #
 sub cos {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	return CORE::cos($z) unless ref $z;
 	my ($x, $y) = @{$z->_cartesian};
 	my $ey = CORE::exp($y);
@@ -902,7 +940,7 @@ sub cos {
 # Compute sin(z) = (exp(iz) - exp(-iz))/2.
 #
 sub sin {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	return CORE::sin($z) unless ref $z;
 	my ($x, $y) = @{$z->_cartesian};
 	my $ey = CORE::exp($y);
@@ -1519,7 +1557,7 @@ sub _stringify_polar {
 
         if (defined $format) {
 	    $r     = sprintf($format, $r);
-	    $theta = sprintf($format, $theta) unless defined $theta;
+	    $theta = sprintf($format, $t) unless defined $theta;
 	} else {
 	    $theta = $t unless defined $theta;
 	}
@@ -2057,9 +2095,10 @@ L<Math::Trig>
 
 =head1 AUTHORS
 
-Daniel S. Lewart <F<lewart!at!uiuc.edu>>
-Jarkko Hietaniemi <F<jhi!at!iki.fi>>
-Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>
+Daniel S. Lewart <F<lewart!at!uiuc.edu>>,
+Jarkko Hietaniemi <F<jhi!at!iki.fi>>,
+Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>,
+Zefram <zefram@fysh.org>
 
 =head1 LICENSE
 

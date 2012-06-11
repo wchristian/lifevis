@@ -28,7 +28,8 @@ struct CoroSLF
 {
   void (*prepare) (pTHX_ struct coro_transfer_args *ta); /* 0 means not yet initialised */
   int (*check) (pTHX_ struct CoroSLF *frame);
-  void *data; /* for use by prepare/check */
+  void *data; /* for use by prepare/check/destroy */
+  void (*destroy) (pTHX_ struct CoroSLF *frame);
 };
 
 /* needs to fill in the *frame */
@@ -37,10 +38,11 @@ typedef void (*coro_slf_cb) (pTHX_ struct CoroSLF *frame, CV *cv, SV **arg, int 
 /* private structure, always use the provided macros below */
 struct CoroAPI
 {
+  /* private */
   I32 ver;
   I32 rev;
-#define CORO_API_VERSION 7
-#define CORO_API_REVISION 0
+#define CORO_API_VERSION 7 /* reorder CoroSLF on change */
+#define CORO_API_REVISION 1
 
   /* Coro */
   int nready;
@@ -61,6 +63,8 @@ struct CoroAPI
   /* SLF */
   struct coro *(*sv_state) (pTHX_ SV *coro);
   void (*execute_slf) (pTHX_ CV *cv, coro_slf_cb init_cb, I32 ax);
+
+  /* public */
   /* for use as CoroSLF.prepare */
   void (*prepare_nop)          (pTHX_ struct coro_transfer_args *ta);
   void (*prepare_schedule)     (pTHX_ struct coro_transfer_args *ta);

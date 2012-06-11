@@ -1,10 +1,10 @@
 =head1 NAME
 
-Coro::Semaphore - non-binary semaphores
+Coro::Semaphore - counting semaphores
 
 =head1 SYNOPSIS
 
- use Coro::Semaphore;
+ use Coro;
 
  $sig = new Coro::Semaphore [initial value];
 
@@ -19,13 +19,16 @@ Coro::Semaphore - non-binary semaphores
 This module implements counting semaphores. You can initialize a mutex
 with any level of parallel users, that is, you can intialize a sempahore
 that can be C<down>ed more than once until it blocks. There is no owner
-associated with semaphores, so one coroutine can C<down> it while another
+associated with semaphores, so one thread can C<down> it while another
 can C<up> it.
 
 Counting semaphores are typically used to coordinate access to
 resources, with the semaphore count initialized to the number of free
-resources. Coroutines then increment the count when resources are added
+resources. Threads then increment the count when resources are added
 and decrement the count when resources are removed.
+
+You don't have to load C<Coro::Semaphore> manually, it will be loaded 
+automatically when you C<use Coro> and call the C<new> constructor. 
 
 =over 4
 
@@ -33,11 +36,11 @@ and decrement the count when resources are removed.
 
 package Coro::Semaphore;
 
-no warnings;
+use common::sense;
 
 use Coro ();
 
-$VERSION = "5.0";
+our $VERSION = 6.08;
 
 =item new [inital count]
 
@@ -65,7 +68,7 @@ waits until the semaphore is available if the counter is zero.
 
 Similar to C<down>, but does not actually decrement the counter. Instead,
 when this function returns, a following call to C<down> or C<try> is
-guaranteed to succeed without blocking, until the next coroutine switch
+guaranteed to succeed without blocking, until the next thread switch
 (C<cede> etc.).
 
 Note that using C<wait> is much less efficient than using C<down>, so try
@@ -79,10 +82,7 @@ becomes available (which might be instantly), and gets passed the
 semaphore as first argument.
 
 The callback might C<down> the semaphore exactly once, might wake up other
-coroutines, but is I<NOT> allowed to block (switch to other coroutines).
-
-This is considered a rather experimental interface, and is subject to
-change.
+threads, but is I<NOT> allowed to block (switch to other threads).
 
 =cut
 
@@ -125,7 +125,7 @@ otherwise return false and leave the semaphore unchanged.
 
 =item $sem->waiters
 
-In scalar context, returns the number of coroutines waiting for this
+In scalar context, returns the number of threads waiting for this
 semaphore.
 
 =item $guard = $sem->guard
@@ -137,9 +137,7 @@ object is destroyed it automatically calls C<up>.
 
 sub guard {
    &down;
-   # double indirection because bless works on the referenced
-   # object, not (only) on the reference itself.
-   bless \\$_[0], Coro::Semaphore::guard::;
+   bless [$_[0]], Coro::Semaphore::guard::
 }
 
 #=item $guard = $sem->timed_guard ($timeout)
@@ -154,7 +152,7 @@ sub guard {
 #}
 
 sub Coro::Semaphore::guard::DESTROY {
-   &up(${${$_[0]}});
+   &up($_[0][0]);
 }
 
 =back

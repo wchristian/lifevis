@@ -1,5 +1,5 @@
 #
-# $Id: GuiTest.pm,v 1.5 2008/10/01 11:32:45 int32 Exp $
+# $Id: GuiTest.pm,v 1.7 2010/10/31 19:06:51 int32 Exp $
 #
 
 =head1 NAME
@@ -242,7 +242,7 @@ require DynaLoader;
 }
 $EXPORT_TAGS{ALL}= \@EXPORT_OK;
                              
-$VERSION = '1.56';
+$VERSION = '1.59';
 
 $debug = 0;
 

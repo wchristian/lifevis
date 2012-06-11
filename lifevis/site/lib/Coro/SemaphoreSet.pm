@@ -1,18 +1,18 @@
 =head1 NAME
 
-Coro::SemaphoreSet - hash of semaphores.
+Coro::SemaphoreSet - efficient set of counting semaphores
 
 =head1 SYNOPSIS
 
- use Coro::SemaphoreSet;
+ use Coro;
 
  $sig = new Coro::SemaphoreSet [initial value];
 
- $sig->down("semaphoreid"); # wait for signal
+ $sig->down ("semaphoreid"); # wait for signal
 
  # ... some other "thread"
 
- $sig->up("semaphoreid");
+ $sig->up ("semaphoreid");
 
 =head1 DESCRIPTION
 
@@ -24,16 +24,18 @@ This is useful if you want to allow parallel tasks to run in parallel but
 not on the same problem. Just use a SemaphoreSet and lock on the problem
 identifier.
 
+You don't have to load C<Coro::SemaphoreSet> manually, it will be loaded 
+automatically when you C<use Coro> and call the C<new> constructor. 
+
 =over 4
 
 =cut
 
 package Coro::SemaphoreSet;
 
-use strict qw(vars subs);
-no warnings;
+use common::sense;
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 
 use Coro::Semaphore ();
 
@@ -45,7 +47,7 @@ individual semaphore. See L<Coro::Semaphore>.
 =cut
 
 sub new {
-   bless [defined $_[1] ? $_[1] : 1], $_[0];
+   bless [defined $_[1] ? $_[1] : 1], $_[0]
 }
 
 =item $semset->down ($id)
@@ -56,8 +58,8 @@ method waits until the semaphore is available if the counter is zero.
 =cut
 
 sub down {
-   package Coro::Semaphore;
-   down ($_[0][1]{$_[1]} ||= new undef, $_[0][0]);
+   # Coro::Semaphore::down increases the refcount, which we check in _may_delete
+   Coro::Semaphore::down ($_[0][1]{$_[1]} ||= Coro::Semaphore::_alloc $_[0][0]);
 }
 
 #ub timed_down {
@@ -90,24 +92,23 @@ sub down {
 
 =item $semset->up ($id)
 
-Unlock the semaphore again. If the semaphore then reaches the default
-count for this set and has no waiters, the space allocated for it will be
-freed.
+Unlock the semaphore again. If the semaphore reaches the default count for
+this set and has no waiters, the space allocated for it will be freed.
 
 =cut
 
 sub up {
    my ($self, $id) = @_;
 
-   package Coro::Semaphore;
-   my $sem = $self->[1]{$id} ||= new undef, $self->[0];
+   my $sem = $self->[1]{$id} ||= Coro::Semaphore::_alloc $self->[0];
 
-   up $sem;
+   Coro::Semaphore::up $sem;
 
-   delete $self->[1]{$id} if $self->[0] == count $sem and !waiters $sem;
+   delete $self->[1]{$id}
+      if _may_delete $sem, $self->[0], 1;
 }
 
-=item $semset->try
+=item $semset->try ($id)
 
 Try to C<down> the semaphore. Returns true when this was possible,
 otherwise return false and leave the semaphore unchanged.
@@ -115,8 +116,38 @@ otherwise return false and leave the semaphore unchanged.
 =cut
 
 sub try {
-   package Coro::Semaphore;
-   try ($_[0][1]{$_[1]} ||= new undef, $_[0][0]);
+   Coro::Semaphore::try ($_[0][1]{$_[1]} || return $_[0][0] > 0)
+}
+
+=item $semset->count ($id)
+
+Return the current semaphore count for the specified semaphore.
+
+=cut
+
+sub count {
+   Coro::Semaphore::count ($_[0][1]{$_[1]} || return $_[0][0]);
+}
+
+=item $semset->waiters ($id)
+
+Returns the number (in scalar context) or list (in list context) of
+waiters waiting on the specified semaphore.
+
+=cut
+
+sub waiters {
+   Coro::Semaphore::waiters ($_[0][1]{$_[1]} || return);
+}
+
+=item $semset->wait ($id)
+
+Same as Coro::Semaphore::wait on the specified semaphore.
+
+=cut
+
+sub wait {
+   Coro::Semaphore::wait ($_[0][1]{$_[1]} || return);
 }
 
 =item $guard = $semset->guard ($id)
@@ -128,7 +159,7 @@ object is destroyed it automatically calls C<up>.
 
 sub guard {
    &down;
-   bless [@_], Coro::SemaphoreSet::guard::;
+   bless [@_], Coro::SemaphoreSet::guard::
 }
 
 #ub timed_guard {
@@ -151,8 +182,8 @@ calling C<< $semset->up >> can invalidate the returned semaphore.
 =cut
 
 sub sem {
-   package Coro::Semaphore;
-   $_[0][1]{$_[1]} ||= new undef, $_[0][0]
+   bless +($_[0][1]{$_[1]} ||= Coro::Semaphore::_alloc $_[0][0]),
+         Coro::Semaphore::;
 }
 
 1;

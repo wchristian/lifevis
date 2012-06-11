@@ -37,13 +37,13 @@ is equivalent to the original path for all systems but VMS.
 
 package File::Basename;
 
-# A bit of juggling to insure that C<use re 'taint';> always works, since
 # File::Basename is used during the Perl build, when the re extension may
-# not be available.
+# not be available, but we only actually need it if running under tainting.
 BEGIN {
-  unless (eval { require re; })
-    { eval ' sub re::import { $^H |= 0x00100000; } ' } # HINT_RE_TAINT
-  import re 'taint';
+  if (${^TAINT}) {
+    require re;
+    re->import('taint');
+  }
 }
 
 
@@ -54,7 +54,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.76";
+$VERSION = "2.84";
 
 fileparse_set_fstype($^O);
 
@@ -78,8 +78,8 @@ The remainder of the $path is the $filename.
      # On Unix returns ("baz", "/foo/bar/", "")
      fileparse("/foo/bar/baz");
 
-     # On Windows returns ("baz", "C:\foo\bar\", "")
-     fileparse("C:\foo\bar\baz");
+     # On Windows returns ("baz", 'C:\foo\bar\', "")
+     fileparse('C:\foo\bar\baz');
 
      # On Unix returns ("", "/foo/bar/baz/", "")
      fileparse("/foo/bar/baz/");
@@ -88,10 +88,10 @@ If @suffixes are given each element is a pattern (either a string or a
 C<qr//>) matched against the end of the $filename.  The matching
 portion is removed and becomes the $suffix.
 
-     # On Unix returns ("baz", "/foo/bar", ".txt")
+     # On Unix returns ("baz", "/foo/bar/", ".txt")
      fileparse("/foo/bar/baz.txt", qr/\.[^.]*/);
 
-If type is non-Unix (see C<fileparse_set_fstype()>) then the pattern
+If type is non-Unix (see L</fileparse_set_fstype>) then the pattern
 matching for suffix removal is performed case-insensitively, since
 those systems are not case-sensitive when opening existing files.
 
@@ -170,7 +170,7 @@ sub fileparse {
     }
   }
 
-  # Ensure taint is propgated from the path to its pieces.
+  # Ensure taint is propagated from the path to its pieces.
   $tail .= $taint;
   wantarray ? ($basename .= $taint, $dirpath .= $taint, $tail)
             : ($basename .= $taint);
@@ -215,7 +215,7 @@ sub basename {
   my($path) = shift;
 
   # From BSD basename(1)
-  # The basename utility deletes any prefix ending with the last slash `/'
+  # The basename utility deletes any prefix ending with the last slash '/'
   # character present in string (after first stripping trailing slashes)
   _strip_trailing_sep($path);
 

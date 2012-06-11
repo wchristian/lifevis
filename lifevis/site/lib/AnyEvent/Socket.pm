@@ -1,6 +1,6 @@
 =head1 NAME
 
-AnyEvent::Socket - useful IPv4 and IPv6 stuff.
+AnyEvent::Socket - useful IPv4 and IPv6 stuff. also unix domain sockets. and stuff.
 
 =head1 SYNOPSIS
 
@@ -35,23 +35,22 @@ by default.
 
 package AnyEvent::Socket;
 
-no warnings;
-use strict;
-
 use Carp ();
 use Errno ();
 use Socket qw(AF_INET AF_UNIX SOCK_STREAM SOCK_DGRAM SOL_SOCKET SO_REUSEADDR);
 
-use AnyEvent ();
+use AnyEvent (); BEGIN { AnyEvent::common_sense }
 use AnyEvent::Util qw(guard fh_nonblocking AF_INET6);
 use AnyEvent::DNS ();
 
 use base 'Exporter';
 
 our @EXPORT = qw(
-   parse_hostport
+   getprotobyname
+   parse_hostport format_hostport
    parse_ipv4 parse_ipv6
    parse_ip parse_address
+   format_ipv4 format_ipv6
    format_ip format_address
    address_family
    inet_aton
@@ -59,7 +58,7 @@ our @EXPORT = qw(
    tcp_connect
 );
 
-our $VERSION = 4.32;
+our $VERSION = $AnyEvent::VERSION;
 
 =item $ipn = parse_ipv4 $dotted_quad
 
@@ -100,6 +99,11 @@ forms supported by parse_ipv4). Note that scope-id's are not supported
 
 This function works similarly to C<inet_pton AF_INET6, ...>.
 
+Example:
+
+   print unpack "H*", parse_ipv6 "2002:5345::10.0.0.1";
+   # => 2002534500000000000000000a000001
+
 =cut
 
 sub parse_ipv6($) {
@@ -139,6 +143,17 @@ sub parse_ipv6($) {
    pack "n*", map hex, @h, @t
 }
 
+=item $token = parse_unix $hostname
+
+This fucntion exists mainly for symmetry to the other C<parse_protocol>
+functions - it takes a hostname and, if it is C<unix/>, it returns a
+special address token, otherwise C<undef>.
+
+The only use for this function is probably to detect whether a hostname
+matches whatever AnyEvent uses for unix domain sockets.
+
+=cut
+
 sub parse_unix($) {
    $_[0] eq "unix/"
       ? pack "S", AF_UNIX
@@ -146,7 +161,7 @@ sub parse_unix($) {
 
 }
 
-=item $ipn = parse_address $text
+=item $ipn = parse_address $ip
 
 Combines C<parse_ipv4> and C<parse_ipv6> in one function. The address
 here refers to the host address (not socket address) in network form
@@ -156,7 +171,16 @@ If the C<$text> is C<unix/>, then this function returns a special token
 recognised by the other functions in this module to mean "UNIX domain
 socket".
 
-=item $text = AnyEvent::Socket::aton $ipn
+If the C<$text> to parse is a mapped IPv4 in IPv6 address (:ffff::<ipv4>),
+then it will be treated as an IPv4 address. If you don't want that, you
+have to call C<parse_ipv4> and/or C<parse_ipv6> manually.
+
+Example:
+
+   print unpack "H*", parse_address "10.1.2.3";
+   # => 0a010203
+
+=item $ipn = AnyEvent::Socket::aton $ip
 
 Same as C<parse_address>, but not exported (think C<Socket::inet_aton> but
 I<without> name resolution).
@@ -164,10 +188,47 @@ I<without> name resolution).
 =cut
 
 sub parse_address($) {
-   &parse_ipv4 || &parse_ipv6 || &parse_unix
+   for (&parse_ipv6) {
+      if ($_) {
+         s/^\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff//;
+         return $_;
+      } else {
+         return &parse_ipv4 || &parse_unix
+      }
+   }
 }
 
 *aton = \&parse_address;
+
+=item ($name, $aliases, $proto) = getprotobyname $name
+
+Works like the builtin function of the same name, except it tries hard to
+work even on broken platforms (well, that's windows), where getprotobyname
+is traditionally very unreliable.
+
+Example: get the protocol number for TCP (usually 6)
+
+   my $proto = getprotobyname "tcp";
+
+=cut
+
+# microsoft can't even get getprotobyname working (the etc/protocols file
+# gets lost fairly often on windows), so we have to hardcode some common
+# protocol numbers ourselves.
+our %PROTO_BYNAME;
+
+$PROTO_BYNAME{tcp}  = Socket::IPPROTO_TCP () if defined &Socket::IPPROTO_TCP;
+$PROTO_BYNAME{udp}  = Socket::IPPROTO_UDP () if defined &Socket::IPPROTO_UDP;
+$PROTO_BYNAME{icmp} = Socket::IPPROTO_ICMP() if defined &Socket::IPPROTO_ICMP;
+
+sub getprotobyname($) {
+   my $name = lc shift;
+
+   defined (my $proton = $PROTO_BYNAME{$name} || (getprotobyname $name)[2])
+      or return;
+
+   ($name, uc $name, $proton)
+}
 
 =item ($host, $service) = parse_hostport $string[, $default_service]
 
@@ -181,19 +242,22 @@ following formats, where C<port> can be a numerical port number of a
 service name, or a C<name=port> string, and the C< port> and C<:port>
 parts are optional. Also, everywhere where an IP address is supported
 a hostname or unix domain socket address is also supported (see
-C<parse_unix>).
+C<parse_unix>), and strings starting with C</> will also be interpreted as
+unix domain sockets.
 
-   hostname:port    e.g. "www.linux.org", "www.x.de:443", "www.x.de:https=443"
+   hostname:port    e.g. "www.linux.org", "www.x.de:443", "www.x.de:https=443",
    ipv4:port        e.g. "198.182.196.56", "127.1:22"
    ipv6             e.g. "::1", "affe::1"
    [ipv4or6]:port   e.g. "[::1]", "[10.0.1]:80"
    [ipv4or6] port   e.g. "[127.0.0.1]", "[www.x.org] 17"
    ipv4or6 port     e.g. "::1 443", "10.0.0.1 smtp"
+   unix/:path       e.g. "unix/:/path/to/socket"
+   /path            e.g. "/path/to/socket"
 
 It also supports defaulting the service name in a simple way by using
 C<$default_service> if no service was detected. If neither a service was
 detected nor a default was specified, then this function returns the
-empty list. The same happens when a parse error weas detected, such as a
+empty list. The same happens when a parse error was detected, such as a
 hostname with a colon in it (the function is rather conservative, though).
 
 Example:
@@ -207,12 +271,19 @@ Example:
   print join ",", parse_hostport "[::1]";
   # => "," (empty list)
 
+  print join ",", parse_host_port "/tmp/debug.sock";
+  # => "unix/", "/tmp/debug.sock"
+
 =cut
 
 sub parse_hostport($;$) {
    my ($host, $port);
 
    for ("$_[0]") { # work on a copy, just in case, and also reset pos
+
+      # shortcut for /path
+      return ("unix/", $_)
+         if m%^/%;
 
       # parse host, special cases: "ipv6" or "ipv6 port"
       unless (
@@ -238,12 +309,29 @@ sub parse_hostport($;$) {
       } else {
          return;
       }
+
    }
 
    # hostnames must not contain :'s
    return if $host =~ /:/ && !parse_ipv6 $host;
 
    ($host, $port)
+}
+
+=item $string = format_hostport $host, $port
+
+Takes a host (in textual form) and a port and formats in unambigiously in
+a way that C<parse_hostport> can parse it again. C<$port> can be C<undef>.
+
+=cut
+
+sub format_hostport($;$) {
+   my ($host, $port) = @_;
+
+   $port = ":$port"  if length $port;
+   $host = "[$host]" if $host =~ /:/;
+
+   "$host$port"
 }
 
 =item $sa_family = address_family $ipn
@@ -261,6 +349,18 @@ sub address_family($) {
          : unpack "S", $_[0]
 }
 
+=item $text = format_ipv4 $ipn
+
+Expects a four octet string representing a binary IPv4 address and returns
+its textual format. Rarely used, see C<format_address> for a nicer
+interface.
+
+=item $text = format_ipv6 $ipn
+
+Expects a sixteen octet string representing a binary IPv6 address and
+returns its textual format. Rarely used, see C<format_address> for a
+nicer interface.
+
 =item $text = format_address $ipn
 
 Covnvert a host address in network format (e.g. 4 octets for IPv4 or 16
@@ -273,46 +373,65 @@ except it automatically detects the address type.
 
 Returns C<undef> if it cannot detect the type.
 
+If the C<$ipn> is a mapped IPv4 in IPv6 address (:ffff::<ipv4>), then just
+the contained IPv4 address will be returned. If you do not want that, you
+have to call C<format_ipv6> manually.
+
+Example:
+
+   print format_address "\x01\x02\x03\x05";
+   => 1.2.3.5
+
 =item $text = AnyEvent::Socket::ntoa $ipn
 
 Same as format_address, but not exported (think C<inet_ntoa>).
 
 =cut
 
-sub format_address;
-sub format_address($) {
-   my $af = address_family $_[0];
-   if ($af == AF_INET) {
-      return join ".", unpack "C4", $_[0]
-   } elsif ($af == AF_INET6) {
+sub format_ipv4($) {
+   join ".", unpack "C4", $_[0]
+}
+
+sub format_ipv6($) {
+   if ($_[0] =~ /^\x00\x00\x00\x00\x00\x00\x00\x00/) {
       if (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0 eq $_[0]) {
          return "::";
       } elsif (v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1 eq $_[0]) {
          return "::1";
       } elsif (v0.0.0.0.0.0.0.0.0.0.0.0 eq substr $_[0], 0, 12) {
          # v4compatible
-         return "::" . format_address substr $_[0], 12;
+         return "::" . format_ipv4 substr $_[0], 12;
       } elsif (v0.0.0.0.0.0.0.0.0.0.255.255 eq substr $_[0], 0, 12) {
          # v4mapped
-         return "::ffff:" . format_address substr $_[0], 12;
+         return "::ffff:" . format_ipv4 substr $_[0], 12;
       } elsif (v0.0.0.0.0.0.0.0.255.255.0.0 eq substr $_[0], 0, 12) {
          # v4translated
-         return "::ffff:0:" . format_address substr $_[0], 12;
-      } else {
-         my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
-
-         # this is rather sucky, I admit
-         $ip =~ s/^0:(?:0:)*(0$)?/::/
-            or $ip =~ s/(:0){7}$/::/ or $ip =~ s/(:0){7}/:/
-            or $ip =~ s/(:0){6}$/::/ or $ip =~ s/(:0){6}/:/
-            or $ip =~ s/(:0){5}$/::/ or $ip =~ s/(:0){5}/:/
-            or $ip =~ s/(:0){4}$/::/ or $ip =~ s/(:0){4}/:/
-            or $ip =~ s/(:0){3}$/::/ or $ip =~ s/(:0){3}/:/
-            or $ip =~ s/(:0){2}$/::/ or $ip =~ s/(:0){2}/:/
-            or $ip =~ s/(:0){1}$/::/ or $ip =~ s/(:0){1}/:/;
-         return $ip
+         return "::ffff:0:" . format_ipv4 substr $_[0], 12;
       }
-   } elsif ($af == AF_UNIX) {
+   }
+
+   my $ip = sprintf "%x:%x:%x:%x:%x:%x:%x:%x", unpack "n8", $_[0];
+
+   # this is admittedly rather sucky
+      $ip =~ s/(?:^|:) 0:0:0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)   0:0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)     0:0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)       0:0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)         0:0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)           0:0 (?:$|:)/::/x
+   or $ip =~ s/(?:^|:)             0 (?:$|:)/::/x;
+
+   $ip
+}
+
+sub format_address($) {
+   if (4 == length $_[0]) {
+      return &format_ipv4;
+   } elsif (16 == length $_[0]) {
+      return $_[0] =~ /^\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff(....)$/s
+         ? format_ipv4 $1
+         : &format_ipv6;
+   } elsif (AF_UNIX == address_family $_[0]) {
       return "unix/"
    } else {
       return undef
@@ -324,12 +443,27 @@ sub format_address($) {
 =item inet_aton $name_or_address, $cb->(@addresses)
 
 Works similarly to its Socket counterpart, except that it uses a
-callback. Also, if a host has only an IPv6 address, this might be passed
-to the callback instead (use the length to detect this - 4 for IPv4, 16
-for IPv6).
+callback. Use the length to distinguish between ipv4 and ipv6 (4 octets
+for IPv4, 16 for IPv6), or use C<format_address> to convert it to a more
+readable format.
 
-Unlike the L<Socket> function of the same name, you can get multiple IPv4
-and IPv6 addresses as result (and maybe even other adrdess types).
+Note that C<resolve_sockaddr>, while initially a more complex interface,
+resolves host addresses, IDNs, service names and SRV records and gives you
+an ordered list of socket addresses to try and should be preferred over
+C<inet_aton>.
+
+Example.
+
+   inet_aton "www.google.com", my $cv = AE::cv;
+   say unpack "H*", $_
+      for $cv->recv;
+   # => d155e363
+   # => d155e367 etc.
+
+   inet_aton "ipv6.google.com", my $cv = AE::cv;
+   say unpack "H*", $_
+      for $cv->recv;
+   # => 20014860a00300000000000000000068
 
 =cut
 
@@ -343,25 +477,54 @@ sub inet_aton {
    } elsif ($name eq "localhost") { # rfc2606 et al.
       $cb->(v127.0.0.1, v0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.1);
    } else {
-      require AnyEvent::DNS;
+      require AnyEvent::DNS unless $AnyEvent::DNS::VERSION;
 
-      # simple, bad suboptimal algorithm
-      AnyEvent::DNS::a ($name, sub {
-         if (@_) {
-            $cb->(map +(parse_ipv4 $_), @_);
-         } else {
-            $cb->();
-            #AnyEvent::DNS::aaaa ($name, $cb); need inet_pton
-         }
-      });
+      my $ipv4 = $AnyEvent::PROTOCOL{ipv4};
+      my $ipv6 = $AnyEvent::PROTOCOL{ipv6};
+
+      my @res;
+
+      my $cv = AE::cv {
+         $cb->(map @$_, reverse @res);
+      };
+
+      $cv->begin;
+
+      if ($ipv4) {
+         $cv->begin;
+         AnyEvent::DNS::a ($name, sub {
+            $res[$ipv4] = [map &parse_ipv4, @_];
+            $cv->end;
+         });
+      };
+
+      if ($ipv6) {
+         $cv->begin;
+         AnyEvent::DNS::aaaa ($name, sub {
+            $res[$ipv6] = [map &parse_ipv6, @_];
+            $cv->end;
+         });
+      };
+
+      $cv->end;
    }
 }
 
-# check for broken platforms with extra field in sockaddr structure
+BEGIN {
+   *sockaddr_family = $Socket::VERSION >= 1.75
+      ? \&Socket::sockaddr_family
+      : # for 5.6.x, we need to do something much more horrible
+        (Socket::pack_sockaddr_in 0x5555, "\x55\x55\x55\x55"
+           | eval { Socket::pack_sockaddr_un "U" }) =~ /^\x00/
+           ? sub { unpack "xC", $_[0] }
+           : sub { unpack "S" , $_[0] };
+}
+
+# check for broken platforms with an extra field in sockaddr structure
 # kind of a rfc vs. bsd issue, as usual (ok, normally it's a
 # unix vs. bsd issue, a iso C vs. bsd issue or simply a
-# correctness vs. bsd issue.
-my $pack_family = (0x55 == Socket::sockaddr_family "\x55\x55")
+# correctness vs. bsd issue.)
+my $pack_family = 0x55 == sockaddr_family ("\x55\x55")
                   ? "xC" : "S";
 
 =item $sa = AnyEvent::Socket::pack_sockaddr $service, $host
@@ -370,6 +533,12 @@ Pack the given port/host combination into a binary sockaddr
 structure. Handles both IPv4 and IPv6 host addresses, as well as UNIX
 domain sockets (C<$host> == C<unix/> and C<$service> == absolute
 pathname).
+
+Example:
+
+   my $bind = AnyEvent::Socket::pack_sockaddr 43, v195.234.53.120;
+   bind $socket, $bind
+      or die "bind: $!";
 
 =cut
 
@@ -406,15 +575,21 @@ module (C<format_address> converts it to C<unix/>).
 
 =cut
 
+# perl contains a bug (imho) where it requires that the kernel always returns
+# sockaddr_un structures of maximum length (which is not, AFAICS, required
+# by any standard). try to 0-pad structures for the benefit of those platforms.
+
+my $sa_un_zero = eval { Socket::pack_sockaddr_un "" }; $sa_un_zero ^= $sa_un_zero;
+
 sub unpack_sockaddr($) {
-   my $af = Socket::sockaddr_family $_[0];
+   my $af = sockaddr_family $_[0];
 
    if ($af == AF_INET) {
       Socket::unpack_sockaddr_in $_[0]
    } elsif ($af == AF_INET6) {
       unpack "x2 n x4 a16", $_[0]
    } elsif ($af == AF_UNIX) {
-      ((Socket::unpack_sockaddr_un $_[0]), pack "S", AF_UNIX)
+      ((Socket::unpack_sockaddr_un $_[0] ^ $sa_un_zero), pack "S", AF_UNIX)
    } else {
       Carp::croak "unpack_sockaddr: unsupported protocol family $af";
    }
@@ -427,13 +602,20 @@ and sockaddr structures usable to connect to this node and service in a
 protocol-independent way. It works remotely similar to the getaddrinfo
 posix function.
 
-For internet addresses, C<$node> is either an IPv4 or IPv6 address or an
-internet hostname, and C<$service> is either a service name (port name
-from F</etc/services>) or a numerical port number. If both C<$node> and
-C<$service> are names, then SRV records will be consulted to find the real
-service, otherwise they will be used as-is. If you know that the service
-name is not in your services database, then you can specify the service in
-the format C<name=port> (e.g. C<http=80>).
+For internet addresses, C<$node> is either an IPv4 or IPv6 address, an
+internet hostname (DNS domain name or IDN), and C<$service> is either
+a service name (port name from F</etc/services>) or a numerical port
+number. If both C<$node> and C<$service> are names, then SRV records
+will be consulted to find the real service, otherwise they will be
+used as-is. If you know that the service name is not in your services
+database, then you can specify the service in the format C<name=port>
+(e.g. C<http=80>).
+
+If a host cannot be found via DNS, then it will be looked up in
+F</etc/hosts> (or the file specified via C<< $ENV{PERL_ANYEVENT_HOSTS}
+>>). If they are found, the addresses there will be used. The effect is as
+if entries from F</etc/hosts> would yield C<A> and C<AAAA> records for the
+host name unless DNS already had records for them.
 
 For UNIX domain sockets, C<$node> must be the string C<unix/> and
 C<$service> must be the absolute pathname of the socket. In this case,
@@ -464,14 +646,68 @@ Example:
 
 =cut
 
-# microsoft can't even get getprotobyname working (the etc/protocols file
-# gets lost fairly often on windows), so we have to hardcode some common
-# protocol numbers ourselves.
-our %PROTO_BYNAME;
+our %HOSTS;          # $HOSTS{$nodename}[$ipv6] = [@aliases...]
+our @HOSTS_CHECKING; # callbacks to call when hosts have been loaded
+our $HOSTS_MTIME;
 
-$PROTO_BYNAME{tcp}  = &Socket::IPPROTO_TCP  if defined &Socket::IPPROTO_TCP;
-$PROTO_BYNAME{udp}  = &Socket::IPPROTO_UDP  if defined &Socket::IPPROTO_UDP;
-$PROTO_BYNAME{icmp} = &Socket::IPPROTO_ICMP if defined &Socket::IPPROTO_ICMP;
+sub _parse_hosts($) {
+   %HOSTS = ();
+
+   for (split /\n/, $_[0]) {
+      s/#.*$//;
+      s/^[ \t]+//;
+      y/A-Z/a-z/;
+
+      my ($addr, @aliases) = split /[ \t]+/;
+      next unless @aliases;
+
+      if (my $ip = parse_ipv4 $addr) {
+         push @{ $HOSTS{$_}[0] }, $ip
+            for @aliases;
+      } elsif (my $ip = parse_ipv6 $addr) {
+         push @{ $HOSTS{$_}[1] }, $ip
+            for @aliases;
+      }
+   }
+}
+
+# helper function - unless dns delivered results, check and parse hosts, then clal continuation code
+sub _load_hosts_unless(&$@) {
+   my ($cont, $cv, @dns) = @_;
+
+   if (@dns) {
+      $cv->end;
+   } else {
+      my $etc_hosts = length $ENV{PERL_ANYEVENT_HOSTS} ? $ENV{PERL_ANYEVENT_HOSTS}
+                      : AnyEvent::WIN32                ? "$ENV{SystemRoot}/system32/drivers/etc/hosts"
+                      :                                  "/etc/hosts";
+
+      push @HOSTS_CHECKING, sub {
+         $cont->();
+         $cv->end;
+      };
+
+      unless ($#HOSTS_CHECKING) {
+         # we are not the first, so we actually have to do the work
+         require AnyEvent::IO;
+
+         AnyEvent::IO::aio_stat ($etc_hosts, sub {
+            if ((stat _)[9] ne $HOSTS_MTIME) {
+               AE::log 8 => "(re)loading $etc_hosts.";
+               $HOSTS_MTIME = (stat _)[9];
+               # we might load a newer version of hosts,but that's a harmless race,
+               # as the next call will just load it again.
+               AnyEvent::IO::aio_load ($etc_hosts, sub {
+                  _parse_hosts $_[0];
+                  (shift @HOSTS_CHECKING)->() while @HOSTS_CHECKING;
+               });
+            } else {
+               (shift @HOSTS_CHECKING)->() while @HOSTS_CHECKING;
+            }
+         });
+      }
+   }
+}
 
 sub resolve_sockaddr($$$$$$) {
    my ($node, $service, $proto, $family, $type, $cb) = @_;
@@ -498,7 +734,7 @@ sub resolve_sockaddr($$$$$$) {
    $proto ||= "tcp";
    $type  ||= $proto eq "udp" ? SOCK_DGRAM : SOCK_STREAM;
 
-   my $proton = $PROTO_BYNAME{lc $proto} || (getprotobyname $proto)[2]
+   my $proton = AnyEvent::Socket::getprotobyname $proto
       or Carp::croak "$proto: protocol unknown";
 
    my $port;
@@ -512,12 +748,12 @@ sub resolve_sockaddr($$$$$$) {
               or Carp::croak "$service/$proto: service unknown";
    }
 
-   my @target = [$node, $port];
-
    # resolve a records / provide sockaddr structures
    my $resolve = sub {
+      my @target = @_;
+
       my @res;
-      my $cv = AnyEvent->condvar (cb => sub {
+      my $cv = AE::cv {
          $cb->(
             map $_->[2],
             sort {
@@ -526,7 +762,7 @@ sub resolve_sockaddr($$$$$$) {
             }
             @res
          )
-      });
+      };
 
       $cv->begin;
       for my $idx (0 .. $#target) {
@@ -545,25 +781,38 @@ sub resolve_sockaddr($$$$$$) {
                            pack_sockaddr $port, $noden]]
             }
          } else {
-            # ipv4
+            $node =~ y/A-Z/a-z/;
+
+            my $hosts = $HOSTS{$node};
+
+            # a records
             if ($family != 6) {
                $cv->begin;
                AnyEvent::DNS::a $node, sub {
-                  push @res, [$idx, "ipv4", [AF_INET, $type, $proton,
-                              pack_sockaddr $port, parse_ipv4 $_]]
+                  push @res, [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, parse_ipv4 $_]]
                      for @_;
-                  $cv->end;
+
+                  # dns takes precedence over hosts
+                  _load_hosts_unless {
+                     push @res,
+                        map [$idx, "ipv4", [AF_INET , $type, $proton, pack_sockaddr $port, $_]],
+                           @{ $HOSTS{$node}[0] };
+                  } $cv, @_;
                };
             }
 
-            # ipv6
+            # aaaa records
             if ($family != 4) {
                $cv->begin;
                AnyEvent::DNS::aaaa $node, sub {
-                  push @res, [$idx, "ipv6", [AF_INET6, $type, $proton,
-                              pack_sockaddr $port, parse_ipv6 $_]]
+                  push @res, [$idx, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, parse_ipv6 $_]]
                      for @_;
-                  $cv->end;
+
+                  _load_hosts_unless {
+                     push @res,
+                        map [$idx + 0.5, "ipv6", [AF_INET6, $type, $proton, pack_sockaddr $port, $_]],
+                           @{ $HOSTS{$node}[1] }
+                  } $cv, @_;
                };
             }
          }
@@ -571,42 +820,46 @@ sub resolve_sockaddr($$$$$$) {
       $cv->end;
    };
 
+   $node = AnyEvent::Util::idn_to_ascii $node
+      if $node =~ /[^\x00-\x7f]/;
+
    # try srv records, if applicable
    if ($node eq "localhost") {
-      @target = (["127.0.0.1", $port], ["::1", $port]);
-      &$resolve;
+      $resolve->(["127.0.0.1", $port], ["::1", $port]);
    } elsif (defined $service && !parse_address $node) {
       AnyEvent::DNS::srv $service, $proto, $node, sub {
          my (@srv) = @_;
 
-         # no srv records, continue traditionally
-         @srv
-            or return &$resolve;
+         if (@srv) {
+            # the only srv record has "." ("" here) => abort
+            $srv[0][2] ne "" || $#srv
+               or return $cb->();
 
-         # the only srv record has "." ("" here) => abort
-         $srv[0][2] ne "" || $#srv
-            or return $cb->();
-
-         # use srv records then
-         @target = map ["$_->[3].", $_->[2]],
-                      grep $_->[3] ne ".",
-                         @srv;
-
-         &$resolve;
+            # use srv records then
+            $resolve->(
+               map ["$_->[3].", $_->[2]],
+                  grep $_->[3] ne ".",
+                     @srv
+            );
+         } else {
+            # no srv records, continue traditionally
+            $resolve->([$node, $port]);
+         }
       };
    } else {
-      &$resolve;
+      # most common case
+      $resolve->([$node, $port]);
    }
 }
 
 =item $guard = tcp_connect $host, $service, $connect_cb[, $prepare_cb]
 
-This is a convenience function that creates a TCP socket and makes a 100%
-non-blocking connect to the given C<$host> (which can be a hostname or
-a textual IP address, or the string C<unix/> for UNIX domain sockets)
-and C<$service> (which can be a numeric port number or a service name,
-or a C<servicename=portnumber> string, or the pathname to a UNIX domain
-socket).
+This is a convenience function that creates a TCP socket and makes a
+100% non-blocking connect to the given C<$host> (which can be a DNS/IDN
+hostname or a textual IP address, or the string C<unix/> for UNIX domain
+sockets) and C<$service> (which can be a numeric port number or a service
+name, or a C<servicename=portnumber> string, or the pathname to a UNIX
+domain socket).
 
 If both C<$host> and C<$port> are names, then this function will use SRV
 records to locate the real target(s).
@@ -615,14 +868,14 @@ In either case, it will create a list of target hosts (e.g. for multihomed
 hosts or hosts with both IPv4 and IPv6 addresses) and try to connect to
 each in turn.
 
-If the connect is successful, then the C<$connect_cb> will be invoked with
-the socket file handle (in non-blocking mode) as first and the peer host
-(as a textual IP address) and peer port as second and third arguments,
-respectively. The fourth argument is a code reference that you can call
-if, for some reason, you don't like this connection, which will cause
-C<tcp_connect> to try the next one (or call your callback without any
-arguments if there are no more connections). In most cases, you can simply
-ignore this argument.
+After the connection is established, then the C<$connect_cb> will be
+invoked with the socket file handle (in non-blocking mode) as first, and
+the peer host (as a textual IP address) and peer port as second and third
+arguments, respectively. The fourth argument is a code reference that you
+can call if, for some reason, you don't like this connection, which will
+cause C<tcp_connect> to try the next one (or call your callback without
+any arguments if there are no more connections). In most cases, you can
+simply ignore this argument.
 
    $cb->($filehandle, $host, $port, $retry)
 
@@ -630,12 +883,18 @@ If the connect is unsuccessful, then the C<$connect_cb> will be invoked
 without any arguments and C<$!> will be set appropriately (with C<ENXIO>
 indicating a DNS resolution failure).
 
+The callback will I<never> be invoked before C<tcp_connect> returns, even
+if C<tcp_connect> was able to connect immediately (e.g. on unix domain
+sockets).
+
 The file handle is perfect for being plugged into L<AnyEvent::Handle>, but
 can be used as a normal perl file handle as well.
 
 Unless called in void context, C<tcp_connect> returns a guard object that
-will automatically abort connecting when it gets destroyed (it does not do
-anything to the socket after the connect was successful).
+will automatically cancel the connection attempt when it gets destroyed
+- in which case the callback will not be invoked. Destroying it does not
+do anything to the socket after the connect was successful - you cannot
+"uncall" a callback that has been invoked already.
 
 Sometimes you need to "prepare" the socket before connecting, for example,
 to C<bind> it to some port, or you want a specific connect timeout that
@@ -677,14 +936,18 @@ to 15 seconds.
          my $handle; # avoid direct assignment so on_eof has it in scope.
          $handle = new AnyEvent::Handle
             fh     => $fh,
+            on_error => sub {
+               AE::log error => $_[2];
+               $_[0]->destroy;
+            },
             on_eof => sub {
-               undef $handle; # keep it alive till eof
-               warn "done.\n";
+               $handle->destroy; # destroy handle
+               AE::log info => "Done.";
             };
 
          $handle->push_write ("GET / HTTP/1.0\015\012\015\012");
 
-         $handle->push_read_line ("\015\012\015\012", sub {
+         $handle->push_read (line => "\015\012\015\012", sub {
             my ($handle, $line) = @_;
 
             # print response header
@@ -714,7 +977,7 @@ Example: connect to a UNIX domain socket.
 sub tcp_connect($$$;$) {
    my ($host, $port, $connect, $prepare) = @_;
 
-   # see http://cr.yp.to/docs/connect.html for some background
+   # see http://cr.yp.to/docs/connect.html for some tricky aspects
    # also http://advogato.org/article/672.html
 
    my %state = ( fh => undef );
@@ -726,10 +989,13 @@ sub tcp_connect($$$;$) {
       $state{next} = sub {
          return unless exists $state{fh};
 
+         my $errno = $!;
          my $target = shift @target
-            or do {
+            or return AE::postpone {
+               return unless exists $state{fh};
                %state = ();
-               return $connect->();
+               $! = $errno;
+               $connect->();
             };
 
          my ($domain, $type, $proto, $sockaddr) = @$target;
@@ -744,49 +1010,60 @@ sub tcp_connect($$$;$) {
 
          $timeout ||= 30 if AnyEvent::WIN32;
 
-         $state{to} = AnyEvent->timer (after => $timeout, cb => sub {
-            $! = &Errno::ETIMEDOUT;
+         $state{to} = AE::timer $timeout, 0, sub {
+            $! = Errno::ETIMEDOUT;
             $state{next}();
-         }) if $timeout;
-
-         # called when the connect was successful, which,
-         # in theory, could be the case immediately (but never is in practise)
-         $state{connected} = sub {
-            delete $state{ww};
-            delete $state{to};
-
-            # we are connected, or maybe there was an error
-            if (my $sin = getpeername $state{fh}) {
-               my ($port, $host) = unpack_sockaddr $sin;
-
-               my $guard = guard { %state = () };
-
-               $connect->(delete $state{fh}, format_address $host, $port, sub {
-                  $guard->cancel;
-                  $state{next}();
-               });
-            } else {
-               # dummy read to fetch real error code
-               sysread $state{fh}, my $buf, 1 if $! == &Errno::ENOTCONN;
-               $state{next}();
-            }
-         };
+         } if $timeout;
 
          # now connect       
-         if (connect $state{fh}, $sockaddr) {
-            $state{connected}->();
-         } elsif ($! == &Errno::EINPROGRESS # POSIX
-                  || $! == &Errno::EWOULDBLOCK
-                  # WSAEINPROGRESS intentionally not checked - it means something else entirely
-                  || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
-                  || $! == AnyEvent::Util::WSAEWOULDBLOCK) {
-            $state{ww} = AnyEvent->io (fh => $state{fh}, poll => 'w', cb => $state{connected});
+         if (
+            (connect $state{fh}, $sockaddr)
+            || ($! == Errno::EINPROGRESS # POSIX
+                || $! == Errno::EWOULDBLOCK
+                # WSAEINPROGRESS intentionally not checked - it means something else entirely
+                || $! == AnyEvent::Util::WSAEINVAL # not convinced, but doesn't hurt
+                || $! == AnyEvent::Util::WSAEWOULDBLOCK)
+         ) {
+            $state{ww} = AE::io $state{fh}, 1, sub {
+               # we are connected, or maybe there was an error
+               if (my $sin = getpeername $state{fh}) {
+                  my ($port, $host) = unpack_sockaddr $sin;
+
+                  delete $state{ww}; delete $state{to};
+
+                  my $guard = guard { %state = () };
+
+                  $connect->(delete $state{fh}, format_address $host, $port, sub {
+                     $guard->cancel;
+                     $state{next}();
+                  });
+               } else {
+                  if ($! == Errno::ENOTCONN) {
+                     # dummy read to fetch real error code if !cygwin
+                     sysread $state{fh}, my $buf, 1;
+
+                     # cygwin 1.5 continously reports "ready' but never delivers
+                     # an error with getpeername or sysread.
+                     # cygwin 1.7 only reports readyness *once*, but is otherwise
+                     # the same, which is actually more broken.
+                     # Work around both by using unportable SO_ERROR for cygwin.
+                     $! = (unpack "l", getsockopt $state{fh}, Socket::SOL_SOCKET(), Socket::SO_ERROR()) || Errno::EAGAIN
+                        if AnyEvent::CYGWIN && $! == Errno::EAGAIN;
+                  }
+
+                  return if $! == Errno::EAGAIN; # skip spurious wake-ups
+
+                  delete $state{ww}; delete $state{to};
+
+                  $state{next}();
+               }
+            };
          } else {
             $state{next}();
          }
       };
 
-      $! = &Errno::ENXIO;
+      $! = Errno::ENXIO;
       $state{next}();
    };
 
@@ -795,8 +1072,8 @@ sub tcp_connect($$$;$) {
 
 =item $guard = tcp_server $host, $service, $accept_cb[, $prepare_cb]
 
-Create and bind a stream socket to the given host, and port, set the
-SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
+Create and bind a stream socket to the given host address and port, set
+the SO_REUSEADDR flag (if applicable) and call C<listen>. Unlike the name
 implies, this function can also bind on UNIX domain sockets.
 
 For internet sockets, C<$host> must be an IPv4 or IPv6 address (or
@@ -807,18 +1084,18 @@ future versions, as applicable).
 To bind to the IPv4 wildcard address, use C<0>, to bind to the IPv6
 wildcard address, use C<::>.
 
-The port is specified by C<$service>, which must be either a service name or
-a numeric port number (or C<0> or C<undef>, in which case an ephemeral
+The port is specified by C<$service>, which must be either a service name
+or a numeric port number (or C<0> or C<undef>, in which case an ephemeral
 port will be used).
 
 For UNIX domain sockets, C<$host> must be C<unix/> and C<$service> must be
 the absolute pathname of the socket. This function will try to C<unlink>
-the socket before it tries to bind to it. See SECURITY CONSIDERATIONS,
-below.
+the socket before it tries to bind to it, and will try to unlink it after
+it stops using it. See SECURITY CONSIDERATIONS, below.
 
 For each new connection that could be C<accept>ed, call the C<<
 $accept_cb->($fh, $host, $port) >> with the file handle (in non-blocking
-mode) as first and the peer host and port as second and third arguments
+mode) as first, and the peer host and port as second and third arguments
 (see C<tcp_connect> for details).
 
 Croaks on any errors it can detect before the listen.
@@ -826,7 +1103,10 @@ Croaks on any errors it can detect before the listen.
 If called in non-void context, then this function returns a guard object
 whose lifetime it tied to the TCP server: If the object gets destroyed,
 the server will be stopped (but existing accepted connections will
-continue).
+not be affected).
+
+Regardless, when the function returns to the caller, the socket is bound
+and in listening state.
 
 If you need more control over the listening socket, you can provide a
 C<< $prepare_cb->($fh, $host, $port) >>, which is called just before the
@@ -852,7 +1132,7 @@ to go away.
       syswrite $fh, "The internet is full, $host:$port. Go away!\015\012";
    }, sub {
       my ($fh, $thishost, $thisport) = @_;
-      warn "bound to $thishost, port $thisport\n";
+      AE::log info => "Bound to $thishost, port $thisport.";
    };
 
 Example: bind a server on a unix domain socket.
@@ -900,6 +1180,16 @@ sub tcp_server($$$;$) {
    bind $state{fh}, pack_sockaddr $service, $ipn
       or Carp::croak "bind: $!";
 
+   if ($af == AF_UNIX) {
+      my $fh  = $state{fh};
+      my $ino = (stat $fh)[1];
+      $state{unlink} = guard {
+         # this is racy, but is not designed to be foolproof, just best-effort
+         unlink $service
+            if $ino == (stat $fh)[1];
+      };
+   }
+
    fh_nonblocking $state{fh}, 1;
 
    my $len;
@@ -914,22 +1204,49 @@ sub tcp_server($$$;$) {
    listen $state{fh}, $len
       or Carp::croak "listen: $!";
 
-   $state{aw} = AnyEvent->io (fh => $state{fh}, poll => 'r', cb => sub {
+   $state{aw} = AE::io $state{fh}, 0, sub {
       # this closure keeps $state alive
-      while (my $peer = accept my $fh, $state{fh}) {
+      while ($state{fh} && (my $peer = accept my $fh, $state{fh})) {
          fh_nonblocking $fh, 1; # POSIX requires inheritance, the outside world does not
 
          my ($service, $host) = unpack_sockaddr $peer;
          $accept->($fh, format_address $host, $service);
       }
-   });
+   };
 
    defined wantarray
       ? guard { %state = () } # clear fh and watcher, which breaks the circular dependency
       : ()
 }
 
-1;
+=item tcp_nodelay $fh, $enable
+
+Enables (or disables) the C<TCP_NODELAY> socket option (also known as
+Nagle's algorithm). Returns false on error, true otherwise.
+
+=cut
+
+sub tcp_nodelay($$) {
+   my $onoff = int ! ! $_[1];
+
+   setsockopt $_[0], Socket::IPPROTO_TCP (), Socket::TCP_NODELAY (), $onoff
+}
+
+=item tcp_congestion $fh, $algorithm
+
+Sets the tcp congestion avoidance algorithm (via the C<TCP_CONGESTION>
+socket option). The default is OS-specific, but is usually
+C<reno>. Typical other available choices include C<cubic>, C<lp>, C<bic>,
+C<highspeed>, C<htcp>, C<hybla>, C<illinois>, C<scalable>, C<vegas>,
+C<veno>, C<westwood> and C<yeah>.
+
+=cut
+
+sub tcp_congestion($$) {
+   defined TCP_CONGESTION
+      ? setsockopt $_[0], Socket::IPPROTO_TCP (), TCP_CONGESTION, "$_[1]"
+      : undef
+}
 
 =back
 
@@ -945,7 +1262,9 @@ harmful in general.
 =head1 AUTHOR
 
  Marc Lehmann <schmorp@schmorp.de>
- http://home.schmorp.de/
+ http://anyevent.schmorp.de
 
 =cut
+
+1
 

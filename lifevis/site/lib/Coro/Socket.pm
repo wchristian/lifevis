@@ -1,6 +1,6 @@
 =head1 NAME
 
-Coro::Socket - non-blocking socket-io
+Coro::Socket - non-blocking socket-I/O
 
 =head1 SYNOPSIS
 
@@ -27,15 +27,42 @@ that is, other coroutines can run while reads or writes block on the
 handle. See L<Coro::Handle>, especially the note about prefering method
 calls.
 
+=head1 IPV6 WARNING
+
+This module was written to imitate the L<IO::Socket::INET> API, and derive
+from it. Since IO::Socket::INET does not support IPv6, this module does
+neither.
+
+Therefore it is not recommended to use Coro::Socket in new code. Instead,
+use L<AnyEvent::Socket> and L<Coro::Handle>, e.g.:
+
+   use Coro;
+   use Coro::Handle;
+   use AnyEvent::Socket;
+
+   # use tcp_connect from AnyEvent::Socket
+   # and call Coro::Handle::unblock on it.
+
+   tcp_connect "www.google.com", 80, Coro::rouse_cb;
+   my $fh = unblock +(Coro::rouse_wait)[0];
+
+   # now we have a perfectly thread-safe socket handle in $fh
+   print $fh "GET / HTTP/1.0\015\012\015\012";
+   local $/;
+   print <$fh>;
+
+Using C<AnyEvent::Socket::tcp_connect> gives you transparent IPv6,
+multi-homing, SRV-record etc. support.
+
+For listening sockets, use C<AnyEvent::Socket::tcp_server>.
+
 =over 4
 
 =cut
 
 package Coro::Socket;
 
-no warnings "uninitialized";
-
-use strict;
+use common::sense;
 
 use Errno ();
 use Carp qw(croak);
@@ -46,7 +73,7 @@ use Coro::Util ();
 
 use base qw(Coro::Handle IO::Socket::INET);
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 
 our (%_proto, %_port);
 
@@ -91,7 +118,8 @@ and port. The parameter names and values are mostly the same as for
 IO::Socket::INET (as ugly as I think they are).
 
 The parameters officially supported currently are: C<ReuseAddr>,
-C<LocalPort>, C<LocalHost>, C<PeerPort>, C<PeerHost>, C<Listen>, C<Timeout>.
+C<LocalPort>, C<LocalHost>, C<PeerPort>, C<PeerHost>, C<Listen>, C<Timeout>,
+C<SO_RCVBUF>, C<SO_SNDBUF>.
 
    $fh = new Coro::Socket PeerHost => "localhost", PeerPort => 'finger';
 
@@ -141,6 +169,16 @@ sub configure {
    if ($arg->{Broadcast}) {
       $self->setsockopt (SOL_SOCKET, SO_BROADCAST, 1)
          or croak "setsockopt(SO_BROADCAST): $!";
+   }
+
+   if ($arg->{SO_RCVBUF}) {
+      $self->setsockopt (SOL_SOCKET, SO_RCVBUF, $arg->{SO_RCVBUF})
+         or croak "setsockopt(SO_RCVBUF): $!";
+   }
+
+   if ($arg->{SO_SNDBUF}) {
+      $self->setsockopt (SOL_SOCKET, SO_SNDBUF, $arg->{SO_SNDBUF})
+         or croak "setsockopt(SO_SNDBUF): $!";
    }
 
    if ($arg->{LocalPort} || $arg->{LocalHost}) {

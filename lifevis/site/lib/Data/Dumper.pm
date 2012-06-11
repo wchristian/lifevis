@@ -9,7 +9,9 @@
 
 package Data::Dumper;
 
-$VERSION = '2.121_14';
+BEGIN {
+    $VERSION = '2.135_06'; # Don't forget to set version and release
+}			   # date in POD!
 
 #$| = 1;
 
@@ -29,11 +31,11 @@ BEGIN {
     # toggled on load failure.
     eval {
 	require XSLoader;
-    };
-    $Useperl = 1 if $@;
+	XSLoader::load( 'Data::Dumper' );
+	1
+    }
+    or $Useperl = 1;
 }
-
-XSLoader::load( 'Data::Dumper' ) unless $Useperl;
 
 # module vars and their defaults
 $Indent     = 2         unless defined $Indent;
@@ -65,7 +67,7 @@ sub new {
 
   croak "Usage:  PACKAGE->new(ARRAYREF, [ARRAYREF])" 
     unless (defined($v) && (ref($v) eq 'ARRAY'));
-  $n = [] unless (defined($n) && (ref($v) eq 'ARRAY'));
+  $n = [] unless (defined($n) && (ref($n) eq 'ARRAY'));
 
   my($s) = { 
              level      => 0,           # current recursive depth
@@ -101,26 +103,39 @@ sub new {
   return bless($s, $c);
 }
 
-if ($] >= 5.006) {
-  # Packed numeric addresses take less memory. Plus pack is faster than sprintf
-  *init_refaddr_format = sub {};
+# Packed numeric addresses take less memory. Plus pack is faster than sprintf
 
-  *format_refaddr  = sub {
+# Most users of current versions of Data::Dumper will be 5.008 or later.
+# Anyone on 5.6.1 and 5.6.2 upgrading will be rare (particularly judging by
+# the bug reports from users on those platforms), so for the common case avoid
+# complexity, and avoid even compiling the unneeded code.
+
+sub init_refaddr_format {
+}
+
+sub format_refaddr {
     require Scalar::Util;
     pack "J", Scalar::Util::refaddr(shift);
-  };
-} else {
-  *init_refaddr_format = sub {
-    require Config;
-    my $f = $Config::Config{uvxformat};
-    $f =~ tr/"//d;
-    our $refaddr_format = "0x%" . $f;
-  };
+};
 
-  *format_refaddr = sub {
-    require Scalar::Util;
-    sprintf our $refaddr_format, Scalar::Util::refaddr(shift);
-  }
+if ($] < 5.008) {
+    eval <<'EOC' or die;
+    no warnings 'redefine';
+    my $refaddr_format;
+    sub init_refaddr_format {
+        require Config;
+        my $f = $Config::Config{uvxformat};
+        $f =~ tr/"//d;
+        $refaddr_format = "0x%" . $f;
+    }
+
+    sub format_refaddr {
+        require Scalar::Util;
+        sprintf $refaddr_format, Scalar::Util::refaddr(shift);
+    }
+
+    1
+EOC
 }
 
 #
@@ -231,15 +246,10 @@ sub Dumpperl {
       $name = "\$" . $s->{varname} . $i;
     }
 
-    # Ensure hash iterator is reset
-    if (ref($val) eq 'HASH') {
-        keys(%$val);
-    }
-
     my $valstr;
     {
       local($s->{apad}) = $s->{apad};
-      $s->{apad} .= ' ' x (length($name) + 3) if $s->{indent} >= 2;
+      $s->{apad} .= ' ' x (length($name) + 3) if $s->{indent} >= 2 and !$s->{terse};
       $valstr = $s->_dump($val, $name);
     }
 
@@ -259,6 +269,10 @@ sub _quote {
     $val =~ s/([\\\'])/\\$1/g;
     return  "'" . $val .  "'";
 }
+
+# Old Perls (5.14-) have trouble resetting vstring magic when it is no
+# longer valid.
+use constant _bad_vsmg => defined &_vstring && (_vstring(~v0)||'') eq "v0";
 
 #
 # twist, toil and turn;
@@ -326,11 +340,11 @@ sub _dump {
 			    $val ];
       }
     }
-
-    if ($realpack and $realpack eq 'Regexp') {
-	$out = "$val";
-	$out =~ s,/,\\/,g;
-	return "qr/$out/";
+    my $no_bless = 0; 
+    my $is_regex = 0;
+    if ( $realpack and ($] >= 5.009005 ? re::is_regexp($val) : $realpack eq 'Regexp') ) {
+        $is_regex = 1;
+        $no_bless = $realpack eq 'Regexp';
     }
 
     # If purity is not set and maxdepth is set, then check depth: 
@@ -345,7 +359,7 @@ sub _dump {
     }
 
     # we have a blessed ref
-    if ($realpack) {
+    if ($realpack and !$no_bless) {
       $out = $s->{'bless'} . '( ';
       $blesspad = $s->{apad};
       $s->{apad} .= '       ' if ($s->{indent} >= 2);
@@ -354,7 +368,29 @@ sub _dump {
     $s->{level}++;
     $ipad = $s->{xpad} x $s->{level};
 
-    if ($realtype eq 'SCALAR' || $realtype eq 'REF') {
+    if ($is_regex) {
+        my $pat;
+        # This really sucks, re:regexp_pattern is in ext/re/re.xs and not in 
+        # universal.c, and even worse we cant just require that re to be loaded
+        # we *have* to use() it. 
+        # We should probably move it to universal.c for 5.10.1 and fix this.
+        # Currently we only use re::regexp_pattern when the re is blessed into another
+        # package. This has the disadvantage of meaning that a DD dump won't round trip
+        # as the pattern will be repeatedly wrapped with the same modifiers.
+        # This is an aesthetic issue so we will leave it for now, but we could use
+        # regexp_pattern() in list context to get the modifiers separately.
+        # But since this means loading the full debugging engine in process we wont
+        # bother unless its necessary for accuracy.
+        if (($realpack ne 'Regexp') && defined(*re::regexp_pattern{CODE})) {
+            $pat = re::regexp_pattern($val);
+        } else {
+            $pat = "$val";
+        }
+        $pat =~ s <(\\.)|/> { $1 || '\\/' }ge;
+        $out .= "qr/$pat/";
+    }
+    elsif ($realtype eq 'SCALAR' || $realtype eq 'REF'
+	|| $realtype eq 'VSTRING') {
       if ($realpack) {
 	$out .= 'do{\\(my $o = ' . $s->_dump($$val, "\${$name}") . ')}';
       }
@@ -366,7 +402,7 @@ sub _dump {
 	$out .= '\\' . $s->_dump($$val, "*{$name}");
     }
     elsif ($realtype eq 'ARRAY') {
-      my($v, $pad, $mname);
+      my($pad, $mname);
       my($i) = 0;
       $out .= ($name =~ /^\@/) ? '(' : '[';
       $pad = $s->{sep} . $s->{pad} . $s->{apad};
@@ -375,7 +411,7 @@ sub _dump {
 	($name =~ /^\\?[\%\@\*\$][^{].*[]}]$/) ? ($mname = $name) :
 	  ($mname = $name . '->');
       $mname .= '->' if $mname =~ /^\*.+\{[A-Z]+\}$/;
-      for $v (@$val) {
+      for my $v (@$val) {
 	$sname = $mname . '[' . $i . ']';
 	$out .= $pad . $ipad . '#' . $i if $s->{indent} >= 3;
 	$out .= $pad . $ipad . $s->_dump($v, $sname);
@@ -408,6 +444,10 @@ sub _dump {
 	  $keys = [ sort keys %$val ];
 	}
       }
+
+      # Ensure hash iterator is reset
+      keys(%$val);
+
       while (($k, $v) = ! $sortkeys ? (each %$val) :
 	     @$keys ? ($key = shift(@$keys), $val->{$key}) :
 	     () ) 
@@ -444,7 +484,7 @@ sub _dump {
       croak "Can\'t handle $realtype type.";
     }
     
-    if ($realpack) { # we have a blessed ref
+    if ($realpack and !$no_bless) { # we have a blessed ref
       $out .= ', ' . _quote($realpack) . ' )';
       $out .= '->' . $s->{toaster} . '()'  if $s->{toaster} ne '';
       $s->{apad} = $blesspad;
@@ -455,6 +495,7 @@ sub _dump {
   else {                                 # simple scalar
 
     my $ref = \$_[1];
+    my $v;
     # first, catalog the scalar
     if ($name ne '') {
       $id = format_refaddr($ref);
@@ -470,14 +511,20 @@ sub _dump {
 	$s->{seen}{$id} = ["\\$name", $ref];
       }
     }
-    if (ref($ref) eq 'GLOB' or "$ref" =~ /=GLOB\([^()]+\)$/) {  # glob
+    $ref = \$val;
+    if (ref($ref) eq 'GLOB') {  # glob
       my $name = substr($val, 1);
-      if ($name =~ /^[A-Za-z_][\w:]*$/) {
+      if ($name =~ /^[A-Za-z_][\w:]*$/ && $name ne 'main::') {
 	$name =~ s/^main::/::/;
 	$sname = $name;
       }
       else {
-	$sname = $s->_dump($name, "");
+	$sname = $s->_dump(
+	  $name eq 'main::' || $] < 5.007 && $name eq "main::\0"
+	    ? ''
+	    : $name,
+	  "",
+	);
 	$sname = '{' . $sname . '}';
       }
       if ($s->{purity}) {
@@ -499,6 +546,14 @@ sub _dump {
     }
     elsif (!defined($val)) {
       $out .= "undef";
+    }
+    elsif (defined &_vstring and $v = _vstring($val)
+	and !_bad_vsmg || eval $v eq $val) {
+      $out .= $v;
+    }
+    elsif (!defined &_vstring
+       and ref $ref eq 'VSTRING' || eval{Scalar::Util::isvstring($val)}) {
+      $out .= sprintf "%vd", $val;
     }
     elsif ($val =~ /^(?:0|-?[1-9]\d{0,8})\z/) { # safe decimal number
       $out .= $val;
@@ -734,7 +789,7 @@ Data::Dumper - stringified perl data structures, suitable for both printing and 
 =head1 DESCRIPTION
 
 Given a list of scalars or reference variables, writes out their contents in
-perl syntax. The references can also be objects.  The contents of each
+perl syntax. The references can also be objects.  The content of each
 variable is output in a single Perl statement.  Handles self-referential
 structures correctly.
 
@@ -997,7 +1052,7 @@ Default is: C< =E<gt> >.
 $Data::Dumper::Maxdepth  I<or>  $I<OBJ>->Maxdepth(I<[NEWVAL]>)
 
 Can be set to a positive integer that specifies the depth beyond which
-which we don't venture into a structure.  Has no effect when
+we don't venture into a structure.  Has no effect when
 C<Data::Dumper::Purity> is set.  (Useful in debugger when we often don't
 want to see more than enough).  Default is 0, which means there is 
 no maximum depth. 
@@ -1086,20 +1141,20 @@ distribution for more examples.)
     print($@) if $@;
     print Dumper($boo), Dumper($bar);  # pretty print (no array indices)
 
-    $Data::Dumper::Terse = 1;          # don't output names where feasible
-    $Data::Dumper::Indent = 0;         # turn off all pretty print
+    $Data::Dumper::Terse = 1;        # don't output names where feasible
+    $Data::Dumper::Indent = 0;       # turn off all pretty print
     print Dumper($boo), "\n";
 
-    $Data::Dumper::Indent = 1;         # mild pretty print
+    $Data::Dumper::Indent = 1;       # mild pretty print
     print Dumper($boo);
 
-    $Data::Dumper::Indent = 3;         # pretty print with array indices
+    $Data::Dumper::Indent = 3;       # pretty print with array indices
     print Dumper($boo);
 
-    $Data::Dumper::Useqq = 1;          # print strings in double quotes
+    $Data::Dumper::Useqq = 1;        # print strings in double quotes
     print Dumper($boo);
 
-    $Data::Dumper::Pair = " : ";       # specify hash key/value separator
+    $Data::Dumper::Pair = " : ";     # specify hash key/value separator
     print Dumper($boo);
 
 
@@ -1277,7 +1332,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.121  (Aug 24 2003)
+Version 2.135_06  (March 20 2012)
 
 =head1 SEE ALSO
 

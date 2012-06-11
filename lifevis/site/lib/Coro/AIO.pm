@@ -23,9 +23,10 @@ run a supported event loop.
 This module implements a thin wrapper around L<IO::AIO>. All of
 the functions that expect a callback are being wrapped by this module.
 
-The API is exactly the same as that of the corresponding IO::AIO routines,
-except that you have to specify I<all> arguments I<except> the callback
-argument. Instead the routines return the values normally passed to the
+The API is exactly the same as that of the corresponding IO::AIO
+routines, except that you have to specify I<all> arguments, even the
+ones optional in IO::AIO, I<except> the callback argument. Instead of
+calling a callback, the routines return the values normally passed to the
 callback. Everything else, including C<$!> and perls stat cache, are set
 as expected after these functions return.
 
@@ -58,7 +59,7 @@ versions of L<IO::AIO> will be automatically wrapped as well.
 
 package Coro::AIO;
 
-use strict qw(subs vars);
+use common::sense;
 
 use IO::AIO 3.1 ();
 use AnyEvent::AIO ();
@@ -68,7 +69,7 @@ use Coro::AnyEvent ();
 
 use base Exporter::;
 
-our $VERSION = "5.0";
+our $VERSION = 6.08;
 
 our @EXPORT    = (@IO::AIO::EXPORT, qw(aio_wait));
 our @EXPORT_OK = @IO::AIO::EXPORT_OK;
@@ -90,7 +91,8 @@ our $AUTOLOAD;
       my $iosub = "IO::AIO::$sub";
       my $proto = prototype $iosub;
 
-      $proto =~ s/;?\$$// or die "$iosub: unable to remove callback slot from prototype";
+      $proto =~ s/;//g; # we do not support optional arguments
+      $proto =~ s/^(\$*)\$$/$1/ or die "$iosub($proto): unable to remove callback slot from prototype";
 
       _register "Coro::AIO::$sub", $proto, \&{$iosub};
    }

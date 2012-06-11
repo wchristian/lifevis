@@ -18,15 +18,25 @@ them) that are specific to the currently executing coroutine. This module
 does not automatically load the Coro module (so the overhead will be small
 when no coroutines are used).
 
+A much faster method is to store extra keys into C<%$Coro::current>
+- all you have to do is to make sure that the key is unique (e.g. by
+prefixing it with your module name). You can even store data there before
+loading the L<Coro> module - when Coro is loaded, the keys stored in
+C<%$Coro::current> are automatically attached to the coro thread executing
+the main program.
+
+You don't have to load C<Coro::Specific> manually, it will be loaded 
+automatically when you C<use Coro> and call the C<new> constructor. 
+
 =over 4
 
 =cut
 
 package Coro::Specific;
 
-BEGIN { eval { require warnings } && warnings->unimport ("uninitialized") }
+use common::sense;
 
-$VERSION = "5.0";
+our $VERSION = 6.08;
 
 =item new
 

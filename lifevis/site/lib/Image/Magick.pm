@@ -1,7 +1,20 @@
 package Image::Magick;
 
-# Released Feb. 17, 1997  by Kyle Shorter (magick@wizards.dupont.com)
-# Public Domain
+#  Copyright 1999-2012 ImageMagick Studio LLC, a non-profit organization
+#  dedicated to making software imaging solutions freely available.
+#
+#  You may not use this file except in compliance with the License.  You may
+#  obtain a copy of the License at
+#
+#    http://www.imagemagick.org/script/license.php
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  Initial version, written by Kyle Shorter.
 
 use strict;
 use Carp;
@@ -30,7 +43,7 @@ require AutoLoader;
       ConfigureError FatalErrorException
     );
 
-$VERSION = '6.4.1';
+$VERSION = '6.77';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -39,16 +52,17 @@ sub AUTOLOAD {
 
     my $constname;
     ($constname = $AUTOLOAD) =~ s/.*:://;
+    die "&${AUTOLOAD} not defined. The required ImageMagick libraries are not installed or not installed properly.\n" if $constname eq 'constant';
     my $val = constant($constname, @_ ? $_[0] : 0);
     if ($! != 0) {
-	if ($! =~ /Invalid/) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-	    my($pack,$file,$line) = caller;
-	    die "Your vendor has not defined PerlMagick macro $pack\:\:$constname, used at $file line $line.\n";
-	}
+    	if ($! =~ /Invalid/) {
+	        $AutoLoader::AUTOLOAD = $AUTOLOAD;
+	        goto &AutoLoader::AUTOLOAD;
+    	}
+    	else {
+	        my($pack,$file,$line) = caller;
+	        die "Your vendor has not defined PerlMagick macro $pack\:\:$constname, used at $file line $line.\n";
+    	}
     }
     eval "sub $AUTOLOAD { $val }";
     goto &$AUTOLOAD;
@@ -87,7 +101,7 @@ __END__
 
 =head1 NAME
 
-Image::Magick - Perl extension for calling ImageMagick's libMagick methods
+Image::Magick - objected-oriented Perl interface to ImageMagick. Use it to read, manipulate, or write an image or image sequence from within a Perl script.
 
 =head1 SYNOPSIS
 
@@ -106,10 +120,14 @@ This Perl extension allows the reading, manipulation and writing of
 a large number of image file formats using the ImageMagick library.
 It was originally developed to be used by CGI scripts for Web pages.
 
-A Web page has been set up for this extension. See:
+A web page has been set up for this extension. See:
 
-	 file:///usr/local/share/doc/ImageMagick-6.4.1/www/perl-magick.html
+	 file:///usr/local/share/doc/ImageMagick-6.7.7/www/perl-magick.html
 	 http://www.imagemagick.org/script/perl-magick.php
+
+If you have problems, go to
+
+   http://www.imagemagick.org/discourse-server/viewforum.php?f=7
 
 =head1 AUTHOR
 

@@ -2,7 +2,8 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.13';
+$VERSION = '2.18';
+$VERSION = eval $VERSION;
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -19,12 +20,6 @@ sub has_fields {
     my($base) = shift;
     my $fglob = ${"$base\::"}{FIELDS};
     return( ($fglob && 'GLOB' eq ref($fglob) && *$fglob{HASH}) ? 1 : 0 );
-}
-
-sub has_version {
-    my($base) = shift;
-    my $vglob = ${$base.'::'}{VERSION};
-    return( ($vglob && *$vglob{SCALAR}) ? 1 : 0 );
 }
 
 sub has_attr {
@@ -69,7 +64,6 @@ sub import {
     my $fields_base;
 
     my $inheritor = caller(0);
-    my @isa_classes;
 
     my @bases;
     foreach my $base (@_) {
@@ -79,11 +73,8 @@ sub import {
 
         next if grep $_->isa($base), ($inheritor, @bases);
 
-        if (has_version($base)) {
-            ${$base.'::VERSION'} = '-1, set by base.pm' 
-              unless defined ${$base.'::VERSION'};
-        }
-        else {
+        # Following blocks help isolate $SIG{__DIE__} changes
+        {
             my $sigdie;
             {
                 local $SIG{__DIE__};
@@ -104,8 +95,6 @@ ERROR
             }
             # Make sure a global $SIG{__DIE__} makes it out of the localization.
             $SIG{__DIE__} = $sigdie if defined $sigdie;
-            ${$base.'::VERSION'} = "-1, set by base.pm"
-              unless defined ${$base.'::VERSION'};
         }
         push @bases, $base;
 
@@ -120,8 +109,6 @@ ERROR
         }
     }
     # Save this until the end so it's all or nothing if the above loop croaks.
-    push @{"$inheritor\::ISA"}, @isa_classes;
-
     push @{"$inheritor\::ISA"}, @bases;
 
     if( defined $fields_base ) {
@@ -192,6 +179,9 @@ base - Establish an ISA relationship with base classes at compile time
 
 =head1 DESCRIPTION
 
+Unless you are using the C<fields> pragma, consider this module discouraged
+in favor of the lighter-weight C<parent>.
+
 Allows you to both load one or more modules, while setting up inheritance from
 those modules at the same time.  Roughly similar in effect to
 
@@ -202,26 +192,26 @@ those modules at the same time.  Roughly similar in effect to
         push @ISA, qw(Foo Bar);
     }
 
-C<base> employs some heuristics to determine if a module has already been
-loaded, if it has it doesn't try again. If C<base> tries to C<require> the
-module it will not die if it cannot find the module's file, but will die on any
-other error. After all this, should your base class be empty, containing no
-symbols, it will die. This is useful for inheriting from classes in the same
-file as yourself, like so:
+When C<base> tries to C<require> a module, it will not die if it cannot find
+the module's file, but will die on any other error.  After all this, should
+your base class be empty, containing no symbols, C<base> will die. This is
+useful for inheriting from classes in the same file as yourself but where
+the filename does not match the base module name, like so:
 
+        # in Bar.pm
         package Foo;
         sub exclaim { "I can have such a thing?!" }
-        
+
         package Bar;
         use base "Foo";
 
-If $VERSION is not detected even after loading it, <base> will define $VERSION
-in the base package, setting it to the string C<-1, set by base.pm>.
+There is no F<Foo.pm>, but because C<Foo> defines a symbol (the C<exclaim>
+subroutine), C<base> will not die when the C<require> fails to load F<Foo.pm>.
 
 C<base> will also initialize the fields if one of the base classes has it.
 Multiple inheritance of fields is B<NOT> supported, if two or more base classes
-each have inheritable fields the 'base' pragma will croak. See L<fields>,
-L<public> and L<protected> for a description of this feature.
+each have inheritable fields the 'base' pragma will croak. See L<fields>
+for a description of this feature.
 
 The base class' C<import> method is B<not> called.
 
@@ -239,7 +229,7 @@ found in your path.
 
 Attempting to inherit from yourself generates a warning.
 
-    use Foo;
+    package Foo;
     use base 'Foo';
 
 =back
