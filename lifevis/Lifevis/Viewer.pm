@@ -106,15 +106,6 @@ use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
 
-if ( !eval { require Image::Magick; 1 } ) {
-    print "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"
-        . "ImageMagick binaries not found. Please download and install from this URL:\n"
-        . "http://www.imagemagick.org/download/binaries/ImageMagick-6.7.7-7-Q16-windows-dll.exe\n\n"
-        . "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-    close STDERR;
-    exit;
-}
-
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
 my $memory_use;
@@ -2207,7 +2198,9 @@ sub build_textures {
 sub create_texture {
     my ( $name, $id ) = @_;
     glBindTexture( GL_TEXTURE_2D, $texture_ID[$id] );
-    my $tex = new OpenGL::Image( engine => 'Magick', source => "textures/$name.png" );
+    my $file = "textures/$name.tga";
+    my $tex = OpenGL::Image->new( engine => 'Targa', source => $file );
+    die "\nCould not load texture file: '$file'.\n" if !$tex;
     my ( $ifmt, $fmt, $type ) = $tex->Get( 'gl_internalformat', 'gl_format', 'gl_type' );
     my ( $w, $h ) = $tex->Get( 'width', 'height' );
     glTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
