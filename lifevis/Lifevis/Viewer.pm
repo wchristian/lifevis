@@ -294,6 +294,7 @@ sub check_for_new_version {
         );
     }
 
+    no warnings 'numeric';
     notify_user(
         "New version $new_version available, please check the download section on [ http://dwarvis.googlecode.com ].")
       if ( $new_version + 0 ) > $VERSION;
