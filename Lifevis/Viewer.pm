@@ -149,6 +149,7 @@ my $max_item_proc_tasks    = 0;
 my %items;
 my $gap = 65535;
 my %bucket_strings;
+my %solids = map { $_ => 1 } FLOOR, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, PILLAR, FORTIF;
 
 my ( $mouse_cursor_x, $mouse_cursor_y );
 
@@ -1177,11 +1178,10 @@ sub generate_display_list {
                 $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                   if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
 
-                given ( $TILE_TYPES[$type][base_visual] ) {
-                    when ( [ FLOOR, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, PILLAR, FORTIF ] ) {
-                        $brightness_mod *= 0.75 if ( defined $type_above && $above != EMPTY );
-                    }
-                }
+                $brightness_mod *= 0.75
+                  if $solids{ $TILE_TYPES[$type][base_visual] }
+                      and defined $type_above
+                      and $above != EMPTY;
 
                 my @const_model_map;
                 $const_model_map[WALL]       = "Wall";
