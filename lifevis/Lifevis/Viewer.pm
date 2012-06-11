@@ -30,8 +30,6 @@ use strict;
 use warnings;
 
 use Cwd 'getcwd';
-chdir '..' if getcwd =~ /Lifevis/;
-
 
 #use warnings::unused;
 #use diagnostics;
@@ -65,9 +63,6 @@ use criticism (
 use Carp;
 use utf8;
 use English qw(-no_match_vars);
-$OUTPUT_AUTOFLUSH = 1;
-
-my $detached;
 
 use threads;
 use threads::shared;
@@ -97,6 +92,12 @@ use Lifevis::constants;
 use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
+
+$OUTPUT_AUTOFLUSH = 1;
+
+my $detached;
+
+chdir '..' if getcwd =~ /Lifevis/;
 
 our $VERSION = "0.257_002";
 
