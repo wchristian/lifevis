@@ -1133,19 +1133,12 @@ sub generate_model_display_lists {
 
 sub generate_display_list {
     my ( $id, $z, $y, $x ) = @_;
-    my $dl;
     my $type;
     my $type_below;
     my $type_above;
     my $brightness_mod;
 
-    if ( $cache[$id][display_lists][$z] ) {
-        $dl = $cache[$id][display_lists][$z];
-    }
-    else {
-        $dl = glGenLists( 1 );
-        $cache[$id][display_lists][$z] = $dl;
-    }
+    my $dl = $cache[$id][display_lists][$z] ||= glGenLists( 1 );
 
     glNewList( $dl, GL_COMPILE );
 
