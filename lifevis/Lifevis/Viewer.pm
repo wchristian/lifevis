@@ -1,9 +1,3 @@
-# $Id: Viewer.pm 257 2008-11-21 16:03:33Z xenofur $
-# $Revision: 257 $
-# $HeadURL: https://dwarvis.googlecode.com/svn/trunk/lifevis/Lifevis/Viewer.pm $
-# $Date: 2008-11-21 17:03:33 +0100 (Fr, 21 Nov 2008) $
-# $Source$
-
 # Lifevis
 #
 # The base intention of this program is to provide an OpenGL engine capable of
