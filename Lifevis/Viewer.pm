@@ -28,6 +28,7 @@ use strictures;
 package Lifevis::Viewer;
 
 use 5.010;
+no autovivification qw' strict warn fetch exists delete';
 
 BEGIN {
     use Cwd 'getcwd';
@@ -508,7 +509,10 @@ sub creature_update_loop {
 
             _ReadMemory( $df_proc_handle, $creature, 232, $buf );
 
-            next if ( defined $creatures{$creature}[string] and $creatures{$creature}[string] eq $buf );
+            next
+              if $creatures{$creature}
+                  and defined $creatures{$creature}[string]
+                  and $creatures{$creature}[string] eq $buf;
             $creatures{$creature}[string] = $buf;
 
             my $flags = unpack( "L", substr( $buf, 228, 4 ) );
@@ -616,7 +620,10 @@ sub building_update_loop {
             #say $proc->hexdump( $building, 0xD8 );
             _ReadMemory( $df_proc_handle, $building, 0xe8, $buf );
 
-            next if ( defined $buildings{$building}[string] and $buildings{$building}[string] eq $buf );
+            next
+              if $buildings{$building}
+                  and defined $buildings{$building}[string]
+                  and $buildings{$building}[string] eq $buf;
             $buildings{$building}[string] = $buf;
 
             # extract coordinates of current creature and skip if out of bounds
@@ -745,7 +752,7 @@ sub item_update_loop {
                     $largest_id = $id;
                 }
 
-                next if ( defined $items{$id}[string] and $items{$id}[string] eq $buf );
+                next if $items{$id} and defined $items{$id}[string] and $items{$id}[string] eq $buf;
                 $items{$id}[string] = $buf;
 
                 # extract state of current item and skip applicable items
@@ -1141,19 +1148,20 @@ sub generate_display_list {
     for my $texture ( 0 .. $#texture_ID ) {    # cycle through textures
 
         glBindTexture( GL_TEXTURE_2D, $texture_ID[$texture] );    # set texture
-        my $tile       = $tiles[$z][type];                        # get pointers to current layer
-        my $tile_below = $tiles[ $z - 1 ][type];                  # as well as to layer above and below
-        my $tile_above = $tiles[ $z + 1 ][type];
+        my $tile       = $tiles[$z]       ? $tiles[$z][type]       : undef;    # get pointers to current layer
+        my $tile_below = $tiles[ $z - 1 ] ? $tiles[ $z - 1 ][type] : undef;    # as well as to layer above and below
+        my $tile_above = $tiles[ $z + 1 ] ? $tiles[ $z + 1 ][type] : undef;
 
         #my $occup      = $tiles[$z][occup];                       # get pointers to current layer
-        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) {          # cycle through tiles in current slice on layer
+        for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) {    # cycle through tiles in current slice on layer
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
 
-                next if !defined $tile->[$rx][$ry];               # skip tile if undefined
-                my $type = $tile->[$rx][$ry];                     # store type of current tile
-                next if $type == 32;                              # skip if tile is air
+                next if !defined $tile->[$rx][$ry];         # skip tile if undefined
+                my $type = $tile->[$rx][$ry];               # store type of current tile
+                next if $type == 32;                        # skip if tile is air
                 next
-                  if !defined $TILE_TYPES[$type][base_texture];    # skip if tile type doesn't have associated texture
+                  if !$TILE_TYPES[$type]
+                      or !defined $TILE_TYPES[$type][base_texture];  # skip if tile type doesn't have associated texture
                 next
                   if $TILE_TYPES[$type][base_texture] !=
                       $texture;    # skip if tile type texture doesn't match current texture
@@ -1166,24 +1174,27 @@ sub generate_display_list {
                 my $x_mod = $rx % 16;
                 my $y_mod = $ry % 16;
 
-                $below = $TILE_TYPES[$type_below][base_visual] if $type_below and $TILE_TYPES[$type_below][base_visual];
-                $above = $TILE_TYPES[$type_above][base_visual] if $type_above and $TILE_TYPES[$type_above][base_visual];
+                $below = $TILE_TYPES[$type_below][base_visual] if $type_below and $TILE_TYPES[$type_below];
+                $above = $TILE_TYPES[$type_above][base_visual] if $type_above and $TILE_TYPES[$type_above];
 
                 $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
                   if $tile->[$rx][ $ry - 1 ]
-                      and $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      and $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ]
                       and $y_mod != 0;
+
                 $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
                   if $tile->[ $rx - 1 ][$ry]
-                      and $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      and $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ]
                       and $x_mod != 0;
+
                 $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
                   if $tile->[$rx][ $ry + 1 ]
-                      and $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      and $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ]
                       and $y_mod != 15;
+
                 $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
                   if $tile->[ $rx + 1 ][$ry]
-                      and $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      and $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ]
                       and $x_mod != 15;
 
                 $brightness_mod *= 0.75
@@ -1256,23 +1267,29 @@ sub generate_display_list {
 
                     when ( RAMP ) {
                         next
-                          if ( defined $type_below
-                            && $TILE_TYPES[$type_below][base_visual] == RAMP );
+                          if defined $type_below
+                              and $TILE_TYPES[$type_below]
+                              and $TILE_TYPES[$type_below][base_visual] == RAMP;
+
                         $northeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
                           if $tile->[ $rx + 1 ][ $ry - 1 ]
-                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
+                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ]
                               and ( $ry != 0 || $rx != $x_max );
+
                         $southeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
                           if $tile->[ $rx + 1 ][ $ry + 1 ]
-                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
+                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ]
                               and ( $ry != $y_max || $rx != $x_max );
+
                         $southwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
                           if $tile->[ $rx - 1 ][ $ry + 1 ]
-                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
+                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ]
                               and ( $ry != $y_max || $ry != 0 );
+
                         $northwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
                           if $tile->[ $rx - 1 ][ $ry - 1 ]
-                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual] && ( $ry != 0 || $ry != 0 );
+                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ]
+                              and ( $ry != 0 || $ry != 0 );
 
                         my $surroundings = 0;
                         $surroundings += ( $north == WALL )     ? 0b1000_0000 : 0;
@@ -1313,7 +1330,7 @@ sub generate_display_list {
     }
     glEndList();
 
-    if ( $cache[$id][mask_lists][$z] ) {
+    if ( $cache[$id] and $cache[$id][mask_lists] and $cache[$id][mask_lists][$z] ) {
         $dl = $cache[$id][mask_lists][$z];
     }
     else {
@@ -1823,7 +1840,11 @@ sub render_models {
         }
 
         # draw buildings
-        if ( defined $cells[$bx][$by][building_list][$z] ) {
+        if (    $cells[$bx]
+            and $cells[$bx][$by]
+            and $cells[$bx][$by][building_list]
+            and defined $cells[$bx][$by][building_list][$z] )
+        {
             my $building_list_size = @{ $cells[$bx][$by][building_list][$z] };
             for my $entry ( 0 .. $building_list_size ) {
                 my $building_id = $cells[$bx][$by][building_list][$z][$entry];
@@ -1836,7 +1857,7 @@ sub render_models {
                 glTranslatef( $x, $z, $y );
 
                 my $vtable_id = $buildings{$building_id}[b_vtable_id];
-                $vtable_id = 'default' if !defined $building_visuals{$vtable_id}[0];
+                $vtable_id = 'default' if !$building_visuals{$vtable_id};
                 my $model_name = $building_visuals{$vtable_id}[0];
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
@@ -1944,28 +1965,30 @@ sub render_ui {
     glRasterPos2i( 2, 122 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    if ( $tiles[$zmouse][type][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
-        glRasterPos2i( 2, 134 );
-        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
+    if ( $tiles[$zmouse] ) {
+        if ( $tiles[$zmouse][type] and $tiles[$zmouse][type][$xmouse] and $tiles[$zmouse][type][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
+            glRasterPos2i( 2, 134 );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
 
-    if ( $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
-        glRasterPos2i( 2, $c{window_height} - 14 );
-        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
+        if ( $tiles[$zmouse][desig] and $tiles[$zmouse][desig][$xmouse] and $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
+            glRasterPos2i( 2, $c{window_height} - 14 );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
 
-    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
-        glRasterPos2i( 2, $c{window_height} - 26 );
-        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-    }
+        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
+            glRasterPos2i( 2, $c{window_height} - 26 );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
 
-    if ( $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-        $buf = sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
-        glRasterPos2i( 2, $c{window_height} - 2 );
-        glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+            $buf = sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
+            glRasterPos2i( 2, $c{window_height} - 2 );
+            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+        }
     }
 
     $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
