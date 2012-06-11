@@ -23,11 +23,11 @@
 ### Translated from C to Perl by J-L Morel <jl_morel@bribes.org>
 ### ( http://www.bribes.org/perl/wopengl.html )
 
+use strictures;
+
 package Lifevis::Viewer;
 
 use 5.010;
-use strict;
-use warnings;
 
 BEGIN {
     use Cwd 'getcwd';
@@ -253,7 +253,7 @@ BEGIN {
 
     sub update_memory_use {
         require Win32::OLE;
-        import Win32::OLE qw(in);
+        Win32::OLE->import( 'in' );
         my @state_array;
         my $pid              = $PROCESS_ID;
         my $sleep_time       = 2;
@@ -396,23 +396,23 @@ sub run {
     # Print out a bit of help dialog.
     print PROGRAM_TITLE, "\n";
 
-    $loc_loop = new Coro \&location_update_loop;
+    $loc_loop = Coro->new( \&location_update_loop );
     $loc_loop->ready;
     cede();
 
     generate_model_display_lists();
-    $land_loop = new Coro \&landscape_update_loop;
+    $land_loop = Coro->new( \&landscape_update_loop );
     $land_loop->ready;
 
-    $creature_loop = new Coro \&creature_update_loop;
+    $creature_loop = Coro->new( \&creature_update_loop );
 
-    $buil_loop = new Coro \&building_update_loop;
+    $buil_loop = Coro->new( \&building_update_loop );
 
-    $item_loop = new Coro \&item_update_loop;
+    $item_loop = Coro->new( \&item_update_loop );
 
-    $memory_loop = new Coro \&memory_control_loop;
+    $memory_loop = Coro->new( \&memory_control_loop );
 
-    $render_loop = new Coro \&render_scene;
+    $render_loop = Coro->new( \&render_scene );
     $render_loop->prio( 1 );
 
     # Pass off control to OpenGL.
