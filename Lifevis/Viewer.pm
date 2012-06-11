@@ -1166,17 +1166,25 @@ sub generate_display_list {
                 my $x_mod = $rx % 16;
                 my $y_mod = $ry % 16;
 
-                $below = $TILE_TYPES[$type_below][base_visual] if $type_below;
-                $above = $TILE_TYPES[$type_above][base_visual] if $type_above;
+                $below = $TILE_TYPES[$type_below][base_visual] if $type_below and $TILE_TYPES[$type_below][base_visual];
+                $above = $TILE_TYPES[$type_above][base_visual] if $type_above and $TILE_TYPES[$type_above][base_visual];
 
                 $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                  if $tile->[$rx][ $ry - 1 ] && $y_mod != 0;
+                  if $tile->[$rx][ $ry - 1 ]
+                      and $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
+                      and $y_mod != 0;
                 $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                  if $tile->[ $rx - 1 ][$ry] && $x_mod != 0;
+                  if $tile->[ $rx - 1 ][$ry]
+                      and $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
+                      and $x_mod != 0;
                 $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                  if $tile->[$rx][ $ry + 1 ] && $y_mod != 15;
+                  if $tile->[$rx][ $ry + 1 ]
+                      and $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
+                      and $y_mod != 15;
                 $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                  if $tile->[ $rx + 1 ][$ry] && $x_mod != 15;
+                  if $tile->[ $rx + 1 ][$ry]
+                      and $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
+                      and $x_mod != 15;
 
                 $brightness_mod *= 0.75
                   if $solids{ $TILE_TYPES[$type][base_visual] }
@@ -1252,16 +1260,19 @@ sub generate_display_list {
                             && $TILE_TYPES[$type_below][base_visual] == RAMP );
                         $northeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
                           if $tile->[ $rx + 1 ][ $ry - 1 ]
-                              && ( $ry != 0 || $rx != $x_max );
+                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
+                              and ( $ry != 0 || $rx != $x_max );
                         $southeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
                           if $tile->[ $rx + 1 ][ $ry + 1 ]
-                              && ( $ry != $y_max || $rx != $x_max );
+                              and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
+                              and ( $ry != $y_max || $rx != $x_max );
                         $southwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
                           if $tile->[ $rx - 1 ][ $ry + 1 ]
-                              && ( $ry != $y_max || $ry != 0 );
+                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
+                              and ( $ry != $y_max || $ry != 0 );
                         $northwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
                           if $tile->[ $rx - 1 ][ $ry - 1 ]
-                              && ( $ry != 0 || $ry != 0 );
+                              and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual] && ( $ry != 0 || $ry != 0 );
 
                         my $surroundings = 0;
                         $surroundings += ( $north == WALL )     ? 0b1000_0000 : 0;
