@@ -114,8 +114,11 @@ my @ramps   = get_ramp_bitmasks();
 my %vtables = get_vtables();
 
 my $config_loaded;
-my %c;
-tie %c, 'Config::Simple', 'lifevis.cfg';
+my %c = Config::Simple->new('lifevis.cfg')->vars;
+for my $key ( keys %c ) {
+    (my $new_key = $key) =~ s/^default\.//;
+    $c{$new_key} = delete $c{$key};
+}
 $c{redraw_delay} = 0.5 / $c{fps_limit};
 
 my $memory_limit;
