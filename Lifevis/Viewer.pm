@@ -1608,6 +1608,8 @@ sub render_scene {
 
         glColor3f( 0.75, 0.75, 0.75 );    # Basic polygon color
 
+        $time{render_setup} = ( my $t_model = time ) - $t0;
+
         render_models();
 
         ## get pixels of cursor
@@ -1654,6 +1656,8 @@ sub render_scene {
         glPolygonMode( GL_FRONT, GL_FILL );
         glBindTexture( GL_TEXTURE_2D, $texture_ID[grass] );
 
+        $time{render_model} = ( my $t_ui = time ) - $t_model;
+
 =cut        glBindTexture( GL_TEXTURE_2D, $texture_ID[test] );
         glEnable(GL_POINT_SPRITE);
         glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
@@ -1674,7 +1678,7 @@ sub render_scene {
         glPopMatrix();        # Done with this special projection matrix.  Throw it away.
         glutSwapBuffers();    # All done drawing.  Let's show it.
 
-        my $t1 = time;
+        $time{render_ui} = ( my $t1 = time ) - $t_ui;
         $time{render} = $t1 - $t0;
 
         $next_render_time = time + $c{redraw_delay} - $time{render};
@@ -1685,28 +1689,40 @@ sub render_scene {
 }
 
 sub render_models {
+    my $t0 = time;
     my @query_cells;
+
+    $time{$_} = 0 for qw( render_cells_prepare render_cells_retrieve render_cells_call render_cells_store glCallList );
 
     for my $z ( 0 .. $ceiling_slice ) {
 
         # cycle through cells in range around cursor to render
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
+                my $cell_0 = time;
 
                 my $cache_ptr = $cells[$bx][$by][cache_ptr];
                 next if !defined $cache_ptr;
                 next if !defined $cache[$cache_ptr];
 
+                $time{render_cells_prepare} += ( my $t_cells_prep = time ) - $cell_0;
+
                 # draw landscape
                 my $slices = $cache[$cache_ptr][display_lists];
                 if ( $slices->[$z] ) {
+                    $time{render_cells_retrieve} += ( my $t_cell_retrieve = time ) - $t_cells_prep;
                     glCallList( $slices->[$z] );
+                    $time{glCallList}++;
+                    $time{render_cells_call} += ( my $t_cell_call = time ) - $t_cell_retrieve;
                     push @query_cells, [ $bx, $by, $z ];
+                    $time{render_cells_store} += ( my $t_cell_store = time ) - $t_cell_call;
                 }
 
             }
         }
     }
+
+    $time{render_cells} = ( my $t_cells = time ) - $t0;
 
     my @cells_to_draw;
 
@@ -1748,6 +1764,8 @@ sub render_models {
     }
 
     $pixels = $#cells_to_draw . "/" . $#query_cells;
+
+    $time{render_occlusion} = ( my $t_occlusion = time ) - $t_cells;
 
     for my $cell ( @cells_to_draw ) {
         my $bx         = $cell->[0];
@@ -1854,6 +1872,8 @@ sub render_models {
         }
 
     }
+
+    $time{render_contents} = ( my $t_contents = time ) - $t_occlusion;
 
     return;
 }
@@ -1977,6 +1997,54 @@ sub render_ui {
     $buf = "Time: $timesum secs";
     glRasterPos2i( 2, 262 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = "Render-Times:";
+    glRasterPos2i( 2, 274 );
+    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+
+    $buf = sprintf "% 7d ms - Frame", ( $time{render} || 0 ) * 1000;
+    glRasterPos2i( 2, 286 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "    % 7d ms - Setup", $time{render_setup} * 1000;
+    glRasterPos2i( 2, 298 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "    % 7d ms - Models", $time{render_model} * 1000;
+    glRasterPos2i( 2, 310 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "        % 7d ms - Cells", $time{render_cells} * 1000;
+    glRasterPos2i( 2, 322 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "            % 7d ms - Prepare", $time{render_cells_prepare} * 1000;
+    glRasterPos2i( 2, 334 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "            % 7d ms - Retrieve", $time{render_cells_retrieve} * 1000;
+    glRasterPos2i( 2, 346 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "            % 7d ms - Calls ( $time{glCallList} )", $time{render_cells_call} * 1000;
+    glRasterPos2i( 2, 358 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "            % 7d ms - Store", $time{render_cells_store} * 1000;
+    glRasterPos2i( 2, 370 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "        % 7d ms - Occlusion", $time{render_occlusion} * 1000;
+    glRasterPos2i( 2, 382 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "        % 7d ms - Contents", $time{render_contents} * 1000;
+    glRasterPos2i( 2, 394 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
+
+    $buf = sprintf "    % 7d ms - UI", ( $time{render_ui} || 0 ) * 1000;
+    glRasterPos2i( 2, 416 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
 
     #$buf = "Crea: $creature_length";
     #glRasterPos2i( 2, 222 );
