@@ -139,12 +139,10 @@ my %buildings;
 my $current_buil_proc_task = 0;
 my $max_buil_proc_tasks    = 0;
 
-my @item_present;
 my $current_item_proc_task = 0;
 my $max_item_proc_tasks    = 0;
 my %items;
 my $gap = 65535;
-my %bucket_strings;
 my %solids = map { $_ => 1 } FLOOR, TREE, SHRUB, BOULDER, SAPLING, STAIR, STAIR_UP, STAIR_DOWN, PILLAR, FORTIF;
 
 my ( $mouse_cursor_x, $mouse_cursor_y );
@@ -209,20 +207,12 @@ my $next_item_time      = 0;
 my $next_cursor_time    = 0;
 my $next_mem_check_time = 0;
 
-my $creature_delay_counter;
 my $creature_loop;
-
-my $location_delay_counter;
 my $loc_loop;
-
-my $landscape_delay_counter;
 my $land_loop;
-
-my $building_delay_counter;
 my $buil_loop;
-
-my $item_delay_counter;
 my $item_loop;
+
 my $force_rt = 0;
 my $pixels   = '';
 
@@ -1325,9 +1315,6 @@ sub draw_quadrangle {
     );
     my $norms = OpenGL::Array->new_list( GL_FLOAT, @norms );
 
-    my @indices = ( 0 .. 36 );
-    my $indices = OpenGL::Array->new_list( GL_UNSIGNED_INT, @indices );
-
     glVertexPointer_p( 3, $verts );
     glNormalPointer_p( $norms );
     glTexCoordPointer_p( 2, $texcoords );
@@ -1372,7 +1359,7 @@ sub new_process_block {
         my @designation_data = unpack( 'L' x 256, $cell_string->[desig] ) if $desig_changed;
         my @occupation_data  = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
 
-        my ( $rx, $ry, $tile, $desig, $desig_below, $occup );
+        my ( $tile, $desig, $desig_below, $occup );
 
         my $bx_scaled  = $bx * 16;
         my $by_scaled  = $by * 16;
@@ -1554,7 +1541,6 @@ sub render_scene {
 
     while ( 1 ) {
         my $t0 = time;
-        my $buf;    # For our strings.
 
         # Enables, disables or otherwise adjusts
         # as appropriate for our current settings.
@@ -1688,7 +1674,7 @@ sub render_models {
                     $time{glCallList}++;
                     $time{render_cells_call} += ( my $t_cell_call = time ) - $t_cell_retrieve;
                     push @query_cells, [ $bx, $by, $z ];
-                    $time{render_cells_store} += ( my $t_cell_store = time ) - $t_cell_call;
+                    $time{render_cells_store} += time - $t_cell_call;
                 }
 
             }
@@ -1858,7 +1844,7 @@ sub render_models {
 
     }
 
-    $time{render_contents} = ( my $t_contents = time ) - $t_occlusion;
+    $time{render_contents} = time - $t_occlusion;
 
     return;
 }
