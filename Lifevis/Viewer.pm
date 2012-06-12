@@ -1178,22 +1178,26 @@ sub generate_display_list {
                 $above = $TILE_TYPES[$type_above][base_visual] if $type_above and $TILE_TYPES[$type_above];
 
                 $north = $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ][base_visual]
-                  if $tile->[$rx][ $ry - 1 ]
+                  if $tile->[$rx]
+                      and $tile->[$rx][ $ry - 1 ]
                       and $TILE_TYPES[ $tile->[$rx][ $ry - 1 ] ]
                       and $y_mod != 0;
 
                 $west = $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ][base_visual]
-                  if $tile->[ $rx - 1 ][$ry]
+                  if $tile->[ $rx - 1 ]
+                      and $tile->[ $rx - 1 ][$ry]
                       and $TILE_TYPES[ $tile->[ $rx - 1 ][$ry] ]
                       and $x_mod != 0;
 
                 $south = $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ][base_visual]
-                  if $tile->[$rx][ $ry + 1 ]
+                  if $tile->[$rx]
+                      and $tile->[$rx][ $ry + 1 ]
                       and $TILE_TYPES[ $tile->[$rx][ $ry + 1 ] ]
                       and $y_mod != 15;
 
                 $east = $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ][base_visual]
-                  if $tile->[ $rx + 1 ][$ry]
+                  if $tile->[ $rx + 1 ]
+                      and $tile->[ $rx + 1 ][$ry]
                       and $TILE_TYPES[ $tile->[ $rx + 1 ][$ry] ]
                       and $x_mod != 15;
 
