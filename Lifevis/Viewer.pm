@@ -68,9 +68,6 @@ use Carp;
 use utf8;
 use English qw(-no_match_vars);
 
-use threads;
-use threads::shared;
-
 use Config::Simple;
 use LWP::Simple;
 use Win32;
@@ -83,6 +80,7 @@ use Coro qw[ cede schedule ];
 use OpenGL::Image;
 use Math::Trig;
 use Win32;
+use Win32::API;
 use Win32::Process::List;
 use Win32::Process;
 use Win32::Process::Memory;
@@ -97,6 +95,8 @@ use Lifevis::df_internals;
 use Lifevis::ProcessConnection;
 use Lifevis::Vtables;
 
+prepare_win32_size_check();
+
 $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
@@ -105,8 +105,7 @@ our $VERSION = "0.258_003";
 
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
-my $memory_use;
-$memory_use = 0;
+my $memory_use = win32_size_check();
 
 my %building_visuals = get_df_building_visuals();
 my @TILE_TYPES       = get_df_tile_type_data();
@@ -115,7 +114,6 @@ my %model_display_lists;
 my @ramps   = get_ramp_bitmasks();
 my %vtables = get_vtables();
 
-my $config_loaded;
 my %c = Config::Simple->new( 'lifevis.cfg' )->vars;
 for my $key ( keys %c ) {
     ( my $new_key = $key ) =~ s/^default\.//;
@@ -123,9 +121,6 @@ for my $key ( keys %c ) {
 }
 $c{redraw_delay} = 0.5 / $c{fps_limit};
 
-my $memory_limit;
-$memory_limit  = $c{memory_limit};
-$config_loaded = 1;
 my $time_slice = $c{time_slice};
 
 my ( $xcount, $ycount, $zcount );    # dimensions of the map data we're dealing with, counts in cells
@@ -203,12 +198,7 @@ my $slice_difference;
 my $ceiling_locked = 0;
 my $view_range_changed;
 
-my $memory_needs_clears = 0;
-my $memory_full_checks  = 0;
-my $memory_clears       = 0;
 my $memory_loop;
-my $all_protected;
-
 my $render_loop;
 my $redraw_needed;
 
@@ -217,6 +207,7 @@ my $next_landscape_time = 0;
 my $next_building_time  = 0;
 my $next_item_time      = 0;
 my $next_cursor_time    = 0;
+my $next_mem_check_time = 0;
 
 my $creature_delay_counter;
 my $creature_loop;
@@ -235,7 +226,7 @@ my $item_loop;
 my $force_rt = 0;
 my $pixels   = '';
 
-my %time = ( landscape => 0, creature => 0, building => 0, item => 0, cursor => 0 );
+my %time = ( landscape => 0, creature => 0, building => 0, item => 0, cursor => 0, mem_check => 0 );
 
 my @offsets;
 my $df_proc_handle;
@@ -244,49 +235,6 @@ my $proc;
 my $occlusion_supported = 1;
 
 __PACKAGE__->run( @ARGV ) unless caller();
-
-BEGIN {
-    share( %c );
-    share( $config_loaded );
-    share( $memory_use );
-    share( $memory_needs_clears );
-    share( $memory_limit );
-    share( $all_protected );
-    my $thr = threads->create( { 'stack_size' => 64 }, \&update_memory_use );
-    $thr->detach();
-
-    sub update_memory_use {
-        require Win32::OLE;
-        Win32::OLE->import( 'in' );
-        my @state_array;
-        my $pid              = $PROCESS_ID;
-        my $sleep_time       = 2;
-        my $small_sleep_time = 0.1;
-
-        sleep $small_sleep_time while ( !$config_loaded );
-
-        while ( 1 ) {
-            @state_array = in(
-                Win32::OLE->GetObject( "winmgmts:\\\\.\\root\\CIMV2" )->ExecQuery(
-                    'SELECT PrivatePageCount FROM Win32_Process' . " WHERE ProcessId = $pid",
-                    'WQL', 0x10 | 0x20
-                )
-            );
-            $memory_use = $state_array[0]->{PrivatePageCount};
-
-            if ( $memory_use > $memory_limit && !$all_protected ) {
-                $memory_needs_clears = 1;
-                sleep $small_sleep_time;
-            }
-            else {
-                $all_protected = 0;
-                sleep $sleep_time;
-            }
-        }
-        Win32::OLE->Uninitialize();
-        return 1;
-    }
-}
 
 sub check_for_new_version {
     my $source = 'http://code.google.com/p/dwarvis/wiki/LifevisVersionInfo';
@@ -1080,72 +1028,38 @@ sub landscape_update_loop {
 
 sub memory_control_loop {
 
+    my $memory_needs_clears;
+    my $all_protected;
+
     while ( 1 ) {
+        my $delay = $c{mem_check_update_delay};
+        $delay *= 10 if !$memory_needs_clears or $all_protected;
+        say "$delay - $time{mem_check}";
+        $next_mem_check_time = time + $delay - $time{mem_check};
+
         schedule();
 
-        $memory_full_checks++;
+        my $t0 = time;
 
-        my @protected_caches;
+        $memory_use = win32_size_check();
 
-        # cycle through cells in range around cursor to generate display lists
-        for my $bx ( $min_x_range .. $max_x_range ) {
-            for my $by ( $min_y_range .. $max_y_range ) {
-                if (   defined $cells[$bx][$by]
-                    && defined $cells[$bx][$by][cache_ptr] )
-                {
-                    $protected_caches[ $cells[$bx][$by][cache_ptr] ] = 1;
-                }
-            }
-        }
-
-        # TODO: Limit cache deletions so $c{view_range} is never undercut
-        # check that we're not using too much memory and destroy cache entries if necessary
-
-        my $delete;
-        my $use;
-
-        for my $id ( 0 .. $#cache ) {
-
-            # skip empty caches
-            next if !defined $cache[$id][use_counter];
-
-            # skip caches we're currently looking at
-            next if $protected_caches[$id];
-
-            if ( !defined $use || $cache[$id][use_counter] < $use ) {
-                $delete = $id;
-                $use    = $cache[$id][use_counter];
-            }
-        }
-
-        if ( defined $delete ) {
-            $memory_clears++;
-
-            # delete landscape display lists
-            my $slices = $cache[$delete][display_lists];
-            for my $slice ( 0 .. @{$slices} - 1 ) {
-                glDeleteLists( $cache[$delete][display_lists][$slice], 1 )
-                  if ( $cache[$delete][display_lists][$slice] );
-            }
-
-            # delete landscape masks
-            $slices = $cache[$delete][mask_lists];
-            for my $slice ( 0 .. @{$slices} - 1 ) {
-                glDeleteLists( $cache[$delete][mask_lists][$slice], 1 )
-                  if ( $cache[$delete][mask_lists][$slice] );
-            }
-
-            undef ${ $cache[$delete][cell_ptr] };
-
-            undef $cache[$delete];
-            push @cache_bucket, $delete;
-        }
-        else {
-            $all_protected = 1;
-        }
-
-        $memory_needs_clears = 0;
+        my $t1 = time;
+        $time{mem_check} = sprintf( "%.3f", $t1 - $t0 );
     }
+}
+
+sub prepare_win32_size_check {
+    Win32::API->Import( 'kernel32', 'GetCurrentProcess',    '',    'I' );
+    Win32::API->Import( 'psapi',    'GetProcessMemoryInfo', 'IPI', 'I' );
+    my $process_handle = GetCurrentProcess();
+    my $memory_counters = pack "B32B32IIIIIIII", 0;
+    no warnings 'once';
+    *win32_size_check = sub {
+        GetProcessMemoryInfo( $process_handle, $memory_counters, 40 );
+        my $working_set = ( unpack "B32B32IIIIIIII", $memory_counters )[3];
+        return $working_set / 1_048_576;
+    };
+    return;
 }
 
 # TODO : comment this better
@@ -1623,8 +1537,11 @@ sub idle_tasks {
         $buil_loop->ready;
     }
 
+    if ( $time > $next_mem_check_time ) {
+        $memory_loop->ready;
+    }
+
     $render_loop->ready if $force_rt or ( $redraw_needed and $time > $next_render_time );
-    $memory_loop->ready if $memory_needs_clears;
     cede();
 
     return;
@@ -1993,7 +1910,7 @@ sub render_ui {
     glRasterPos2i( 2, 98 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'Mem: %.2f %%', ( ( $memory_use / $c{memory_limit} ) * 100 );
+    $buf = sprintf 'Mem: %d MB', $memory_use;
     glRasterPos2i( 2, 110 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
@@ -2045,10 +1962,6 @@ sub render_ui {
 
     $buf = "Ceiling: $ceiling_slice - Floor: $floor_slice";
     glRasterPos2i( 2, 198 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Mem-Act: $memory_clears / $memory_full_checks";
-    glRasterPos2i( 2, 210 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
     $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks : $time{building} secs";
