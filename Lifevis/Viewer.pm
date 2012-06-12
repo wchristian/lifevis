@@ -1999,11 +1999,11 @@ sub render_ui {
     glRasterPos2i( 2, 158 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = sprintf 'Working threads: %d', Coro::nready;
+    $buf = sprintf 'Working Coro threads: %d', Coro::nready;
     glRasterPos2i( 2, 146 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = "Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
+    $buf = "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
     glRasterPos2i( 2, 172 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
