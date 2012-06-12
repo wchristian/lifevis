@@ -1185,8 +1185,8 @@ sub generate_display_list {
                 next
                   if $TILE_TYPES[$type][base_texture] !=
                       $texture;    # skip if tile type texture doesn't match current texture
-                my $type_below     = $tile_below->[$rx][$ry];
-                my $type_above     = $tile_above->[$rx][$ry];
+                my $type_below = $tile_below->[$rx] ? $tile_below->[$rx][$ry] : undef;
+                my $type_above = $tile_above->[$rx] ? $tile_above->[$rx][$ry] : undef;
                 my $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
                 my ( $above, $below, $north, $south, $west, $east ) = ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
@@ -1296,22 +1296,26 @@ sub generate_display_list {
                               and $TILE_TYPES[$type_below][base_visual] == RAMP;
 
                         $northeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ][base_visual]
-                          if $tile->[ $rx + 1 ][ $ry - 1 ]
+                          if $tile->[ $rx + 1 ]
+                              and $tile->[ $rx + 1 ][ $ry - 1 ]
                               and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry - 1 ] ]
                               and ( $ry != 0 || $rx != $x_max );
 
                         $southeast = $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ][base_visual]
-                          if $tile->[ $rx + 1 ][ $ry + 1 ]
+                          if $tile->[ $rx + 1 ]
+                              and $tile->[ $rx + 1 ][ $ry + 1 ]
                               and $TILE_TYPES[ $tile->[ $rx + 1 ][ $ry + 1 ] ]
                               and ( $ry != $y_max || $rx != $x_max );
 
                         $southwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ][base_visual]
-                          if $tile->[ $rx - 1 ][ $ry + 1 ]
+                          if $tile->[ $rx - 1 ]
+                              and $tile->[ $rx - 1 ][ $ry + 1 ]
                               and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry + 1 ] ]
                               and ( $ry != $y_max || $ry != 0 );
 
                         $northwest = $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ][base_visual]
-                          if $tile->[ $rx - 1 ][ $ry - 1 ]
+                          if $tile->[ $rx - 1 ]
+                              and $tile->[ $rx - 1 ][ $ry - 1 ]
                               and $TILE_TYPES[ $tile->[ $rx - 1 ][ $ry - 1 ] ]
                               and ( $ry != 0 || $ry != 0 );
 
@@ -1830,7 +1834,11 @@ sub render_models {
         next if !defined $cache[$cache_ptr];
 
         # draw creatures
-        if ( defined $cells[$bx][$by][creature_list][$z] ) {
+        if (    $cells[$bx]
+            and $cells[$bx][$by]
+            and $cells[$bx][$by][creature_list]
+            and defined $cells[$bx][$by][creature_list][$z] )
+        {
             my $creature_list_size = @{ $cells[$bx][$by][creature_list][$z] };
             for my $entry ( 0 .. $creature_list_size ) {
                 my $creature_id = $cells[$bx][$by][creature_list][$z][$entry];
@@ -1896,7 +1904,11 @@ sub render_models {
         }
 
         # draw items
-        if ( defined $cells[$bx][$by][item_list][$z] ) {
+        if (    $cells[$bx]
+            and $cells[$bx][$by]
+            and $cells[$bx][$by][item_list]
+            and defined $cells[$bx][$by][item_list][$z] )
+        {
             my $item_list_size = @{ $cells[$bx][$by][item_list][$z] };
             for my $entry ( 0 .. $item_list_size ) {
                 my $item_id = $cells[$bx][$by][item_list][$z][$entry];
