@@ -2421,6 +2421,7 @@ sub process_mouse_click {
         $last_mouse_x = $x;
         $last_mouse_y = $y;
 
+        # less view range
         if (   $x > $c{window_width} - 42
             && $x < $c{window_width} - 22
             && $y > $c{window_height} - 20
@@ -2433,6 +2434,8 @@ sub process_mouse_click {
                 $view_range_changed = 1;
             }
         }
+
+        # toggle ceiling lock
         elsif ($x > $c{window_width} - 42
             && $x < $c{window_width} - 20
             && $y > 0
@@ -2448,6 +2451,8 @@ sub process_mouse_click {
                 $redraw_needed  = 1;
             }
         }
+
+        # more view range
         elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}
             && $y > $c{window_height} - 20
@@ -2462,6 +2467,8 @@ sub process_mouse_click {
                 $view_range_changed = 1;
             }
         }
+
+        # set slices
         elsif ($x > $c{window_width} - 20
             && $x < $c{window_width}
             && $y > 0
@@ -2474,6 +2481,8 @@ sub process_mouse_click {
             $changing_ceiling = 1;
             $redraw_needed    = 1;
         }
+
+        # rotate
         else {
             $mouse_cursor_x = $x;
             $mouse_cursor_y = $y;
