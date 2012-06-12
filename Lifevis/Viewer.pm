@@ -196,7 +196,10 @@ my $cam_angle  = 45;
 
 my $rotating = 0;
 my $changing_ceiling;
+my $changing_floor;
 my $ceiling_slice;
+my $floor_slice;
+my $slice_difference;
 my $ceiling_locked = 0;
 my $view_range_changed;
 
@@ -419,10 +422,21 @@ sub run {
     # Pass off control to OpenGL.
     # Above functions are called as appropriate.
     print "switching to main loop...\n";
-    $ceiling_slice = $zcount;
 
+    initialize_ceiling_floor();
     glutMainLoop();
 
+    return;
+}
+
+sub initialize_ceiling_floor {
+    my $buf = "";
+    _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4, $buf );
+    my $viewport_z = unpack( "L", $buf );
+    $ceiling_slice = $viewport_z + 10;
+    $ceiling_slice = $zcount if $ceiling_slice > $zcount;
+    $floor_slice   = $viewport_z - 10;
+    $floor_slice   = 0 if $floor_slice < 0;
     return;
 }
 
@@ -842,8 +856,7 @@ sub location_update_loop {
 
         my $t0 = time;
 
-        my $old_ceiling_slice = $ceiling_slice;
-        my $buf               = "";
+        my $buf = "";
 
         $xmouse_old = $xmouse;
         $ymouse_old = $ymouse;
@@ -881,12 +894,19 @@ sub location_update_loop {
             $zmouse = $viewport_z;
         }
 
-        $ceiling_slice = $zmouse if $ceiling_locked;
+        my $old_ceiling_slice = $ceiling_slice;
+        my $old_floor_slice   = $floor_slice;
+        if ( $ceiling_locked ) {
+            $ceiling_slice = $zmouse;
+            $floor_slice   = $ceiling_slice - $slice_difference;
+            $floor_slice   = 0 if $floor_slice < 0;
+        }
 
         if (   $xmouse != $xmouse_old
             || $ymouse != $ymouse_old
             || $zmouse != $zmouse_old
             || $ceiling_slice != $old_ceiling_slice
+            || $floor_slice != $old_floor_slice
             || $view_range_changed )
         {
             $view_range_changed = 0;
@@ -1726,7 +1746,7 @@ sub render_models {
 
     $time{$_} = 0 for qw( render_cells_prepare render_cells_retrieve render_cells_call render_cells_store glCallList );
 
-    for my $z ( 0 .. $ceiling_slice ) {
+    for my $z ( $floor_slice .. $ceiling_slice ) {
 
         # cycle through cells in range around cursor to render
         for my $bx ( $min_x_range .. $max_x_range ) {
@@ -2011,7 +2031,7 @@ sub render_ui {
     glRasterPos2i( 2, 186 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
-    $buf = "Ceiling: $ceiling_slice";
+    $buf = "Ceiling: $ceiling_slice - Floor: $floor_slice";
     glRasterPos2i( 2, 198 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
 
@@ -2129,6 +2149,11 @@ sub render_ui {
     glRasterPos2i( $c{window_width} - 19,
         $c{window_height} - ( 20 + ( $ceiling_slice * ( $c{window_height} - 40 ) / $zcount ) ) );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, $ceiling_slice );
+
+    glColor4f( 1, 1, 0, 1 );
+    glRasterPos2i( $c{window_width} - 19,
+        $c{window_height} - ( 20 + ( $floor_slice * ( $c{window_height} - 40 ) / $zcount ) ) );
+    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $floor_slice );
 
     glEnable( GL_TEXTURE_2D );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
@@ -2431,12 +2456,12 @@ sub process_mouse_click {
         {
             if ( $ceiling_locked == 1 ) {
                 $ceiling_locked = 0;
-                $ceiling_slice  = $zcount;
                 $redraw_needed  = 1;
             }
             else {
-                $ceiling_locked = 1;
-                $redraw_needed  = 1;
+                $ceiling_locked   = 1;
+                $redraw_needed    = 1;
+                $slice_difference = $ceiling_slice - $floor_slice;
             }
         }
 
@@ -2457,17 +2482,32 @@ sub process_mouse_click {
         }
 
         # set slices
-        elsif ($x > $c{window_width} - 20
-            && $x < $c{window_width}
-            && $y > 0
-            && $y < $c{window_height} - 22 )
+        elsif (!$ceiling_locked
+            and $x > $c{window_width} - 20
+            and $x < $c{window_width}
+            and $y > 0
+            and $y < $c{window_height} - 22 )
         {
-            $ceiling_slice =
+            my $target_slice =
               int( ( ( $y / ( ( $c{window_height} - 22 ) / ( $zcount + 2 ) ) ) - ( $zcount ) ) * -1 ) + 2;
-            $ceiling_slice = 0       if $ceiling_slice < 0;
-            $ceiling_slice = $zcount if $ceiling_slice > $zcount;
-            $changing_ceiling = 1;
-            $redraw_needed    = 1;
+            my $ceil_dist  = abs( $ceiling_slice - $target_slice );
+            my $floor_dist = abs( $floor_slice - $target_slice );
+
+            if ( $ceil_dist <= $floor_dist ) {
+                $ceiling_slice = 0                  if $ceiling_slice < 0;
+                $ceiling_slice = $zcount            if $ceiling_slice > $zcount;
+                $floor_slice   = $ceiling_slice - 1 if $floor_slice >= $ceiling_slice;
+                $floor_slice   = 0                  if $floor_slice < 0;
+                $changing_ceiling = 1;
+            }
+            else {
+                $floor_slice   = 0                if $floor_slice < 0;
+                $floor_slice   = $zcount          if $floor_slice > $zcount;
+                $ceiling_slice = $floor_slice + 1 if $ceiling_slice <= $floor_slice;
+                $ceiling_slice = $zcount          if $ceiling_slice > $zcount;
+                $changing_floor = 1;
+            }
+            $redraw_needed = 1;
         }
 
         # rotate
@@ -2486,6 +2526,7 @@ sub process_mouse_click {
     glutSetCursor( GLUT_CURSOR_INHERIT ) if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
     glutSetCursor( GLUT_CURSOR_INHERIT ) if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
     $changing_ceiling = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
+    $changing_floor   = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
     $rotating         = 0 if $button == GLUT_LEFT_BUTTON   && $state == GLUT_UP;
     $middle_mouse     = 0 if $button == GLUT_MIDDLE_BUTTON && $state == GLUT_UP;
     return;
@@ -2496,8 +2537,20 @@ sub process_active_mouse_motion {
 
     if ( $changing_ceiling ) {
         $ceiling_slice = int( ( ( $y / ( ( $c{window_height} - 22 ) / ( $zcount + 2 ) ) ) - ( $zcount ) ) * -1 ) + 2;
-        $ceiling_slice = 0       if $ceiling_slice < 0;
-        $ceiling_slice = $zcount if $ceiling_slice > $zcount;
+        $ceiling_slice = 0                  if $ceiling_slice < 0;
+        $ceiling_slice = $zcount            if $ceiling_slice > $zcount;
+        $floor_slice   = $ceiling_slice - 1 if $floor_slice >= $ceiling_slice;
+        $floor_slice   = 0                  if $floor_slice < 0;
+        $redraw_needed = 1;
+        return;
+    }
+
+    if ( $changing_floor ) {
+        $floor_slice = int( ( ( $y / ( ( $c{window_height} - 22 ) / ( $zcount + 2 ) ) ) - ( $zcount ) ) * -1 ) + 2;
+        $floor_slice   = 0                if $floor_slice < 0;
+        $floor_slice   = $zcount          if $floor_slice > $zcount;
+        $ceiling_slice = $floor_slice + 1 if $ceiling_slice <= $floor_slice;
+        $ceiling_slice = $zcount          if $ceiling_slice > $zcount;
         $redraw_needed = 1;
         return;
     }
