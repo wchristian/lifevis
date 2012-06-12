@@ -101,7 +101,7 @@ $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
 
-our $VERSION = "0.258_002";
+our $VERSION = "0.258_003";
 
 *_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
 
