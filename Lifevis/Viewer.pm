@@ -2115,32 +2115,20 @@ sub render_ui {
     glRasterPos2i( $c{window_width} - 14, $c{window_height} - 6 );
     glutBitmapString( GLUT_BITMAP_HELVETICA_12, "+" );
 
-    my $height_mod = ( $c{window_height} - 22 ) / ( $zcount + 2 );
+    glBegin( GL_QUADS );
+    glColor4f( 0.8, 0.8, 0.8, 1 );
+    glVertex3f( $c{window_width} - 20, 20, 0.0 );
+    glColor4f( 0.2, 0.2, 0.2, 1 );
+    glVertex3f( $c{window_width} - 20, $c{window_height} - 20, 0.0 );
+    glVertex3f( $c{window_width} - 0,  $c{window_height} - 20, 0.0 );
+    glColor4f( 0.8, 0.8, 0.8, 1 );
+    glVertex3f( $c{window_width} - 0, 20, 0.0 );
+    glEnd();
 
-    for my $slice ( 0 .. $zcount ) {
-
-        my $part   = ( 0.6 / $zcount );
-        my $bright = ( $part * $slice ) + 0.2;
-
-        glColor4f( $bright, $bright, $bright, 1 );
-
-        glBegin( GL_QUADS );
-        glVertex3f( $c{window_width} - 20, $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
-        glVertex3f( $c{window_width} - 20, $c{window_height} - 22 - $height_mod * $slice, 0.0 );
-        glVertex3f( $c{window_width} - 0,  $c{window_height} - 22 - $height_mod * $slice, 0.0 );
-        glVertex3f( $c{window_width} - 0, $c{window_height} - 22 - $height_mod * ( $slice + 1 ), 0.0 );
-        glEnd();
-    }
-
-    for my $slice ( 0 .. $zcount ) {
-        if ( $slice == $ceiling_slice ) {
-            glColor4f( 1, 1, 0, 1 );
-            my $height = ( $height_mod * $slice ) - ( $height_mod * ( $slice + 1 ) );
-            glRasterPos2i( $c{window_width} - 17,
-                $c{window_height} - 22 - ( $height / 2 ) - $height_mod * ( $slice + 1 ) );
-            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $slice );
-        }
-    }
+    glColor4f( 1, 1, 0, 1 );
+    glRasterPos2i( $c{window_width} - 19,
+        $c{window_height} - ( 20 + ( $ceiling_slice * ( $c{window_height} - 40 ) / $zcount ) ) );
+    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $ceiling_slice );
 
     glEnable( GL_TEXTURE_2D );
     glBindTexture( GL_TEXTURE_2D, $texture_ID[ui] );
