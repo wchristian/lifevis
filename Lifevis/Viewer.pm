@@ -92,7 +92,7 @@ use lib '.';
 use lib '..';
 use Lifevis::constants;
 use Lifevis::df_internals;
-use Lifevis::ProcessConnection;
+use Lifevis::ProcessConnection 'connect_to_DF';
 use Lifevis::Vtables;
 
 prepare_win32_size_check();

@@ -1,8 +1,8 @@
+use strictures;
+
 package Lifevis::ProcessConnection;
 
 use 5.010;
-use strict;
-use warnings;
 use Carp;
 use English;
 use Win32::API;
@@ -17,26 +17,17 @@ use Lifevis::df_offsets;
 Win32::API->Import( "psapi", "EnumProcessModules", "NPNP", "I" );
 
 use base 'Exporter';
-our @EXPORT    = qw( connect_to_DF );
-our @EXPORT_OK = qw( );
+our @EXPORT_OK = qw( connect_to_DF );
 
-my $ver;
-my $proc;
-
-my $df_proc_handle;
-my $dwarf_pid;
-my $pe_timestamp;
-
-my $VERSION;
+our $VERSION;
 my $detached;
 our $master_offset;
 
 my @OFFSETS = get_df_offsets();
 
 sub connect_to_DF {
-    $ver = init_process_connection();
-
-    refresh_datastore() unless defined $ver;
+    my ( $ver, $proc ) = init_process_connection();
+    $ver ||= refresh_datastore();
 
     my @offsets;
     $offsets[version]         = $OFFSETS[$ver]{'version'};
@@ -65,49 +56,45 @@ sub connect_to_DF {
     $offsets[building_vector] = $OFFSETS[$ver]{'building_vector'} + $master_offset - 0x400000;
     $offsets[item_vector]     = $OFFSETS[$ver]{'item_vector'} + $master_offset - 0x400000;
 
-    return ( $proc, $df_proc_handle, \@offsets );
+    return ( $proc, $proc->{hProcess}, \@offsets );
 }
 
 sub init_process_connection {
     ### get dwarf process id #######################################################
     my %list = Win32::Process::List->new()->GetProcesses();
-    for my $key ( keys %list ) {
-        $dwarf_pid = $key if ( $list{$key} =~ /(dwarfort|Dwarf Fortress)\.exe/ );
-    }
-    fatal_error( 'Could not find process ID, make sure DF is running and' . ' a savegame is loaded.' )
-      unless ( $dwarf_pid );
+    my ( $dwarf_pid ) = grep { $list{$_} =~ /(dwarfort|Dwarf Fortress)\.exe/ } keys %list;
+    fatal_error( 'Could not find process ID, make sure DF is running and' . ' a savegame is loaded.' ) if !$dwarf_pid;
 
     ### lower priority of dwarf fortress ###########################################
     Win32::Process::Open( my $dwarf_process, $dwarf_pid, 1 );
     $dwarf_process->SetPriorityClass( IDLE_PRIORITY_CLASS );
     croak 'Could not lower DF process priority, this is really odd and'
       . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ( $dwarf_process );
+      if !$dwarf_process;
 
     Win32::Process::Open( my $self_process, $PROCESS_ID, 1 );
     $self_process->SetPriorityClass( IDLE_PRIORITY_CLASS );
     croak 'Could not lower own process priority, this is really odd and'
       . ' should not happen, try running as administrator or poke Mithaldu/Xenofur.'
-      unless ( $self_process );
+      if !$self_process;
 
     ### actually read stuff from memory ############################################
-    $proc =
+    my $proc =
       Win32::Process::Memory->new( { pid => $dwarf_pid, access => 'read/write/query' } )
       ;    # open process with read access
     croak 'Could not open memory access to Dwarf Fortress, this is really odd'
       . ' and should not happen, try running as'
       . ' administrator or poke Mithaldu/Xenofur.'
-      unless ( $proc );
-    $df_proc_handle = $proc->{hProcess};
+      if !$proc;
 
     ### Let's Pla... erm, figure out what version this is ##########################
-    $master_offset = enum_win( $df_proc_handle );
+    $master_offset = enum_win( $proc->{hProcess} );
 
     my $pe_offset = $proc->get_u32( $master_offset + 0x3C );
 
     for my $i ( 0 .. $#OFFSETS ) {
-        $pe_timestamp = $proc->get_u32( $master_offset + $pe_offset + 8 );
-        return $i if ( $OFFSETS[$i]{PE} == $pe_timestamp );
+        my $pe_timestamp = $proc->get_u32( $master_offset + $pe_offset + 8 );
+        return ( $i, $proc ) if $OFFSETS[$i]{PE} == $pe_timestamp;
     }
     return;
 }
@@ -123,16 +110,13 @@ sub enum_win {
 }
 
 sub refresh_datastore {
-    say 'Could not find DF version in local data store.' . " Checking for new memory address data...\n";
+    say "Could not find DF version in local data store. Checking for new memory address data...\n";
     import_remote_xml();
 
-    $ver = init_process_connection();
+    my $ver = init_process_connection();
+    croak "Version could not be correctly identified. Please contact Mithaldu for updated memory addresses.\n" if !$ver;
 
-    croak 'Version could not be correctly identified.'
-      . ' Please contact Xenofur/Mithaldu or Jifodus'
-      . " for updated memory addresses.\n"
-      unless $ver;
-    return;
+    return $ver;
 }
 
 sub import_remote_xml {
