@@ -5,6 +5,9 @@ package Lifevis::ProcessConnection;
 use 5.010;
 use Carp;
 use English;
+use File::Slurp 'read_file';
+use Data::SExpression;
+use Parse::CSV;
 use Win32::API;
 
 use lib '.';
@@ -23,38 +26,48 @@ our $VERSION;
 my $detached;
 our $master_offset;
 
-my @OFFSETS = get_df_offsets();
-
 sub connect_to_DF {
     my ( $ver, $proc ) = init_process_connection();
-    $ver ||= refresh_datastore();
+    fatal_error( "Could not recognize Dwarf Fortress version." ) if !$ver;
 
     my @offsets;
-    $offsets[version]         = $OFFSETS[$ver]{'version'};
-    $offsets[PE]              = $OFFSETS[$ver]{'PE'};
-    $offsets[map_loc]         = $OFFSETS[$ver]{'map_loc'} + $master_offset - 0x400000;
-    $offsets[x_count]         = $OFFSETS[$ver]{'x_count'} + $master_offset - 0x400000;
-    $offsets[y_count]         = $OFFSETS[$ver]{'y_count'} + $master_offset - 0x400000;
-    $offsets[z_count]         = $OFFSETS[$ver]{'z_count'} + $master_offset - 0x400000;
-    $offsets[type_off]        = $OFFSETS[$ver]{'type_off'};
-    $offsets[designation_off] = $OFFSETS[$ver]{'designation_off'};
-    $offsets[occupancy_off]   = $OFFSETS[$ver]{'occupancy_off'};
-    $offsets[mouse_x]         = $OFFSETS[$ver]{'mouse_x'} + $master_offset - 0x400000;
-    $offsets[mouse_y]         = $OFFSETS[$ver]{'mouse_y'} + $master_offset - 0x400000;
-    $offsets[mouse_z]         = $OFFSETS[$ver]{'mouse_z'} + $master_offset - 0x400000;
-    $offsets[creature_vector] = $OFFSETS[$ver]{'creature_vector'} + $master_offset - 0x400000;
-    $offsets[creature_race]   = $OFFSETS[$ver]{'creature_race'};
-    $offsets[creature_x]      = $OFFSETS[$ver]{'creature_x'};
-    $offsets[creature_y]      = $OFFSETS[$ver]{'creature_y'};
-    $offsets[viewport_x]      = $OFFSETS[$ver]{'viewport_x'} + $master_offset - 0x400000;
-    $offsets[viewport_y]      = $OFFSETS[$ver]{'viewport_y'} + $master_offset - 0x400000;
-    $offsets[viewport_z]      = $OFFSETS[$ver]{'viewport_z'} + $master_offset - 0x400000;
-    $offsets[window_grid_x]   = $OFFSETS[$ver]{'window_grid_x'} + $master_offset - 0x400000;
-    $offsets[window_grid_y]   = $OFFSETS[$ver]{'window_grid_y'} + $master_offset - 0x400000;
-    $offsets[menu_state]      = $OFFSETS[$ver]{'menu_state'} + $master_offset - 0x400000;
-    $offsets[view_state]      = $OFFSETS[$ver]{'view_state'} + $master_offset - 0x400000;
-    $offsets[building_vector] = $OFFSETS[$ver]{'building_vector'} + $master_offset - 0x400000;
-    $offsets[item_vector]     = $OFFSETS[$ver]{'item_vector'} + $master_offset - 0x400000;
+    $offsets[version] = $ver;
+
+    my $objects = Parse::CSV->new( file => "adresses/$ver/windows/globals.csv", names => 1 );
+
+    my %targets = (
+        "world.map.block_index"   => map_loc,
+        "world.map.x_count_block" => x_count,
+        "world.map.y_count_block" => y_count,
+        "world.map.z_count_block" => z_count,
+        "cursor.x"                => mouse_x,
+        "cursor.y"                => mouse_y,
+        "cursor.z"                => mouse_z,
+        "world.units.all"         => creature_vector,
+        "window_x"                => viewport_x,
+        "window_y"                => viewport_y,
+        "window_z"                => viewport_z,
+        "init.display.grid_x"     => window_grid_x,
+        "init.display.grid_y"     => window_grid_y,
+        "ui_menu_width"           => menu_state,
+        "world.buildings.all"     => building_vector,
+        "world.items.all"         => item_vector,
+    );
+
+    while ( my $location = $objects->fetch ) {
+        my $target = $targets{ $location->{"Field Name"} };
+        next if !$target;
+        $offsets[$target] = hex $location->{Address};
+    }
+    $offsets[type_off]        = 0x007a;
+    $offsets[designation_off] = 0x027c;
+    $offsets[occupancy_off]   = 0x067c;
+
+    $offsets[$_] += $master_offset - 0x400000
+      for ( map_loc, x_count, y_count, z_count, mouse_x, mouse_y,
+        mouse_z,       creature_vector, viewport_x, viewport_y,      viewport_z, window_grid_x,
+        window_grid_y, menu_state,      view_state, building_vector, item_vector,
+      );
 
     return ( $proc, $proc->{hProcess}, \@offsets );
 }
@@ -92,11 +105,20 @@ sub init_process_connection {
 
     my $pe_offset = $proc->get_u32( $master_offset + 0x3C );
 
-    for my $i ( 0 .. $#OFFSETS ) {
-        my $pe_timestamp = $proc->get_u32( $master_offset + $pe_offset + 8 );
-        return ( $i, $proc ) if $OFFSETS[$i]{PE} == $pe_timestamp;
+    my %versions;
+
+    my @dirs = glob( "adresses/*" );
+    for my $dir ( @dirs ) {
+        ( my $version_info = read_file "$dir/version.lisp" ) =~ s/#(\w+)/"0$1"/;
+        my $timestamp = Data::SExpression->new->read( ( split /\n/, $version_info )[1] )->[2];
+        my $version   = Data::SExpression->new->read( ( split /\n/, $version_info )[0] )->[2];
+        $versions{ hex $timestamp } = $version;
     }
-    return;
+
+    my $pe_timestamp = $proc->get_u32( $master_offset + $pe_offset + 8 );
+    return if !$versions{$pe_timestamp};
+
+    return ( $versions{$pe_timestamp}, $proc );
 }
 
 sub enum_win {
@@ -107,166 +129,6 @@ sub enum_win {
     EnumProcessModules( $pid, $lphmodule, $cb, "" );
 
     return Win32::API::Type::Unpack( 'HMODULE', $lphmodule );
-}
-
-sub refresh_datastore {
-    say "Could not find DF version in local data store. Checking for new memory address data...\n";
-    import_remote_xml();
-
-    my $ver = init_process_connection();
-    croak "Version could not be correctly identified. Please contact Mithaldu for updated memory addresses.\n" if !$ver;
-
-    return $ver;
-}
-
-sub import_remote_xml {
-    say '  Remotely...';
-    my $source = 'http://www.geocities.com/jifodus/tables/dwarvis/';
-    my @xml_list;
-
-    my $list = get( $source );
-    croak 'Could not download the index of the online offset stores!'
-      unless defined $list;
-
-    while ( $list =~ m/<A HREF="(.+?\.xml)">/gi ) {
-        push @xml_list, $1;
-    }
-
-    say '    Found ' . ( $#xml_list + 1 ) . ' memory data files...';
-
-    for my $file ( @xml_list ) {
-        my $known = 0;
-        for my $i ( 0 .. $#OFFSETS ) {
-            $known = 1 if $file =~ m/$OFFSETS[$i]{version}/;
-        }
-
-        if ( $known ) {
-            say "    One file ($file) discarded," . ' memory data inside already known.';
-            next;
-        }
-
-        my $xml = get( $source . $file );
-        croak 'Could not get it!' unless defined $xml;
-
-        my $msg_file = $file;
-        $msg_file =~ s/core\.xml/messages.txt/;
-        my $message = get( $source . $msg_file );
-
-        process_xml( $xml, $message );
-    }
-    return;
-}
-
-sub process_xml {
-    my ( $xml, $message ) = @_;
-    my ( @data_store, @new_data_store );
-
-    my %config_hash;
-
-    if ( $xml =~ m/<version name="(.+?)" \/>/i ) {
-        $config_hash{version} = $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<pe timestamp_offset="0x(.+?)" timestamp="0x(.+?)" \/>/i ) {
-        $config_hash{pe_timestamp_offset} = hex $1;
-        $config_hash{PE}                  = hex $2;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_data" value="0x(.+?)" \/>/i ) {
-        $config_hash{map_loc} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_x_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{x_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_y_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{y_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="map_z_count" value="0x(.+?)" \/>/i ) {
-        $config_hash{z_count} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_type_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{type_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_designation_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{designation_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<offset name="map_data_occupancy_offset" value="0x(.+?)" \/>/i ) {
-        $config_hash{occupancy_off} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_x" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_x} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_y" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_y} = hex $1;
-    }
-    else { return 0; }
-
-    if ( $xml =~ m/<address name="mouse_z" value="0x(.+?)" \/>/i ) {
-        $config_hash{mouse_z} = hex $1;
-    }
-    else { return 0; }
-
-    for my $i ( 0 .. $#OFFSETS ) {
-        return 0 if $OFFSETS[$i]{version} eq $config_hash{version};
-    }
-
-    say "    Recognized new memory address data for DF $config_hash{version}," . ' inserting into data store.';
-    say "--- -- -\n$message\n--- -- -" if defined $message;
-    push @OFFSETS, \%config_hash;
-
-    open my $HANDLE, '<', 'Lifevis/df_offsets.pm'
-      or croak( "horribly: $OS_ERROR" );
-    @data_store = <$HANDLE>;
-    close $HANDLE or croak( "horribly: $OS_ERROR" );
-
-    for my $line ( @data_store ) {
-        if ( $line =~ m/OFFSETS\ END\ HERE/ ) {
-            push @new_data_store, "    {\n";
-            push @new_data_store, "        version => \"$config_hash{version}\",\n";
-            push @new_data_store, '        PE => ' . sprintf( '0x%08x', $config_hash{PE} ) . ",\n";
-            push @new_data_store, '        map_loc => ' . sprintf( '0x%08x', $config_hash{map_loc} ) . ",\n";
-            push @new_data_store, '        x_count => ' . sprintf( '0x%08x', $config_hash{x_count} ) . ",\n";
-            push @new_data_store, '        y_count => ' . sprintf( '0x%08x', $config_hash{y_count} ) . ",\n";
-            push @new_data_store, '        z_count => ' . sprintf( '0x%08x', $config_hash{z_count} ) . ",\n";
-            push @new_data_store,
-              '        pe_timestamp_offset => ' . sprintf( '0x%08x', $config_hash{pe_timestamp_offset} ) . ",\n";
-            push @new_data_store, '        type_off        => ' . sprintf( '0x%08x', $config_hash{type_off} ) . ",\n";
-            push @new_data_store,
-              '        designation_off => ' . sprintf( '0x%08x', $config_hash{designation_off} ) . ",\n";
-            push @new_data_store,
-              '        occupancy_off   => ' . sprintf( '0x%08x', $config_hash{occupancy_off} ) . ",\n";
-            push @new_data_store, '        mouse_x   => ' . sprintf( '0x%08x', $config_hash{mouse_x} ) . ",\n";
-            push @new_data_store, '        mouse_y   => ' . sprintf( '0x%08x', $config_hash{mouse_y} ) . ",\n";
-            push @new_data_store, '        mouse_z   => ' . sprintf( '0x%08x', $config_hash{mouse_z} ) . ",\n";
-            push @new_data_store, "    },\n";
-        }
-        push @new_data_store, $line;
-    }
-
-    open $HANDLE, '>', 'Lifevis/df_offsets.pm' or croak( "horribly: $OS_ERROR" );
-    for my $line ( @new_data_store ) {
-        print {$HANDLE} $line;
-    }
-    close $HANDLE or croak( "horribly: $OS_ERROR" );
-    return;
 }
 
 ### helpers

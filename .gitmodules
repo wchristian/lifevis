@@ -1,3 +1,9 @@
-[submodule "df-structures"]
-	path = df-structures
+[submodule "adresses/v0.34.10"]
+	path = adresses/v0.34.10
+	url = git://github.com/angavrilov/df-structures.git
+[submodule "adresses/v0.34.07"]
+	path = adresses/v0.34.07
+	url = git://github.com/angavrilov/df-structures.git
+[submodule "adresses/v0.34.11"]
+	path = adresses/v0.34.11
 	url = git://github.com/angavrilov/df-structures.git
