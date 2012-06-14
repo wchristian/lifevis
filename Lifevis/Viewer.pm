@@ -64,7 +64,7 @@ use criticism (
 
 =cut
 
-use Carp;
+use Carp qw' croak confess ';
 use utf8;
 use English qw(-no_match_vars);
 
@@ -84,8 +84,8 @@ use Win32::API;
 use Win32::Process::List;
 use Win32::Process;
 use Win32::Process::Memory;
-use Win32::GUI::Constants qw ( :window :accelerator );
-use Win32::GuiTest qw( :FUNC );
+use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT );
+use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes );
 use Math::Vec qw(:terse);
 
 use lib '.';

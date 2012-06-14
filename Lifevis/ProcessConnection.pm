@@ -8,16 +8,17 @@ use English;
 use File::Slurp 'read_file';
 use Data::SExpression;
 use Parse::CSV;
+use Win32 qw' MB_ICONSTOP MB_ICONINFORMATION ';
+use Win32::Process 'IDLE_PRIORITY_CLASS';
 use Win32::API;
+
+BEGIN {
+    Win32::API->Import( "psapi", "EnumProcessModules", "NPNP", "I" );
+}
 
 use lib '.';
 use lib '..';
-use Win32;
-use Win32::Process;
 use Lifevis::constants;
-use Lifevis::df_offsets;
-
-Win32::API->Import( "psapi", "EnumProcessModules", "NPNP", "I" );
 
 use base 'Exporter';
 our @EXPORT_OK = qw( connect_to_DF );
