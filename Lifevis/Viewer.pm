@@ -1836,7 +1836,6 @@ sub render_models {
 }
 
 sub render_ui {
-    my $buf;
 
     glLoadIdentity();    # Now we set up a new projection for the text.
 
@@ -1850,156 +1849,69 @@ sub render_ui {
     # But, for fun, let's make the text partially transparent too.
     glColor4f( 0.6, 1.0, 0.6, .75 );
 
-    $buf = sprintf 'X: %d', $x_pos;
+    my @buf;
+    push @buf, sprintf 'X: %d',         $x_pos;
+    push @buf, sprintf 'Y: %d',         $z_pos;
+    push @buf, sprintf 'Z: %d',         $y_pos;
+    push @buf, sprintf 'H-Angle: %.2f', $y_rot;
+    push @buf, sprintf 'V-Angle: %.2f', $x_rot;
+    push @buf, sprintf 'Cam-X: %.2f',   $x_off;
+    push @buf, sprintf 'Cam-Y: %.2f',   $z_off;
+    push @buf, sprintf 'Cam-Z: %.2f',   $y_off;
+    push @buf, sprintf 'Mem: %d MB',    $memory_use;
+    push @buf, sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
+    push @buf, 'Mouse: $xmouse $ymouse';
+    push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
+    push @buf, "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
+    push @buf, "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks : $time{creature} secs";
+    push @buf, "Ceiling: $ceiling_slice - Floor: $floor_slice";
+    push @buf, "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks : $time{building} secs";
+    push @buf, "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks : $time{item} secs";
+    push @buf, "Pixels: $pixels";
+    my $timesum = $time{landscape} + $time{creature} + $time{building} + $time{item};
+    push @buf, "Time: $timesum secs";
+    push @buf, "Render-Times:";
+
     glRasterPos2i( 2, 14 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+    glutBitmapString( GLUT_BITMAP_HELVETICA_12, join "\n", @buf );
 
-    $buf = sprintf 'Y: %d', $z_pos;
-    glRasterPos2i( 2, 26 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+    my @frame_stats;
+    push @frame_stats, sprintf "% 7d ms - Frame", ( $time{render} || 0 ) * 1000;
+    push @frame_stats, sprintf "    % 7d ms - Setup",                               $time{render_setup} * 1000;
+    push @frame_stats, sprintf "    % 7d ms - Models",                              $time{render_model} * 1000;
+    push @frame_stats, sprintf "        % 7d ms - Cells",                           $time{render_cells} * 1000;
+    push @frame_stats, sprintf "            % 7d ms - Prepare",                     $time{render_cells_prepare} * 1000;
+    push @frame_stats, sprintf "            % 7d ms - Retrieve",                    $time{render_cells_retrieve} * 1000;
+    push @frame_stats, sprintf "            % 7d ms - Calls ( $time{glCallList} )", $time{render_cells_call} * 1000;
+    push @frame_stats, sprintf "            % 7d ms - Store",                       $time{render_cells_store} * 1000;
+    push @frame_stats, sprintf "        % 7d ms - Occlusion",                       $time{render_occlusion} * 1000;
+    push @frame_stats, sprintf "        % 7d ms - Contents",                        $time{render_contents} * 1000;
+    push @frame_stats, sprintf "    % 7d ms - UI", ( $time{render_ui} || 0 ) * 1000;
 
-    $buf = sprintf 'Z: %d', $y_pos;
-    glRasterPos2i( 2, 38 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'H-Angle: %.2f', $y_rot;
-    glRasterPos2i( 2, 50 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'V-Angle: %.2f', $x_rot;
-    glRasterPos2i( 2, 62 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Cam-X: %.2f', $x_off;
-    glRasterPos2i( 2, 74 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Cam-Y: %.2f', $z_off;
-    glRasterPos2i( 2, 86 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Cam-Z: %.2f', $y_off;
-    glRasterPos2i( 2, 98 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Mem: %d MB', $memory_use;
-    glRasterPos2i( 2, 110 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
-    glRasterPos2i( 2, 122 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+    glRasterPos2i( 2, 340 );
+    glutBitmapString( GLUT_BITMAP_8_BY_13, join "\n", @frame_stats );
 
     if ( $tiles[$zmouse] ) {
+        my @tile_buf;
         if ( $tiles[$zmouse][type] and $tiles[$zmouse][type][$xmouse] and $tiles[$zmouse][type][$xmouse][$ymouse] ) {
-            $buf = sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
-            glRasterPos2i( 2, 134 );
-            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+            push @tile_buf, sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
+        }
+
+        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+            push @tile_buf, sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
         }
 
         if ( $tiles[$zmouse][desig] and $tiles[$zmouse][desig][$xmouse] and $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
-            $buf = sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
-            glRasterPos2i( 2, $c{window_height} - 14 );
-            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+            push @tile_buf, sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
         }
 
         if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-            $buf = sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
-            glRasterPos2i( 2, $c{window_height} - 26 );
-            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
+            push @tile_buf, sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
         }
 
-        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
-            $buf = sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
-            glRasterPos2i( 2, $c{window_height} - 2 );
-            glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-        }
+        glRasterPos2i( 2, $c{window_height} - 80 );
+        glutBitmapString( GLUT_BITMAP_HELVETICA_12, join "\n", @tile_buf );
     }
-
-    $buf = sprintf 'Mouse: %d %d', $xmouse, $ymouse;
-    glRasterPos2i( 2, 158 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf 'Working Coro threads: %d', Coro::nready;
-    glRasterPos2i( 2, 146 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
-    glRasterPos2i( 2, 172 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks : $time{creature} secs";
-    glRasterPos2i( 2, 186 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Ceiling: $ceiling_slice - Floor: $floor_slice";
-    glRasterPos2i( 2, 198 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks : $time{building} secs";
-    glRasterPos2i( 2, 224 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Item-Tasks: $current_item_proc_task / $max_item_proc_tasks : $time{item} secs";
-    glRasterPos2i( 2, 236 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Pixels: $pixels";
-    glRasterPos2i( 2, 250 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    my $timesum = $time{landscape} + $time{creature} + $time{building} + $time{item};
-    $buf = "Time: $timesum secs";
-    glRasterPos2i( 2, 262 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = "Render-Times:";
-    glRasterPos2i( 2, 274 );
-    glutBitmapString( GLUT_BITMAP_HELVETICA_12, $buf );
-
-    $buf = sprintf "% 7d ms - Frame", ( $time{render} || 0 ) * 1000;
-    glRasterPos2i( 2, 286 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "    % 7d ms - Setup", $time{render_setup} * 1000;
-    glRasterPos2i( 2, 298 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "    % 7d ms - Models", $time{render_model} * 1000;
-    glRasterPos2i( 2, 310 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "        % 7d ms - Cells", $time{render_cells} * 1000;
-    glRasterPos2i( 2, 322 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "            % 7d ms - Prepare", $time{render_cells_prepare} * 1000;
-    glRasterPos2i( 2, 334 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "            % 7d ms - Retrieve", $time{render_cells_retrieve} * 1000;
-    glRasterPos2i( 2, 346 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "            % 7d ms - Calls ( $time{glCallList} )", $time{render_cells_call} * 1000;
-    glRasterPos2i( 2, 358 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "            % 7d ms - Store", $time{render_cells_store} * 1000;
-    glRasterPos2i( 2, 370 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "        % 7d ms - Occlusion", $time{render_occlusion} * 1000;
-    glRasterPos2i( 2, 382 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "        % 7d ms - Contents", $time{render_contents} * 1000;
-    glRasterPos2i( 2, 394 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
-
-    $buf = sprintf "    % 7d ms - UI", ( $time{render_ui} || 0 ) * 1000;
-    glRasterPos2i( 2, 416 );
-    glutBitmapString( GLUT_BITMAP_8_BY_13, $buf );
 
     #$buf = "Crea: $creature_length";
     #glRasterPos2i( 2, 222 );
