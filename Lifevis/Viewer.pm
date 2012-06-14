@@ -83,7 +83,6 @@ use Win32;
 use Win32::API;
 use Win32::Process::List;
 use Win32::Process;
-use Win32::Process::Memory;
 use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT );
 use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes );
 use Math::Vec qw(:terse);
@@ -95,6 +94,11 @@ use Lifevis::df_internals;
 use Lifevis::ProcessConnection 'connect_to_DF';
 use Lifevis::Vtables;
 
+BEGIN {
+    Win32::API->Import( 'kernel32', 'GetLastError',      '',      'I' );
+    Win32::API->Import( 'kernel32', 'ReadProcessMemory', 'IIPIP', 'I' );
+}
+
 prepare_win32_size_check();
 
 $OUTPUT_AUTOFLUSH = 1;
@@ -103,7 +107,13 @@ my $detached;
 
 our $VERSION = "0.258_003";
 
-*_ReadMemory = \&Win32::Process::Memory::_ReadMemory;
+sub _ReadMemory {
+    my ( $proc, $from, $len ) = @_;
+    my $buf = "\x0" x $len;
+    ReadProcessMemory( $proc, $from, $buf, $len, 0 )
+      or confess sprintf "ReadProcessMemory failed with code: %d", GetLastError();
+    return $buf;
+}
 
 my $memory_use = win32_size_check();
 
@@ -368,9 +378,7 @@ sub run {
 }
 
 sub initialize_ceiling_floor {
-    my $buf = "";
-    _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4, $buf );
-    my $viewport_z = unpack( "L", $buf );
+    my $viewport_z = unpack "L", _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4 );
     $ceiling_slice = $viewport_z + 10;
     $ceiling_slice = $zcount if $ceiling_slice > $zcount;
     $floor_slice   = $viewport_z - 10;
@@ -383,7 +391,6 @@ sub initialize_ceiling_floor {
 ################################################################################
 
 sub extract_base_memory_data {
-    my $buf = '';
     my $map_base;    # offset of the address where the map blocks start
     $xcount = $proc->get_u32( $offsets[x_count] );    # map size in cells
     $ycount = $proc->get_u32( $offsets[y_count] );
@@ -399,14 +406,12 @@ sub extract_base_memory_data {
       unless ( $map_base );
 
     # get the offsets of the address storages for each x-slice and cycle through
-    _ReadMemory( $df_proc_handle, $map_base, $xcount * 4, $buf );
-    my @xoffsets = unpack( 'L' x $xcount, $buf );
+    my @xoffsets = unpack 'L' x $xcount, _ReadMemory( $df_proc_handle, $map_base, $xcount * 4 );
     for my $bx ( 0 .. $xcount - 1 ) {
 
         # get the offsets of the address storages
         # for each y-column in this x-slice and cycle through
-        _ReadMemory( $df_proc_handle, $xoffsets[$bx], $ycount * 4, $buf );
-        my @yoffsets = unpack( 'L' x $ycount, $buf );
+        my @yoffsets = unpack 'L' x $ycount, _ReadMemory( $df_proc_handle, $xoffsets[$bx], $ycount * 4 );
         for my $by ( 0 .. $ycount - 1 ) {
             $cells[$bx][$by][offset] = $yoffsets[$by];
         }
@@ -426,13 +431,13 @@ sub creature_update_loop {
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[creature_vector], 4 * 2, $buf );
-        my @creature_vector_offsets = unpack( 'L' x 2, $buf );
+        my @creature_vector_offsets = unpack 'L' x 2,
+          _ReadMemory( $df_proc_handle, $offsets[creature_vector], 4 * 2, $buf );
 
         my $creature_list_length = ( $creature_vector_offsets[1] - $creature_vector_offsets[0] ) / 4;
 
-        _ReadMemory( $df_proc_handle, $creature_vector_offsets[0], 4 * $creature_list_length, $buf );
-        my @creature_offsets = unpack( 'L' x $creature_list_length, $buf );
+        my @creature_offsets = unpack 'L' x $creature_list_length,
+          _ReadMemory( $df_proc_handle, $creature_vector_offsets[0], 4 * $creature_list_length, $buf );
 
         for my $creature ( values %creatures_present ) {
             $creature = 0;
@@ -448,7 +453,6 @@ sub creature_update_loop {
         for my $creature ( @creature_offsets ) {
 
             #say $creature unless $full_crea_run;
-            my $buf = "";
 
             $current_creat_proc_task++;
 
@@ -459,7 +463,7 @@ sub creature_update_loop {
 
             #say $proc->hexdump( $creature, 0x688 );
 
-            _ReadMemory( $df_proc_handle, $creature, 232, $buf );
+            my $buf = _ReadMemory( $df_proc_handle, $creature, 232 );
 
             next
               if $creatures{$creature}
@@ -535,17 +539,15 @@ sub building_update_loop {
         $next_building_time = time + $c{building_update_delay} - $time{building};
         schedule();
         $entry_time = time;
-        my $buf = "";
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[building_vector], 4 * 2, $buf );
-        my @building_vector_offsets = unpack( 'L' x 2, $buf );
+        my @building_vector_offsets = unpack 'L' x 2, _ReadMemory( $df_proc_handle, $offsets[building_vector], 4 * 2 );
 
         my $building_list_length = ( $building_vector_offsets[1] - $building_vector_offsets[0] ) / 4;
 
-        _ReadMemory( $df_proc_handle, $building_vector_offsets[0], 4 * $building_list_length, $buf );
-        my @building_offsets = unpack( 'L' x $building_list_length, $buf );
+        my @building_offsets = unpack 'L' x $building_list_length,
+          _ReadMemory( $df_proc_handle, $building_vector_offsets[0], 4 * $building_list_length );
 
         for my $building ( values %building_present ) {
             $building = 0;
@@ -561,7 +563,6 @@ sub building_update_loop {
         for my $building ( @building_offsets ) {
 
             #say $building unless $full_buil_run;
-            my $buf = "";
 
             $current_buil_proc_task++;
             if ( ( time - $entry_time ) > $time_slice ) {
@@ -570,7 +571,7 @@ sub building_update_loop {
             }
 
             #say $proc->hexdump( $building, 0xD8 );
-            _ReadMemory( $df_proc_handle, $building, 0xe8, $buf );
+            my $buf = _ReadMemory( $df_proc_handle, $building, 0xe8 );
 
             next
               if $buildings{$building}
@@ -639,17 +640,15 @@ sub item_update_loop {
         $next_item_time = time + $c{item_update_delay} - $time{item};
         schedule();
         $entry_time = time;
-        my $buf = "";
 
         my $t0 = time;
 
-        _ReadMemory( $df_proc_handle, $offsets[item_vector], 4 * 2, $buf );
-        my @item_vector_offsets = unpack( 'L' x 2, $buf );
+        my @item_vector_offsets = unpack 'L' x 2, _ReadMemory( $df_proc_handle, $offsets[item_vector], 4 * 2 );
 
         my $item_list_length = ( $item_vector_offsets[1] - $item_vector_offsets[0] ) / 4;
 
-        _ReadMemory( $df_proc_handle, $item_vector_offsets[0], 4 * $item_list_length, $buf );
-        my @item_offsets = unpack( 'L' x $item_list_length, $buf );
+        my @item_offsets = unpack 'L' x $item_list_length,
+          _ReadMemory( $df_proc_handle, $item_vector_offsets[0], 4 * $item_list_length );
 
         $current_item_proc_task = 0;
         $max_item_proc_tasks    = $#item_offsets;
@@ -678,8 +677,7 @@ sub item_update_loop {
                 $entry_time = time;
             }
 
-            my $string = "";
-            _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + $item_size, $string );
+            my $string = _ReadMemory( $df_proc_handle, $bucket->[0], $bucket->[1] - $bucket->[0] + $item_size );
 
             next if ( $string eq "" );
 
@@ -794,19 +792,14 @@ sub location_update_loop {
 
         my $t0 = time;
 
-        my $buf = "";
-
         $xmouse_old = $xmouse;
         $ymouse_old = $ymouse;
         $zmouse_old = $zmouse;
 
         # get mouse data
-        _ReadMemory( $df_proc_handle, $offsets[mouse_x], 4, $buf );
-        $xmouse = unpack( "L", $buf );
-        _ReadMemory( $df_proc_handle, $offsets[mouse_y], 4, $buf );
-        $ymouse = unpack( "L", $buf );
-        _ReadMemory( $df_proc_handle, $offsets[mouse_z], 4, $buf );
-        $zmouse = unpack( "L", $buf );
+        $xmouse = unpack "L", _ReadMemory( $df_proc_handle, $offsets[mouse_x], 4 );
+        $ymouse = unpack "L", _ReadMemory( $df_proc_handle, $offsets[mouse_y], 4 );
+        $zmouse = unpack "L", _ReadMemory( $df_proc_handle, $offsets[mouse_z], 4 );
 
         #say $proc->get_u32( $OFFSETS[$ver]{menu_state} );
         #say $proc->get_u32( $OFFSETS[$ver]{view_state} );
@@ -816,16 +809,11 @@ sub location_update_loop {
             || $ymouse > $ycount * 16
             || $zmouse > $zcount )
         {
-            _ReadMemory( $df_proc_handle, $offsets[viewport_x], 4, $buf );
-            my $viewport_x = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $offsets[window_grid_x], 4, $buf );
-            my $window_grid_x = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $offsets[viewport_y], 4, $buf );
-            my $viewport_y = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $offsets[window_grid_y], 4, $buf );
-            my $window_grid_y = unpack( "L", $buf );
-            _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4, $buf );
-            my $viewport_z = unpack( "L", $buf );
+            my $viewport_x    = unpack "L", _ReadMemory( $df_proc_handle, $offsets[viewport_x],    4 );
+            my $window_grid_x = unpack "L", _ReadMemory( $df_proc_handle, $offsets[window_grid_x], 4 );
+            my $viewport_y    = unpack "L", _ReadMemory( $df_proc_handle, $offsets[viewport_y],    4 );
+            my $window_grid_y = unpack "L", _ReadMemory( $df_proc_handle, $offsets[window_grid_y], 4 );
+            my $viewport_z    = unpack "L", _ReadMemory( $df_proc_handle, $offsets[viewport_z],    4 );
 
             $xmouse = $viewport_x + int( $window_grid_x / 6 );
             $ymouse = $viewport_y + int( $window_grid_y / 3 );
@@ -887,8 +875,7 @@ sub landscape_update_loop {
         $next_landscape_time = time + $c{landscape_update_delay} - $time{landscape};
         schedule();
         $entry_time = time;
-        my $buf = "";
-        my $t0  = time;
+        my $t0 = time;
 
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
@@ -901,8 +888,8 @@ sub landscape_update_loop {
                   if $by < $min_y_range - 1 || $by > $max_y_range + 1; # skip if block is outside the current view range
 
                 # cycle through slices in cell
-                _ReadMemory( $df_proc_handle, $cells[$bx][$by][offset], 4 * $zcount, $buf );
-                my @zoffsets = unpack( 'L' x $zcount, $buf );
+                my @zoffsets = unpack 'L' x $zcount,
+                  _ReadMemory( $df_proc_handle, $cells[$bx][$by][offset], 4 * $zcount );
                 $cells[$bx][$by][changed] = 0 if !defined $cells[$bx][$by][changed];
                 for my $bz ( 0 .. $#zoffsets ) {
 
@@ -1327,29 +1314,28 @@ sub draw_quadrangle {
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
     my $changed = 0;
-    my $buf     = "";
 
     my ( $type_changed, $desig_changed, $occup_changed ) = ( 0, 0, 0 );
 
     my $cell_string = $cell_strings[$bx][$by][$bz] ||= [ '', '', '' ];
 
-    _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256, $buf );
-    if ( $cell_string->[type] ne $buf ) {
-        $cell_string->[type] = $buf;
+    my $type_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256 );
+    if ( $cell_string->[type] ne $type_off ) {
+        $cell_string->[type] = $type_off;
         $type_changed        = 1;
         $changed             = 1;
     }
 
-    _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256, $buf );
-    if ( $cell_string->[desig] ne $buf ) {
-        $cell_string->[desig] = $buf;
+    my $designation_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256 );
+    if ( $cell_string->[desig] ne $designation_off ) {
+        $cell_string->[desig] = $designation_off;
         $desig_changed        = 1;
         $changed              = 1;
     }
 
-    _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256, $buf );
-    if ( $cell_string->[occup] ne $buf ) {
-        $cell_string->[occup] = $buf;
+    my $occupancy_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256 );
+    if ( $cell_string->[occup] ne $occupancy_off ) {
+        $cell_string->[occup] = $occupancy_off;
         $occup_changed        = 1;
         $changed              = 1;
     }

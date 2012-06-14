@@ -10,6 +10,7 @@ use Data::SExpression;
 use Parse::CSV;
 use Win32 qw' MB_ICONSTOP MB_ICONINFORMATION ';
 use Win32::Process 'IDLE_PRIORITY_CLASS';
+use Win32::Process::Memory;
 use Win32::API;
 
 BEGIN {
