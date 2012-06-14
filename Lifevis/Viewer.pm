@@ -84,7 +84,7 @@ use Win32::API;
 use Win32::Process::List;
 use Win32::Process;
 use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT );
-use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes );
+use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes PostMessage VkKeyScan );
 use Math::Vec qw(:terse);
 
 use lib '.';
@@ -105,7 +105,7 @@ $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
 
-our $VERSION = "0.258_003";
+our $VERSION = "0.258_004";
 
 sub _ReadMemory {
     my ( $proc, $from, $len ) = @_;
