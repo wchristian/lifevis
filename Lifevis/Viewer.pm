@@ -173,8 +173,6 @@ my $max_y_range = 3;
 
 my $current_data_proc_task = 0;
 my $max_data_proc_tasks    = 0;
-my @cache;
-my @cache_bucket;
 
 my @texture_ID;
 my @tiles;
@@ -880,12 +878,14 @@ sub landscape_update_loop {
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
         for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
-            next if $bx < 0 || $bx > $xcount - 1;                      # skip if block is outside the map
-            next if $bx < $min_x_range - 1 || $bx > $max_x_range + 1;  # skip if block is outside the current view range
+            next if $bx < 0 or $bx > $xcount - 1;                      # skip if block is outside the map
+            next if $bx < $min_x_range - 1 or $bx > $max_x_range + 1;  # skip if block is outside the current view range
+
             for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
-                next if $by < 0 || $by > $ycount - 1;                  # skip if block is outside the map
+                next if $by < 0 or $by > $ycount - 1;                  # skip if block is outside the map
                 next
-                  if $by < $min_y_range - 1 || $by > $max_y_range + 1; # skip if block is outside the current view range
+                  if $by < $min_y_range - 1
+                      or $by > $max_y_range + 1;                       # skip if block is outside the current view range
 
                 # cycle through slices in cell
                 my @zoffsets = unpack 'L' x $zcount,
@@ -925,12 +925,7 @@ sub landscape_update_loop {
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
 
-                my $cache_id;
-
-                if ( defined $cells[$bx][$by][cache_ptr] ) {
-                    $cache_id = $cells[$bx][$by][cache_ptr];
-
-                    # cell is in cache
+                if ( defined $cells[$bx][$by][display_lists] ) {
                     if ( $cells[$bx][$by][changed] ) {
 
                         # cycle through slices and
@@ -939,7 +934,7 @@ sub landscape_update_loop {
                         my $slices = $cells[$bx][$by][z];
                         for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
                             if ( @{$slices}[$slice] ) {
-                                generate_display_list( $cache_id, $slice, $by, $bx );
+                                generate_display_list( $cells[$bx][$by], $slice, $by, $bx );
                                 @{$slices}[$slice] = 0;
                             }
                             $redraw_needed = 1;
@@ -960,20 +955,12 @@ sub landscape_update_loop {
 
                     # cell is not in cache
 
-                    # get fresh cache id either from end of cache or out of bucket
-                    $cache_id = $#cache + 1;
-                    $cache_id = pop @cache_bucket if ( $#cache_bucket > -1 );
-
-                    # set up link to cell and back-link to cache id
-                    $cache[$cache_id][cell_ptr]    = \$cells[$bx][$by][cache_ptr];
-                    $cells[$bx][$by][cache_ptr]    = $cache_id;
-
                     # cycle through slices and
                     # create displaylists as necessary,
                     # storing the ids in the cache entry
                     for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
                         if ( defined @{$slices}[$slice] ) {
-                            generate_display_list( $cache_id, $slice, $by, $bx );
+                            generate_display_list( $cells[$bx][$by], $slice, $by, $bx );
                             @{$slices}[$slice] = 0;
                         }
                         $redraw_needed = 1;
@@ -1047,8 +1034,8 @@ sub generate_model_display_lists {
 }
 
 sub generate_display_list {
-    my ( $id, $z, $y, $x ) = @_;
-    my $dl = $cache[$id][display_lists][$z] ||= glGenLists( 1 );
+    my ( $cell, $z, $y, $x ) = @_;
+    my $dl = $cell->[display_lists][$z] ||= glGenLists( 1 );
 
     glNewList( $dl, GL_COMPILE );
 
@@ -1245,12 +1232,12 @@ sub generate_display_list {
     }
     glEndList();
 
-    if ( $cache[$id] and $cache[$id][mask_lists] and $cache[$id][mask_lists][$z] ) {
-        $dl = $cache[$id][mask_lists][$z];
+    if ( $cell and $cell->[mask_lists] and $cell->[mask_lists][$z] ) {
+        $dl = $cell->[mask_lists][$z];
     }
     else {
         $dl = glGenLists( 1 );
-        $cache[$id][mask_lists][$z] = $dl;
+        $cell->[mask_lists][$z] = $dl;
     }
 
     draw_quadrangle( ( $x * 16 ), $z, ( $y * 16 ), 16, 16, $dl );
@@ -1642,15 +1629,11 @@ sub render_models {
             for my $by ( $min_y_range .. $max_y_range ) {
                 my $cell_0 = time;
 
-                my $cache_ptr = $cells[$bx][$by][cache_ptr];
-                next if !defined $cache_ptr;
-                next if !defined $cache[$cache_ptr];
-
                 $time{render_cells_prepare} += ( my $t_cells_prep = time ) - $cell_0;
 
                 # draw landscape
-                my $slices = $cache[$cache_ptr][display_lists];
-                if ( $slices->[$z] ) {
+                my $slices = $cells[$bx][$by][display_lists];
+                if ( $slices and $slices->[$z] ) {
                     $time{render_cells_retrieve} += ( my $t_cell_retrieve = time ) - $t_cells_prep;
                     glCallList( $slices->[$z] );
                     $time{glCallList}++;
@@ -1677,11 +1660,10 @@ sub render_models {
         my $id = 0;
 
         for my $cell ( @query_cells ) {
-            my $bx        = $cell->[0];
-            my $by        = $cell->[1];
-            my $z         = $cell->[2];
-            my $cache_ptr = $cells[$bx][$by][cache_ptr];
-            my $slices    = $cache[$cache_ptr][mask_lists];
+            my $bx     = $cell->[0];
+            my $by     = $cell->[1];
+            my $z      = $cell->[2];
+            my $slices = $cells[$bx][$by][mask_lists];
             $cell->[3] = $queries[$id];
             glBeginQuery( GL_SAMPLES_PASSED, $cell->[3] );
             glCallList( $slices->[$z] );
@@ -1713,10 +1695,6 @@ sub render_models {
         my $by         = $cell->[1];
         my $z          = $cell->[2];
         my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
-
-        my $cache_ptr = $cells[$bx][$by][cache_ptr];
-        next if !defined $cache_ptr;
-        next if !defined $cache[$cache_ptr];
 
         # draw creatures
         if (    $cells[$bx]
@@ -1846,16 +1824,15 @@ sub render_ui {
     glColor4f( 0.6, 1.0, 0.6, .75 );
 
     my @buf;
-    push @buf, sprintf 'X: %d',         $x_pos;
-    push @buf, sprintf 'Y: %d',         $z_pos;
-    push @buf, sprintf 'Z: %d',         $y_pos;
-    push @buf, sprintf 'H-Angle: %.2f', $y_rot;
-    push @buf, sprintf 'V-Angle: %.2f', $x_rot;
-    push @buf, sprintf 'Cam-X: %.2f',   $x_off;
-    push @buf, sprintf 'Cam-Y: %.2f',   $z_off;
-    push @buf, sprintf 'Cam-Z: %.2f',   $y_off;
-    push @buf, sprintf 'Mem: %d MB',    $memory_use;
-    push @buf, sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
+    push @buf, sprintf 'X: %d',                    $x_pos;
+    push @buf, sprintf 'Y: %d',                    $z_pos;
+    push @buf, sprintf 'Z: %d',                    $y_pos;
+    push @buf, sprintf 'H-Angle: %.2f',            $y_rot;
+    push @buf, sprintf 'V-Angle: %.2f',            $x_rot;
+    push @buf, sprintf 'Cam-X: %.2f',              $x_off;
+    push @buf, sprintf 'Cam-Y: %.2f',              $z_off;
+    push @buf, sprintf 'Cam-Z: %.2f',              $y_off;
+    push @buf, sprintf 'Mem: %d MB',               $memory_use;
     push @buf, "Mouse: $xmouse $ymouse";
     push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
     push @buf, "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
