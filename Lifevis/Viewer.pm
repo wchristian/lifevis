@@ -1856,7 +1856,7 @@ sub render_ui {
     push @buf, sprintf 'Cam-Z: %.2f',   $y_off;
     push @buf, sprintf 'Mem: %d MB',    $memory_use;
     push @buf, sprintf 'Caches: %d', ( ( $#cache + 1 ) - ( $#cache_bucket + 1 ) );
-    push @buf, 'Mouse: $xmouse $ymouse';
+    push @buf, "Mouse: $xmouse $ymouse";
     push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
     push @buf, "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
     push @buf, "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks : $time{creature} secs";
