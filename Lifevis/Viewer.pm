@@ -951,9 +951,6 @@ sub landscape_update_loop {
                         }
                         $cells[$bx][$by][changed] = 0;
                     }
-
-                    $cache[$cache_id][use_counter]++;
-
                 }
                 else {
 
@@ -970,7 +967,6 @@ sub landscape_update_loop {
                     # set up link to cell and back-link to cache id
                     $cache[$cache_id][cell_ptr]    = \$cells[$bx][$by][cache_ptr];
                     $cells[$bx][$by][cache_ptr]    = $cache_id;
-                    $cache[$cache_id][use_counter] = 0;
 
                     # cycle through slices and
                     # create displaylists as necessary,
