@@ -28,7 +28,7 @@ our @EXPORT = (
 
     string_c i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const invisible
 
-    changed z offset creature_list building_list item_list display_lists mask_lists
+    changed z offset creature_list building_list item_list display_lists mask_lists next_update
 
     version PE map_loc x_count y_count z_count pe_timestamp_offset type_off designation_off occupancy_off mouse_x
     mouse_y mouse_z creature_vector creature_race creature_x creature_y viewport_x viewport_y viewport_z window_grid_x
@@ -91,7 +91,7 @@ use enum qw(
 );
 
 use enum qw(
-  changed z offset creature_list building_list item_list display_lists mask_lists
+  changed z offset creature_list building_list item_list display_lists mask_lists next_update
 );
 
 use enum qw(

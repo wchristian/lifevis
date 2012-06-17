@@ -417,8 +417,8 @@ sub extract_base_memory_data {
         my @yoffsets = unpack 'L' x $ycount, _ReadMemory( $df_proc_handle, $xoffsets[$bx], $ycount * 4 );
         for my $by ( 0 .. $ycount - 1 ) {
             my $cell = $cells[$bx][$by] ||= [];
-            $cell->[changed] = 0;
-            $cell->[offset]  = $yoffsets[$by];
+            $cell->[$_] = 0 for ( changed, next_update );
+            $cell->[offset] = $yoffsets[$by];
             $cell->[$_] = [] for ( z, creature_list, building_list, item_list, display_lists, mask_lists );
         }
     }
@@ -914,6 +914,7 @@ sub landscape_update_loop {
                 for my $data_block_y ( $by - 1 .. $by + 1 ) {
                     my $cell = $cells[$data_block_x][$data_block_y];
                     next if !$cell;
+                    next if $cell->[next_update] > time;
 
                     # cycle through slices in cell
                     my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
@@ -932,6 +933,7 @@ sub landscape_update_loop {
                         $current_data_proc_task++;
                     }
 
+                    $cell->[next_update] = time + 10;
                 }
             }
 
