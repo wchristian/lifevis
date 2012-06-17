@@ -896,7 +896,12 @@ sub landscape_update_loop {
 
                 # cycle through slices in cell
                 my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
-                for my $bz ( 0 .. $#zoffsets ) {
+                my $z_min = $floor_slice - 1;
+                $z_min = 0 if $z_min < 0;
+                my $z_max = $ceiling_slice;
+                $z_max = $#zoffsets if $z_max > $#zoffsets;
+
+                for my $bz ( $z_min .. $z_max ) {
                     next if !$zoffsets[$bz];    # go to the next block if this one is not allocated
 
                     #say $zoffsets[$bz] unless $full_land_run;
@@ -911,8 +916,7 @@ sub landscape_update_loop {
 
                     # update changed status of cell if necessary
                     if ( $slice_changed ) {
-                        $cell->[z][$bz] = 1;     # slice was changed
-                        $cell->[changed] = 1;    # cell was changed
+                        $cell->[z][$bz] = 1;    # slice was changed
                     }
 
                     if ( ( time - $entry_time ) > $time_slice ) {
@@ -930,52 +934,23 @@ sub landscape_update_loop {
 
                 my $cell = $cells[$bx][$by];
 
-                if ( defined $cell->[display_lists] ) {
-                    if ( $cell->[changed] ) {
+                # cycle through slices and
+                # create displaylists as necessary,
+                # storing the ids in the cache entry
+                my $slices = $cell->[z];
 
-                        # cycle through slices and
-                        # create displaylists as necessary,
-                        # storing the ids in the cache entry
-                        my $slices = $cell->[z];
-                        for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                            if ( @{$slices}[$slice] ) {
-                                generate_display_list( $cell, $slice, $by, $bx );
-                                @{$slices}[$slice] = 0;
-                            }
-                            $redraw_needed = 1;
-                            if ( ( time - $entry_time ) > $time_slice ) {
-                                cede();
-                                $entry_time = time;
-                            }
-                            $current_data_proc_task++;
-                        }
-                        $cell->[changed] = 0;
+                #for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
+                for my $slice ( $floor_slice .. $ceiling_slice ) {
+                    if ( @{$slices}[$slice] ) {
+                        generate_display_list( $cell, $slice, $by, $bx );
+                        @{$slices}[$slice] = 0;
                     }
-                }
-                else {
-
-                    my $slices = $cell->[z];
-
-                    next if !defined $slices;
-
-                    # cell is not in cache
-
-                    # cycle through slices and
-                    # create displaylists as necessary,
-                    # storing the ids in the cache entry
-                    for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                        if ( defined @{$slices}[$slice] ) {
-                            generate_display_list( $cell, $slice, $by, $bx );
-                            @{$slices}[$slice] = 0;
-                        }
-                        $redraw_needed = 1;
-                        if ( ( time - $entry_time ) > $time_slice ) {
-                            cede();
-                            $entry_time = time;
-                        }
-                        $current_data_proc_task++;
+                    $redraw_needed = 1;
+                    if ( ( time - $entry_time ) > $time_slice ) {
+                        cede();
+                        $entry_time = time;
                     }
-                    $cell->[changed] = 0;
+                    $current_data_proc_task++;
                 }
             }
         }
@@ -1064,8 +1039,8 @@ sub generate_display_list {
                 next
                   if $TILE_TYPES[$type][base_texture] !=
                       $texture;    # skip if tile type texture doesn't match current texture
-                my $type_below = $tile_below->[$rx] ? $tile_below->[$rx][$ry] : undef;
-                my $type_above = $tile_above->[$rx] ? $tile_above->[$rx][$ry] : undef;
+                my $type_below = ( $tile_below and $tile_below->[$rx] ) ? $tile_below->[$rx][$ry] : undef;
+                my $type_above = ( $tile_above and $tile_above->[$rx] ) ? $tile_above->[$rx][$ry] : undef;
                 my $brightness_mod = $TILE_TYPES[$type][brightness_mod];
 
                 my ( $above, $below, $north, $south, $west, $east ) = ( EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY );
