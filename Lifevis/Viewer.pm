@@ -201,7 +201,7 @@ my $changing_floor;
 my $ceiling_slice;
 my $floor_slice;
 my $slice_difference;
-my $ceiling_locked = 0;
+my $ceiling_locked;
 my $view_range_changed;
 
 my $memory_loop;
@@ -377,10 +377,12 @@ sub run {
 
 sub initialize_ceiling_floor {
     my $viewport_z = unpack "L", _ReadMemory( $df_proc_handle, $offsets[viewport_z], 4 );
-    $ceiling_slice = $viewport_z + 10;
-    $ceiling_slice = $zcount if $ceiling_slice > $zcount;
-    $floor_slice   = $viewport_z - 10;
-    $floor_slice   = 0 if $floor_slice < 0;
+    $ceiling_slice    = $viewport_z + 10;
+    $ceiling_slice    = $zcount if $ceiling_slice > $zcount;
+    $floor_slice      = $viewport_z - 10;
+    $floor_slice      = 0 if $floor_slice < 0;
+    $slice_difference = $ceiling_slice - $floor_slice;
+    $ceiling_locked   = 1;
     return;
 }
 
