@@ -1299,7 +1299,6 @@ sub draw_quadrangle {
 
 sub new_process_block {
     my ( $block_offset, $bx, $by, $bz ) = @_;
-    my $changed = 0;
 
     my ( $type_changed, $desig_changed, $occup_changed ) = ( 0, 0, 0 );
 
@@ -1308,73 +1307,71 @@ sub new_process_block {
     my $type_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[type_off], 2 * 256 );
     if ( $cell_string->[type] ne $type_off ) {
         $cell_string->[type] = $type_off;
-        $type_changed        = 1;
-        $changed             = 1;
+        $type_changed = 1;
     }
 
     my $designation_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[designation_off], 4 * 256 );
     if ( $cell_string->[desig] ne $designation_off ) {
         $cell_string->[desig] = $designation_off;
-        $desig_changed        = 1;
-        $changed              = 1;
+        $desig_changed = 1;
     }
 
     my $occupancy_off = _ReadMemory( $df_proc_handle, $block_offset + $offsets[occupancy_off], 4 * 256 );
     if ( $cell_string->[occup] ne $occupancy_off ) {
         $cell_string->[occup] = $occupancy_off;
-        $occup_changed        = 1;
-        $changed              = 1;
+        $occup_changed = 1;
     }
 
-    if ( $changed ) {
-        my @type_data        = unpack( 'S' x 256, $cell_string->[type] )  if $type_changed;
-        my @designation_data = unpack( 'L' x 256, $cell_string->[desig] ) if $desig_changed;
-        my @occupation_data  = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
+    return if !$type_changed and !$desig_changed and !$occup_changed;
 
-        my ( $tile, $desig, $desig_below, $occup );
+    my @type_data        = unpack( 'S' x 256, $cell_string->[type] )  if $type_changed;
+    my @designation_data = unpack( 'L' x 256, $cell_string->[desig] ) if $desig_changed;
+    my @occupation_data  = unpack( 'L' x 256, $cell_string->[occup] ) if $occup_changed;
 
-        my $bx_scaled  = $bx * 16;
-        my $by_scaled  = $by * 16;
-        my $tile_index = 0;
+    my $bx_scaled  = $bx * 16;
+    my $by_scaled  = $by * 16;
+    my $tile_index = 0;
 
-        for my $rx ( $bx_scaled .. $bx_scaled + 15 ) {
+    my $tiles_on_z  = $tiles[$bz]       ||= [];
+    my $tiles_below = $tiles[ $bz - 1 ] ||= [];
 
-            # this calculates the real x and y values
-            # of this tile on the overall map_base
-            $tile        = $tiles[$bz][type][$rx]        ||= [];
-            $desig       = $tiles[$bz][desig][$rx]       ||= [];
-            $desig_below = $tiles[ $bz - 1 ][desig][$rx] ||= [];
-            $occup       = $tiles[$bz][occup][$rx]       ||= [];
+    for my $rx ( $bx_scaled .. $bx_scaled + 15 ) {
 
-            # cycle through 16 x and 16 y values,
-            # which generate a total of 256 tile indexes
-            for my $ry ( $by_scaled .. $by_scaled + 15 ) {
-                my $hideflag = 0;
+        # this calculates the real x and y values
+        # of this tile on the overall map_base
+        my $tile        = $tiles_on_z->[type][$rx]   ||= [];
+        my $desig       = $tiles_on_z->[desig][$rx]  ||= [];
+        my $desig_below = $tiles_below->[desig][$rx] ||= [];
+        my $occup       = $tiles_on_z->[occup][$rx]  ||= [];
 
-                # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
-                $hideflag = $designation_data[$tile_index] & 512 if $desig_changed;
-                $hideflag = $desig->[$ry] & 512 if !$desig_changed;
-                if (
-                    $hideflag == 512
-                    and ( !defined $desig_below->[$ry]
-                        or ( $desig_below->[$ry] & 512 ) == 512 )
-                  )
-                {
-                    $desig->[$ry] = 512;
-                    ++$tile_index;
-                    next;
-                }
+        # cycle through 16 x and 16 y values,
+        # which generate a total of 256 tile indexes
+        for my $ry ( $by_scaled .. $by_scaled + 15 ) {
+            my $hideflag = 0;
 
-                $tile->[$ry]  = $type_data[$tile_index]        if $type_changed;
-                $desig->[$ry] = $designation_data[$tile_index] if $desig_changed;
-                $occup->[$ry] = $occupation_data[$tile_index]  if $occup_changed;
-
+            # skip tile if it is hidden, but only if the tile directly below it is not loaded yet or also hidden
+            $hideflag = $designation_data[$tile_index] & 512 if $desig_changed;
+            $hideflag = $desig->[$ry] & 512 if !$desig_changed;
+            if (
+                $hideflag == 512
+                and ( !defined $desig_below->[$ry]
+                    or ( $desig_below->[$ry] & 512 ) == 512 )
+              )
+            {
+                $desig->[$ry] = 512;
                 ++$tile_index;
+                next;
             }
+
+            $tile->[$ry]  = $type_data[$tile_index]        if $type_changed;
+            $desig->[$ry] = $designation_data[$tile_index] if $desig_changed;
+            $occup->[$ry] = $occupation_data[$tile_index]  if $occup_changed;
+
+            ++$tile_index;
         }
     }
 
-    return $changed;
+    return 1;
 }
 
 sub ask {
