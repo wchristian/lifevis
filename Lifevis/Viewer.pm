@@ -162,6 +162,7 @@ my ( $xmouse_old, $ymouse_old, $zmouse_old ) = ( 0, 0, 15 );
 
 # current cursor coordinates, in tiles
 my ( $xmouse, $ymouse, $zmouse ) = ( 0, 0, 15 );
+my ( $xcell, $ycell ) = ( 0, 0 );
 
 # Camera position and rotation variables.
 my ( $x_pos, $y_pos, $z_pos, $x_off, $y_off, $z_off, $x_rot, $y_rot );
@@ -848,8 +849,8 @@ sub location_update_loop {
             reposition_camera();    # sets up initial camera position offsets
 
             # calculate cell coords from mouse coords
-            my $xcell = int $xmouse / 16;
-            my $ycell = int $ymouse / 16;
+            $xcell = int $xmouse / 16;
+            $ycell = int $ymouse / 16;
             $xcell = $c{view_range} if $xcell <= $c{view_range} - 1;
             $ycell = $c{view_range} if $ycell <= $c{view_range} - 1;
             $xcell = $xcount - $c{view_range} - 1
@@ -1825,6 +1826,7 @@ sub render_ui {
     push @buf, sprintf 'Cam-Z: %.2f',              $y_off;
     push @buf, sprintf 'Mem: %d MB',               $memory_use;
     push @buf, "Mouse: $xmouse $ymouse";
+    push @buf, "Cell: $xcell $ycell";
     push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
     push @buf, "Landscape-Data-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
     push @buf,
