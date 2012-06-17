@@ -411,7 +411,10 @@ sub extract_base_memory_data {
         # for each y-column in this x-slice and cycle through
         my @yoffsets = unpack 'L' x $ycount, _ReadMemory( $df_proc_handle, $xoffsets[$bx], $ycount * 4 );
         for my $by ( 0 .. $ycount - 1 ) {
-            $cells[$bx][$by][offset] = $yoffsets[$by];
+            my $cell = $cells[$bx][$by] ||= [];
+            $cell->[changed] = 0;
+            $cell->[offset]  = $yoffsets[$by];
+            $cell->[$_] = [] for ( z, creature_list, building_list, item_list, display_lists, mask_lists );
         }
     }
 
@@ -887,29 +890,27 @@ sub landscape_update_loop {
                   if $by < $min_y_range - 1
                       or $by > $max_y_range + 1;                       # skip if block is outside the current view range
 
-                # cycle through slices in cell
-                my @zoffsets = unpack 'L' x $zcount,
-                  _ReadMemory( $df_proc_handle, $cells[$bx][$by][offset], 4 * $zcount );
-                $cells[$bx][$by][changed] = 0 if !defined $cells[$bx][$by][changed];
-                for my $bz ( 0 .. $#zoffsets ) {
+                my $cell = $cells[$bx][$by];
 
-                    # go to the next block if this one is not allocated
-                    next if ( $zoffsets[$bz] == 0 );
+                # cycle through slices in cell
+                my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
+                for my $bz ( 0 .. $#zoffsets ) {
+                    next if !$zoffsets[$bz];    # go to the next block if this one is not allocated
 
                     #say $zoffsets[$bz] unless $full_land_run;
 
                     # process slice in cell and set slice to changed
                     my $slice_changed = new_process_block(
-                        $zoffsets[$bz],    # offset of the current slice
-                        $bx,               # x location of the current slice
-                        $by,               # y location of the current slice
+                        $zoffsets[$bz],         # offset of the current slice
+                        $bx,                    # x location of the current slice
+                        $by,                    # y location of the current slice
                         $bz
                     );
 
                     # update changed status of cell if necessary
                     if ( $slice_changed ) {
-                        $cells[$bx][$by][z][$bz] = 1;     # slice was changed
-                        $cells[$bx][$by][changed] = 1;    # cell was changed
+                        $cell->[z][$bz] = 1;     # slice was changed
+                        $cell->[changed] = 1;    # cell was changed
                     }
 
                     if ( ( time - $entry_time ) > $time_slice ) {
@@ -925,16 +926,18 @@ sub landscape_update_loop {
         for my $bx ( $min_x_range .. $max_x_range ) {
             for my $by ( $min_y_range .. $max_y_range ) {
 
-                if ( defined $cells[$bx][$by][display_lists] ) {
-                    if ( $cells[$bx][$by][changed] ) {
+                my $cell = $cells[$bx][$by];
+
+                if ( defined $cell->[display_lists] ) {
+                    if ( $cell->[changed] ) {
 
                         # cycle through slices and
                         # create displaylists as necessary,
                         # storing the ids in the cache entry
-                        my $slices = $cells[$bx][$by][z];
+                        my $slices = $cell->[z];
                         for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
                             if ( @{$slices}[$slice] ) {
-                                generate_display_list( $cells[$bx][$by], $slice, $by, $bx );
+                                generate_display_list( $cell, $slice, $by, $bx );
                                 @{$slices}[$slice] = 0;
                             }
                             $redraw_needed = 1;
@@ -944,12 +947,12 @@ sub landscape_update_loop {
                             }
                             $current_data_proc_task++;
                         }
-                        $cells[$bx][$by][changed] = 0;
+                        $cell->[changed] = 0;
                     }
                 }
                 else {
 
-                    my $slices = $cells[$bx][$by][z];
+                    my $slices = $cell->[z];
 
                     next if !defined $slices;
 
@@ -960,7 +963,7 @@ sub landscape_update_loop {
                     # storing the ids in the cache entry
                     for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
                         if ( defined @{$slices}[$slice] ) {
-                            generate_display_list( $cells[$bx][$by], $slice, $by, $bx );
+                            generate_display_list( $cell, $slice, $by, $bx );
                             @{$slices}[$slice] = 0;
                         }
                         $redraw_needed = 1;
@@ -970,7 +973,7 @@ sub landscape_update_loop {
                         }
                         $current_data_proc_task++;
                     }
-                    $cells[$bx][$by][changed] = 0;
+                    $cell->[changed] = 0;
                 }
             }
         }
@@ -1050,9 +1053,9 @@ sub generate_display_list {
         for my $rx ( ( $x * 16 ) .. ( $x * 16 ) + 15 ) {    # cycle through tiles in current slice on layer
             for my $ry ( ( $y * 16 ) .. ( $y * 16 ) + 15 ) {
 
-                next if !defined $tile->[$rx][$ry];         # skip tile if undefined
-                my $type = $tile->[$rx][$ry];               # store type of current tile
-                next if $type == 32;                        # skip if tile is air
+                next if !defined $tile or !defined $tile->[$rx] or !defined $tile->[$rx][$ry];  # skip tile if undefined
+                my $type = $tile->[$rx][$ry];    # store type of current tile
+                next if $type == 32;             # skip if tile is air
                 next
                   if !$TILE_TYPES[$type]
                       or !defined $TILE_TYPES[$type][base_texture];  # skip if tile type doesn't have associated texture
