@@ -880,13 +880,20 @@ sub landscape_update_loop {
         $entry_time = time;
         my $t0 = time;
 
+        my $z_min = $floor_slice - 1;
+        $z_min = 0 if $z_min < 0;
+
+        my @data_x = ( $min_x_range - 1 .. $max_x_range + 1 );
+        my @data_y = ( $min_y_range - 1 .. $max_y_range + 1 );
+        my @data_z = ( $z_min .. $ceiling_slice );
+
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
-        for my $bx ( $min_x_range - 1 .. $max_x_range + 1 ) {
+        for my $bx ( @data_x ) {
             next if $bx < 0 or $bx > $xcount - 1;                      # skip if block is outside the map
             next if $bx < $min_x_range - 1 or $bx > $max_x_range + 1;  # skip if block is outside the current view range
 
-            for my $by ( $min_y_range - 1 .. $max_y_range + 1 ) {
+            for my $by ( @data_y ) {
                 next if $by < 0 or $by > $ycount - 1;                  # skip if block is outside the map
                 next
                   if $by < $min_y_range - 1
@@ -896,12 +903,8 @@ sub landscape_update_loop {
 
                 # cycle through slices in cell
                 my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
-                my $z_min = $floor_slice - 1;
-                $z_min = 0 if $z_min < 0;
-                my $z_max = $ceiling_slice;
-                $z_max = $#zoffsets if $z_max > $#zoffsets;
 
-                for my $bz ( $z_min .. $z_max ) {
+                for my $bz ( @data_z ) {
                     next if !$zoffsets[$bz];    # go to the next block if this one is not allocated
 
                     #say $zoffsets[$bz] unless $full_land_run;
@@ -928,9 +931,13 @@ sub landscape_update_loop {
             }
         }
 
+        my @disp_list_x = ( $min_x_range .. $max_x_range );
+        my @disp_list_y = ( $min_y_range .. $max_y_range );
+        my @disp_list_z = ( $floor_slice .. $ceiling_slice );
+
         # cycle through cells in range around cursor to generate display lists
-        for my $bx ( $min_x_range .. $max_x_range ) {
-            for my $by ( $min_y_range .. $max_y_range ) {
+        for my $bx ( @disp_list_x ) {
+            for my $by ( @disp_list_y ) {
 
                 my $cell = $cells[$bx][$by];
 
@@ -940,7 +947,7 @@ sub landscape_update_loop {
                 my $slices = $cell->[z];
 
                 #for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                for my $slice ( $floor_slice .. $ceiling_slice ) {
+                for my $slice ( @disp_list_z ) {
                     if ( @{$slices}[$slice] ) {
                         generate_display_list( $cell, $slice, $by, $bx );
                         @{$slices}[$slice] = 0;
