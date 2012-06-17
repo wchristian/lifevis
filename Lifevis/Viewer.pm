@@ -883,94 +883,82 @@ sub landscape_update_loop {
         $entry_time = time;
         my $t0 = time;
 
-        my $z_min = $floor_slice - 1;
-        $z_min = 0 if $z_min < 0;
-
-        my @data_x = ( $min_x_range - 1 .. $max_x_range + 1 );
-        my @data_y = ( $min_y_range - 1 .. $max_y_range + 1 );
-        my @data_z = ( $z_min .. $ceiling_slice );
-
-        $max_data_proc_tasks = @data_x * @data_y * @data_z;
-
-        #TODO: When at the edge, only grab at inner edge.
-        # cycle through cells in range around cursor to grab data
-        for my $bx ( @data_x ) {
-            next if $bx < 0 or $bx > $xcount - 1;                      # skip if block is outside the map
-            next if $bx < $min_x_range - 1 or $bx > $max_x_range + 1;  # skip if block is outside the current view range
-
-            for my $by ( @data_y ) {
-                next if $by < 0 or $by > $ycount - 1;                  # skip if block is outside the map
-                next
-                  if $by < $min_y_range - 1
-                      or $by > $max_y_range + 1;                       # skip if block is outside the current view range
-
-                my $cell = $cells[$bx][$by];
-
-                # cycle through slices in cell
-                my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
-
-                for my $bz ( @data_z ) {
-                    next if !$zoffsets[$bz];    # go to the next block if this one is not allocated
-
-                    #say $zoffsets[$bz] unless $full_land_run;
-
-                    # process slice in cell and set slice to changed
-                    my $slice_changed = new_process_block(
-                        $zoffsets[$bz],         # offset of the current slice
-                        $bx,                    # x location of the current slice
-                        $by,                    # y location of the current slice
-                        $bz
-                    );
-
-                    # update changed status of cell if necessary
-                    if ( $slice_changed ) {
-                        $cell->[z][$bz] = 1;    # slice was changed
-                    }
-
-                    if ( ( time - $entry_time ) > $time_slice ) {
-                        cede();
-                        $entry_time = time;
-                    }
-                    $current_data_proc_task++;
-                }
-            }
-        }
-
-        $current_data_proc_task = 0;
+        my $view = "$xcell - $ycell - $c{view_range} - $floor_slice - $ceiling_slice";
 
         my @disp_list_x = ( $min_x_range .. $max_x_range );
         my @disp_list_y = ( $min_y_range .. $max_y_range );
+
+        my @block_coords = map {
+            my $x = $_;
+            map { [ $x, $_, abs( $x - $xcell ) + abs( $_ - $ycell ) ] } @disp_list_y
+        } @disp_list_x;
+        @block_coords = sort { $a->[2] <=> $b->[2] } @block_coords;
+
+        my $z_min = $floor_slice - 1;
+        $z_min = 0 if $z_min < 0;
+        my @data_z      = ( $z_min .. $ceiling_slice );
         my @disp_list_z = ( $floor_slice .. $ceiling_slice );
 
-        $max_landscape_3d_proc_tasks = @disp_list_x * @disp_list_y * @disp_list_z;
+        for my $block ( @block_coords ) {
+            my $bx = $block->[0];
+            my $by = $block->[1];
+            next
+              if $bx < $min_x_range - 1
+                  or $bx > $max_x_range + 1
+                  or $by < $min_y_range - 1
+                  or $by > $max_y_range + 1;
+            last if $view ne "$xcell - $ycell - $c{view_range} - $floor_slice - $ceiling_slice";
 
-        # cycle through cells in range around cursor to generate display lists
-        for my $bx ( @disp_list_x ) {
-            for my $by ( @disp_list_y ) {
+            for my $data_block_x ( $bx - 1 .. $bx + 1 ) {
+                next if !$cells[$data_block_x];
+                for my $data_block_y ( $by - 1 .. $by + 1 ) {
+                    my $cell = $cells[$data_block_x][$data_block_y];
+                    next if !$cell;
 
-                my $cell = $cells[$bx][$by];
+                    # cycle through slices in cell
+                    my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
 
-                # cycle through slices and
-                # create displaylists as necessary,
-                # storing the ids in the cache entry
-                my $slices = $cell->[z];
+                    for my $bz ( @data_z ) {
+                        next if !$zoffsets[$bz];    # go to the next block if this one is not allocated
 
-                #for my $slice ( 0 .. ( @{$slices} - 1 ) ) {
-                for my $slice ( @disp_list_z ) {
-                    if ( @{$slices}[$slice] ) {
-                        generate_display_list( $cell, $slice, $by, $bx );
-                        @{$slices}[$slice] = 0;
+                        # process slice in cell and set slice to changed
+                        $cell->[z][$bz] = 1
+                          if new_process_block( $zoffsets[$bz], $data_block_x, $data_block_y, $bz );
+
+                        if ( ( time - $entry_time ) > $time_slice ) {
+                            cede();
+                            $entry_time = time;
+                        }
+                        $current_data_proc_task++;
                     }
-                    $redraw_needed = 1;
-                    if ( ( time - $entry_time ) > $time_slice ) {
-                        cede();
-                        $entry_time = time;
-                    }
-                    $current_landscape_3d_proc_tasks++;
+
                 }
+            }
+
+            next
+              if $bx < $min_x_range - 1
+                  or $bx > $max_x_range + 1
+                  or $by < $min_y_range - 1
+                  or $by > $max_y_range + 1;
+            last if $view ne "$xcell - $ycell - $c{view_range} - $floor_slice - $ceiling_slice";
+
+            my $cell   = $cells[$bx][$by];
+            my $slices = $cell->[z];
+            for my $slice ( @disp_list_z ) {
+                if ( $slices->[$slice] ) {
+                    generate_display_list( $cell, $slice, $by, $bx );
+                    $slices->[$slice] = 0;
+                }
+                $redraw_needed = 1;
+                if ( ( time - $entry_time ) > $time_slice ) {
+                    cede();
+                    $entry_time = time;
+                }
+                $current_landscape_3d_proc_tasks++;
             }
         }
 
+        $current_data_proc_task          = 0;
         $current_landscape_3d_proc_tasks = 0;
 
         my $t1 = time;
