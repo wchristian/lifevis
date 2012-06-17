@@ -171,8 +171,10 @@ my $max_x_range = 0;
 my $min_y_range = 3;
 my $max_y_range = 3;
 
-my $current_data_proc_task = 0;
-my $max_data_proc_tasks    = 0;
+my $current_data_proc_task          = 0;
+my $max_data_proc_tasks             = 0;
+my $current_landscape_3d_proc_tasks = 0;
+my $max_landscape_3d_proc_tasks     = 0;
 
 my @texture_ID;
 my @tiles;
@@ -887,6 +889,8 @@ sub landscape_update_loop {
         my @data_y = ( $min_y_range - 1 .. $max_y_range + 1 );
         my @data_z = ( $z_min .. $ceiling_slice );
 
+        $max_data_proc_tasks = @data_x * @data_y * @data_z;
+
         #TODO: When at the edge, only grab at inner edge.
         # cycle through cells in range around cursor to grab data
         for my $bx ( @data_x ) {
@@ -931,9 +935,13 @@ sub landscape_update_loop {
             }
         }
 
+        $current_data_proc_task = 0;
+
         my @disp_list_x = ( $min_x_range .. $max_x_range );
         my @disp_list_y = ( $min_y_range .. $max_y_range );
         my @disp_list_z = ( $floor_slice .. $ceiling_slice );
+
+        $max_landscape_3d_proc_tasks = @disp_list_x * @disp_list_y * @disp_list_z;
 
         # cycle through cells in range around cursor to generate display lists
         for my $bx ( @disp_list_x ) {
@@ -957,13 +965,12 @@ sub landscape_update_loop {
                         cede();
                         $entry_time = time;
                     }
-                    $current_data_proc_task++;
+                    $current_landscape_3d_proc_tasks++;
                 }
             }
         }
 
-        $max_data_proc_tasks    = $current_data_proc_task;
-        $current_data_proc_task = 0;
+        $current_landscape_3d_proc_tasks = 0;
 
         my $t1 = time;
         $time{landscape} = sprintf( "%.3f", $t1 - $t0 );
@@ -1819,7 +1826,9 @@ sub render_ui {
     push @buf, sprintf 'Mem: %d MB',               $memory_use;
     push @buf, "Mouse: $xmouse $ymouse";
     push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
-    push @buf, "Landscape-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
+    push @buf, "Landscape-Data-Tasks: $current_data_proc_task / $max_data_proc_tasks : $time{landscape} secs";
+    push @buf,
+      "Landscape-3D-Tasks: $current_landscape_3d_proc_tasks / $max_landscape_3d_proc_tasks : $time{landscape} secs";
     push @buf, "Creature-Tasks: $current_creat_proc_task / $max_creat_proc_tasks : $time{creature} secs";
     push @buf, "Ceiling: $ceiling_slice - Floor: $floor_slice";
     push @buf, "Building-Tasks: $current_buil_proc_task / $max_buil_proc_tasks : $time{building} secs";
