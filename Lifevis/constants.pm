@@ -32,7 +32,7 @@ our @EXPORT = (
 
     version PE map_loc x_count y_count z_count pe_timestamp_offset type_off designation_off occupancy_off mouse_x
     mouse_y mouse_z creature_vector creature_race creature_x creature_y viewport_x viewport_y viewport_z window_grid_x
-    window_grid_y menu_state view_state building_vector item_vector
+    window_grid_y menu_state view_state building_vector item_vector cur_year_tick cur_year
 
     main north south west east top bottom
     )
@@ -97,7 +97,7 @@ use enum qw(
 use enum qw(
   version PE map_loc x_count y_count z_count pe_timestamp_offset type_off designation_off occupancy_off mouse_x
   mouse_y mouse_z creature_vector creature_race creature_x creature_y viewport_x viewport_y viewport_z window_grid_x
-  window_grid_y menu_state view_state building_vector item_vector
+  window_grid_y menu_state view_state building_vector item_vector cur_year_tick cur_year
 );
 
 use enum qw (

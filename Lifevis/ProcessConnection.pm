@@ -54,6 +54,8 @@ sub connect_to_DF {
         "ui_menu_width"           => menu_state,
         "world.buildings.all"     => building_vector,
         "world.items.all"         => item_vector,
+        "cur_year_tick"           => cur_year_tick,
+        "cur_year"                => cur_year,
     );
 
     while ( my $location = $objects->fetch ) {
@@ -66,9 +68,10 @@ sub connect_to_DF {
     $offsets[occupancy_off]   = 0x067c;
 
     $offsets[$_] += $master_offset - 0x400000
-      for ( map_loc, x_count, y_count, z_count, mouse_x, mouse_y,
-        mouse_z,       creature_vector, viewport_x, viewport_y,      viewport_z, window_grid_x,
-        window_grid_y, menu_state,      view_state, building_vector, item_vector,
+      for ( map_loc, x_count, y_count, z_count, mouse_x,
+        mouse_y,         mouse_z,       creature_vector, viewport_x, viewport_y,
+        viewport_z,      window_grid_x, window_grid_y,   menu_state, view_state,
+        building_vector, item_vector,   cur_year_tick,   cur_year,
       );
 
     return ( $proc, $proc->{hProcess}, \@offsets );

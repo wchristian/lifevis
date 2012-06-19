@@ -1806,15 +1806,17 @@ sub render_ui {
     glColor4f( 0.6, 1.0, 0.6, .75 );
 
     my @buf;
-    push @buf, sprintf 'X: %d',                    $x_pos;
-    push @buf, sprintf 'Y: %d',                    $z_pos;
-    push @buf, sprintf 'Z: %d',                    $y_pos;
-    push @buf, sprintf 'H-Angle: %.2f',            $y_rot;
-    push @buf, sprintf 'V-Angle: %.2f',            $x_rot;
-    push @buf, sprintf 'Cam-X: %.2f',              $x_off;
-    push @buf, sprintf 'Cam-Y: %.2f',              $z_off;
-    push @buf, sprintf 'Cam-Z: %.2f',              $y_off;
-    push @buf, sprintf 'Mem: %d MB',               $memory_use;
+    push @buf, sprintf 'Year: %d',      unpack 'L', _ReadMemory( $df_proc_handle, $offsets[cur_year],      4 );
+    push @buf, sprintf 'Year-Tick: %d', unpack 'L', _ReadMemory( $df_proc_handle, $offsets[cur_year_tick], 4 );
+    push @buf, sprintf 'X: %d',         $x_pos;
+    push @buf, sprintf 'Y: %d',         $z_pos;
+    push @buf, sprintf 'Z: %d',         $y_pos;
+    push @buf, sprintf 'H-Angle: %.2f', $y_rot;
+    push @buf, sprintf 'V-Angle: %.2f', $x_rot;
+    push @buf, sprintf 'Cam-X: %.2f',   $x_off;
+    push @buf, sprintf 'Cam-Y: %.2f',   $z_off;
+    push @buf, sprintf 'Cam-Z: %.2f',   $y_off;
+    push @buf, sprintf 'Mem: %d MB',    $memory_use;
     push @buf, "Mouse: $xmouse $ymouse";
     push @buf, "Cell: $xcell $ycell";
     push @buf, sprintf 'Working Coro threads: %d', Coro::nready;
