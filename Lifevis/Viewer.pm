@@ -31,8 +31,7 @@ use 5.010;
 no autovivification qw' strict warn fetch exists delete';
 
 BEGIN {
-    use Cwd 'getcwd';
-    chdir '..' if getcwd =~ /Lifevis/;
+    chdir '..' if !-d "Lifevis";
 }
 
 #use warnings::unused;
