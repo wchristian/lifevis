@@ -85,6 +85,7 @@ use Win32::Process;
 use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT );
 use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes PostMessage VkKeyScan );
 use Math::Vec qw(:terse);
+use List::Util qw( min max );
 
 use lib '.';
 use lib '..';
@@ -908,9 +909,9 @@ sub landscape_update_loop {
                   or $by > $max_y_range + 1;
             last if $view ne "$xcell - $ycell - $c{view_range} - $floor_slice - $ceiling_slice";
 
-            for my $data_block_x ( $bx - 1 .. $bx + 1 ) {
+            for my $data_block_x ( max( $bx - 1, 0 ) .. min( $bx + 1, $xcount - 1 ) ) {
                 next if !$cells[$data_block_x];
-                for my $data_block_y ( $by - 1 .. $by + 1 ) {
+                for my $data_block_y ( max( $by - 1, 0 ) .. min( $by + 1, $ycount - 1 ) ) {
                     my $cell = $cells[$data_block_x][$data_block_y];
                     next if !$cell;
                     next if $cell->[next_update] and $cell->[next_update] > time;
