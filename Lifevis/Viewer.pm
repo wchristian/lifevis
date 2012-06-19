@@ -105,7 +105,7 @@ $OUTPUT_AUTOFLUSH = 1;
 
 my $detached;
 
-our $VERSION = "0.258_005";
+our $VERSION = "0.258_006";
 
 sub _ReadMemory {
     my ( $proc, $from, $len ) = @_;
