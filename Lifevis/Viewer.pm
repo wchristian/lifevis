@@ -914,7 +914,7 @@ sub landscape_update_loop {
                 for my $data_block_y ( $by - 1 .. $by + 1 ) {
                     my $cell = $cells[$data_block_x][$data_block_y];
                     next if !$cell;
-                    next if $cell->[next_update] > time;
+                    next if $cell->[next_update] and $cell->[next_update] > time;
 
                     # cycle through slices in cell
                     my @zoffsets = unpack 'L' x $zcount, _ReadMemory( $df_proc_handle, $cell->[offset], 4 * $zcount );
