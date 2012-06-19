@@ -723,14 +723,14 @@ sub item_update_loop {
 
                 # extract coordinates of current creature and skip if out of bounds
                 my $rx = unpack( "S", substr( $buf, 0x4, 2 ) );
-                if ( $rx > $xcount * 16 ) {
+                my $ry = unpack( "S", substr( $buf, 0x6, 2 ) );
+                if ( $rx > ( $xcount * 16 ) - 1 or $ry > ( $ycount * 16 ) - 1 ) {
                     $items{$id}[invisible] = 1;
                     next;
                 }
                 my $rz = unpack( "S", substr( $buf, 0x8, 2 ) );
                 next if ( $rz > $zcount + 1 );
-                my $ry   = unpack( "S", substr( $buf, 0x6, 2 ) );
-                my $type = unpack( "L", substr( $buf, 0,   4 ) );
+                my $type = unpack( "L", substr( $buf, 0, 4 ) );
                 my $vtable = $type;
 
                 #say $proc->hexdump( $item, 0x88 ),"\n ";
