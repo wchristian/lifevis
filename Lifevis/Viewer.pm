@@ -144,6 +144,7 @@ my $current_creat_proc_task = 0;
 my $max_creat_proc_tasks    = 0;
 my %creatures;
 
+my %slices_with_bldg;
 my %building_present;
 my %buildings;
 my $current_buil_proc_task = 0;
@@ -572,7 +573,7 @@ sub building_update_loop {
 
             my $buf = _ReadMemory( $df_proc_handle, $building_offset, 0xe8 );
 
-            my $building = $buildings{$building_offset};
+            my $building = $buildings{$building_offset} ||= [];
             next if $building and defined $building->[string] and $building->[string] eq $buf;
             $building->[string] = $buf;
 
@@ -580,41 +581,40 @@ sub building_update_loop {
             my ( $vtable, $rx, $ry, undef, $rx2, $ry2, undef, $rz ) = unpack "LLLLLLLL", $buf;
 
             # update record of current building
+            my $loc_changed = (
+                     !defined $building->[b_x]
+                  or $building->[b_x] != $rx
+                  or $building->[b_y] != $ry
+                  or $building->[b_x2] != $rx2
+                  or $building->[b_y2] != $ry2
+                  or $building->[b_z] != $rz
+            ) ? 1 : 0;
+
             $building->[b_x]            = $rx;
             $building->[b_y]            = $ry;
             $building->[b_x2]           = $rx2;
             $building->[b_y2]           = $ry2;
+            $building->[b_z]            = $rz;
             $building->[b_vtable_const] = $vtable;
             $building->[b_vtable_id]    = $vtables{$vtable} || 0;
 
-            # get old and new cell location and compare
-            my $old_x = $building->[b_cell_x];
-            my $old_y = $building->[b_cell_y];
-            my $old_z = $building->[b_z];
-            my $bx    = int $rx / 16;
-            my $by    = int $ry / 16;
-            if ( !defined $old_x || $bx != $old_x || $by != $old_y or $rz != $old_z ) {
+            next if !$loc_changed;
 
-                # creature moved to other cell or is new
-                # get creature list of old cell then cycle through it and remove the old entry
-                if ( defined $old_x ) {
-                    $redraw_needed = 1;
-                    my $building_list = $cells[$old_x][$old_y][building_list][$old_z];
-                    for my $entry ( @{$building_list} ) {
-                        if ( $entry == $building ) {
-                            $entry = $building_list->[$#$building_list];
-                            pop @{$building_list};
-                            last;
-                        }
-                    }
+            delete $_->{$building_offset} for @{ $slices_with_bldg{$building_offset} || [] };
+            my $slices = $slices_with_bldg{$building_offset} = [];
+
+            my %b_x = map { ( int $_ / 16 ) => 1 } ( $rx .. $rx2 );
+            my %b_y = map { ( int $_ / 16 ) => 1 } ( $ry .. $ry2 );
+
+            for my $bx ( keys %b_x ) {
+                for my $by ( keys %b_y ) {
+                    my $slice = $cells[$bx][$by][building_list][$rz] ||= {};
+                    push @{$slices}, $slice;
+                    $slice->{$building_offset} = 1;
                 }
-
-                # add entry to new cell and update cell coordinates
-                push @{ $cells[$bx][$by][building_list][$rz] }, $building;
-                $building->[b_cell_x] = $bx;
-                $building->[b_cell_y] = $by;
-                $building->[b_z]      = $rz;
             }
+
+            $redraw_needed = 1;
         }
 
         my $t1 = time;
@@ -1708,10 +1708,7 @@ sub render_models {
             and $cells[$bx][$by][building_list]
             and defined $cells[$bx][$by][building_list][$z] )
         {
-            my $building_list_size = @{ $cells[$bx][$by][building_list][$z] };
-            for my $entry ( 0 .. $building_list_size ) {
-                my $building_id = $cells[$bx][$by][building_list][$z][$entry];
-                next if !defined $building_id;
+            for my $building_id ( keys %{ $cells[$bx][$by][building_list][$z] } ) {
                 next unless $building_present{$building_id};
 
                 my $building = $buildings{$building_id};
