@@ -24,7 +24,7 @@ our @EXPORT = (
 
     string flags race c_x c_y c_z name cell_x cell_y id c_vtable_id c_vtable_const
 
-    string_b b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
+    string_b b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const b_x2 b_y2
 
     string_c i_id i_x i_y i_z i_cell_x i_cell_y i_state i_type i_address i_vtable_id i_vtable_const invisible
 
@@ -83,7 +83,7 @@ use enum qw(
 );
 
 use enum qw(
-  string_b b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const
+  string_b b_x b_y b_z  b_cell_x b_cell_y b_vtable_id b_vtable_const b_x2 b_y2
 );
 
 use enum qw(

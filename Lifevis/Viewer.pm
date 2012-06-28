@@ -577,11 +577,13 @@ sub building_update_loop {
             $building->[string] = $buf;
 
             # extract coordinates of current building
-            my ( $vtable, $rx, $ry, undef, undef, undef, undef, $rz ) = unpack "LLLLLLLL", $buf;
+            my ( $vtable, $rx, $ry, undef, $rx2, $ry2, undef, $rz ) = unpack "LLLLLLLL", $buf;
 
             # update record of current building
             $building->[b_x]            = $rx;
             $building->[b_y]            = $ry;
+            $building->[b_x2]           = $rx2;
+            $building->[b_y2]           = $ry2;
             $building->[b_vtable_const] = $vtable;
             $building->[b_vtable_id]    = $vtables{$vtable} || 0;
 
@@ -1712,23 +1714,31 @@ sub render_models {
                 next if !defined $building_id;
                 next unless $building_present{$building_id};
 
-                my $x = $buildings{$building_id}[b_x];
-                my $y = $buildings{$building_id}[b_y];
-                glColor3f( $brightness, $brightness, $brightness );
-                glTranslatef( $x, $z, $y );
+                my $building = $buildings{$building_id};
 
-                my $vtable_id = $buildings{$building_id}[b_vtable_id];
+                my $x = $building->[b_x];
+                my $y = $building->[b_y];
+                glColor3f( $brightness, $brightness, $brightness );
+
+                my $vtable_id = $building->[b_vtable_id];
                 $vtable_id = 'default' if !$building_visuals{$vtable_id};
                 my $model_name = $building_visuals{$vtable_id}[0];
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[ $building_visuals{$vtable_id}[1] ] );
 
-                # TODO : remove unneeded checks for definedness
-                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                    next if !defined $model_display_lists{$model_name}[$part];
-                    glCallList( $model_display_lists{$model_name}[$part] );
+                my @list = ( 0 .. $#{ $DRAW_MODEL{$model_name} } );
+                @list = grep { defined } @{ $model_display_lists{$model_name} }[@list];
+
+                my @draw_x = ( max( $building->[b_x], $bx * 16 ) .. min( $building->[b_x2], ( $bx * 16 ) + 15 ) );
+                my @draw_y = ( max( $building->[b_y], $by * 16 ) .. min( $building->[b_y2], ( $by * 16 ) + 15 ) );
+
+                for my $x ( @draw_x ) {
+                    for my $y ( @draw_y ) {
+                        glTranslatef( $x, $z, $y );
+                        glCallList( $_ ) for @list;
+                        glTranslatef( -$x, -$z, -$y );
+                    }
                 }
-                glTranslatef( -$x, -$z, -$y );
             }
         }
 
