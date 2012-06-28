@@ -82,7 +82,7 @@ use Win32;
 use Win32::API;
 use Win32::Process::List;
 use Win32::Process;
-use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT );
+use Win32::GUI::Constants qw( WM_KEYDOWN VK_HOME VK_END VK_INSERT WM_KEYUP VK_SHIFT VK_CONTROL VK_MENU );
 use Win32::GuiTest qw( FindWindowLike GetWindowRect ClientToScreen GetScreenRes PostMessage VkKeyScan );
 use Math::Vec qw(:terse);
 use List::Util qw( min max );
@@ -331,8 +331,10 @@ sub run {
     # It's a good idea to know when our window's resized.
     glutReshapeFunc( \&resize_scene );
 
-    glutKeyboardFunc( \&process_key_press );    # And let's get some keyboard input.
-    glutSpecialFunc( \&process_special_key_press );
+    glutKeyboardFunc( \&key_down );    # And let's get some keyboard input.
+    glutKeyboardUpFunc( \&key_up );
+    glutSpecialFunc( \&special_key_down );
+    glutSpecialUpFunc( \&special_key_up );
 
     glutMotionFunc( \&process_active_mouse_motion );
     glutMouseFunc( \&process_mouse_click );
@@ -591,7 +593,7 @@ sub building_update_loop {
             my $rz = unpack( "S", substr( $buf, 0x1c, 0x4 ) );
             next if ( $rz > $zcount + 1 );
             my $ry     = unpack( "S", substr( $buf, 0x8, 0x4 ) );
-            my $vtable = unpack( "L", substr( $buf, 0,    4 ) );
+            my $vtable = unpack( "L", substr( $buf, 0,   4 ) );
 
             # update record of current creature
             $buildings{$building}[b_x]            = $rx;
@@ -2088,103 +2090,99 @@ sub create_texture {
 ## Input Stuff #################################################################
 ################################################################################
 
-# Callback function called when a normal $key is pressed. ######################
+sub key_up   { process_key_press( WM_KEYUP,   @_ ) }
+sub key_down { process_key_press( WM_KEYDOWN, @_ ) }
 
 sub process_key_press {
-    my $key = shift;
+    my ( $direction, $key ) = @_;
 
-    my $scan = VkKeyScan( $key );
-    $scan &= 0xff;
-
-    #if ( $scan == VK_F ) {
-    #    $proc->set_u32( $OFFSETS[$ver]{mouse_z}, $zmouse + 1 );    # BE CAREFUL, MAY DAMAGE YOUR SYSTEM
-    #    print "moo";
-    #}
-
-    PostMessage( $DF_window, WM_KEYDOWN, $scan, 0 );
+    my $scan = VkKeyScan( $key ) & 0xff;
+    PostMessage( $DF_window, $direction, $scan, 0 );
 
     $redraw_needed = 1;
     return;
 }
 
-# Callback Function called when a special $key is pressed. #####################
+sub special_key_up   { process_special_key_press( WM_KEYUP,   @_ ) }
+sub special_key_down { process_special_key_press( WM_KEYDOWN, @_ ) }
 
 sub process_special_key_press {
-    my $key = shift;
+    my ( $direction, $key ) = @_;
 
-    if ( $key == GLUT_KEY_F12 ) {
+    dump_entities() if $key == GLUT_KEY_F12 and $direction == WM_KEYDOWN;
 
-        $force_rt = 1;
-        open my $OUT, ">>", 'export.txt' or die( "horribly: " . $! );
-        print $OUT "\n\n--------------------------------\n";
-        print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";
-        say "\n\n--------------------------------";
-        say "X: $xmouse Y: $ymouse Z: $zmouse\n";
-        for my $item ( values %items ) {
-            next if !defined $item->[i_x];
-            next if !defined $item->[i_y];
-            next if !defined $item->[i_z];
-            if (   $item->[i_x] == $xmouse
-                && $item->[i_y] == $ymouse
-                && $item->[i_z] == $zmouse )
-            {
-                my $hex_dump = $proc->hexdump( $item->[i_address], 0x88 );
-                print $OUT "Item:\n$hex_dump\n\n";
-                say "Item:\n$hex_dump\n";
-            }
-        }
-        for my $building ( keys %buildings ) {
-            next if !defined $buildings{$building}[b_x];
-            next if !defined $buildings{$building}[b_y];
-            next if !defined $buildings{$building}[b_z];
-            if (   $buildings{$building}[b_x] == $xmouse
-                && $buildings{$building}[b_y] == $ymouse
-                && $buildings{$building}[b_z] == $zmouse )
-            {
-                my $hex_dump = $proc->hexdump( $building, 0xD8 );
-                print $OUT "Building:\n$hex_dump\n\n";
-                say "Building:\n$hex_dump\n";
-            }
-        }
-        for my $creature ( keys %creatures ) {
-            next if !defined $creatures{$creature}[c_x];
-            next if !defined $creatures{$creature}[c_y];
-            next if !defined $creatures{$creature}[c_z];
-            if (   $creatures{$creature}[c_x] == $xmouse
-                && $creatures{$creature}[c_y] == $ymouse
-                && $creatures{$creature}[c_z] == $zmouse )
-            {
-                my $hex_dump = $proc->hexdump( $creature, 0x688 );
-                print $OUT "Creature:\n$hex_dump\n\n";
-                say "Creature:\n$hex_dump\n";
-            }
-        }
-        close $OUT;
-    }
-
-    if ( $key >= GLUT_KEY_F1 && $key <= GLUT_KEY_F12 ) {
-        PostMessage( $DF_window, WM_KEYDOWN, $key + 111, 0 );
-    }
-    elsif ( $key >= GLUT_KEY_LEFT && $key <= GLUT_KEY_DOWN ) {
-        PostMessage( $DF_window, WM_KEYDOWN, $key - 63, 0 );
-    }
-    elsif ( $key >= GLUT_KEY_PAGE_UP && $key <= GLUT_KEY_PAGE_DOWN ) {
-        PostMessage( $DF_window, WM_KEYDOWN, $key - 71, 0 );
-    }
-    elsif ( $key == GLUT_KEY_HOME ) {
-        PostMessage( $DF_window, WM_KEYDOWN, VK_HOME, 0 );
-    }
-    elsif ( $key == GLUT_KEY_END ) {
-        PostMessage( $DF_window, WM_KEYDOWN, VK_END, 0 );
-    }
-    elsif ( $key == GLUT_KEY_INSERT ) {
-        PostMessage( $DF_window, WM_KEYDOWN, VK_INSERT, 0 );
-    }
-    else {
-        printf "SKP: No action for %d.\n", $key;
-    }
+    my $vkey = special_glut_key_to_vkey( $key );
+    PostMessage( $DF_window, $direction, $vkey, 0 ) if $vkey;
+    printf "SKP: No action for $key.\n", if !$vkey;
 
     $redraw_needed = 1;
+    return;
+}
+
+sub special_glut_key_to_vkey {
+    my ( $key ) = @_;
+
+    return $key + 111 if $key >= GLUT_KEY_F1      and $key <= GLUT_KEY_F12;
+    return $key - 63  if $key >= GLUT_KEY_LEFT    and $key <= GLUT_KEY_DOWN;
+    return $key - 71  if $key >= GLUT_KEY_PAGE_UP and $key <= GLUT_KEY_PAGE_DOWN;
+    return VK_SHIFT   if $key == 113 or $key == 112;
+    return VK_CONTROL if $key == 114 or $key == 114;
+    return VK_MENU    if $key == 116 or $key == 116;
+    return VK_HOME    if $key == GLUT_KEY_HOME;
+    return VK_END     if $key == GLUT_KEY_END;
+    return VK_INSERT  if $key == GLUT_KEY_INSERT;
+    return;
+}
+
+sub dump_entities {
+    $force_rt = 1;
+
+    open my $OUT, ">>", 'export.txt' or die( "horribly: " . $! );
+    print $OUT "\n\n--------------------------------\n";
+    print $OUT "X: $xmouse Y: $ymouse Z: $zmouse\n\n";
+    say "\n\n--------------------------------";
+    say "X: $xmouse Y: $ymouse Z: $zmouse\n";
+    for my $item ( values %items ) {
+        next if !defined $item->[i_x];
+        next if !defined $item->[i_y];
+        next if !defined $item->[i_z];
+        if (   $item->[i_x] == $xmouse
+            && $item->[i_y] == $ymouse
+            && $item->[i_z] == $zmouse )
+        {
+            my $hex_dump = $proc->hexdump( $item->[i_address], 0x88 );
+            print $OUT "Item:\n$hex_dump\n\n";
+            say "Item:\n$hex_dump\n";
+        }
+    }
+    for my $building ( keys %buildings ) {
+        next if !defined $buildings{$building}[b_x];
+        next if !defined $buildings{$building}[b_y];
+        next if !defined $buildings{$building}[b_z];
+        if (   $buildings{$building}[b_x] == $xmouse
+            && $buildings{$building}[b_y] == $ymouse
+            && $buildings{$building}[b_z] == $zmouse )
+        {
+            my $hex_dump = $proc->hexdump( $building, 0xD8 );
+            print $OUT "Building:\n$hex_dump\n\n";
+            say "Building:\n$hex_dump\n";
+        }
+    }
+    for my $creature ( keys %creatures ) {
+        next if !defined $creatures{$creature}[c_x];
+        next if !defined $creatures{$creature}[c_y];
+        next if !defined $creatures{$creature}[c_z];
+        if (   $creatures{$creature}[c_x] == $xmouse
+            && $creatures{$creature}[c_y] == $ymouse
+            && $creatures{$creature}[c_z] == $zmouse )
+        {
+            my $hex_dump = $proc->hexdump( $creature, 0x688 );
+            print $OUT "Creature:\n$hex_dump\n\n";
+            say "Creature:\n$hex_dump\n";
+        }
+    }
+    close $OUT;
+
     return;
 }
 
