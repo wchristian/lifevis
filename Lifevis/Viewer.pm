@@ -557,20 +557,12 @@ sub building_update_loop {
         my @building_offsets = unpack 'L' x $building_list_length,
           _ReadMemory( $df_proc_handle, $building_vector_offsets[0], 4 * $building_list_length );
 
-        for my $building ( values %building_present ) {
-            $building = 0;
-        }
-
-        for my $building ( @building_offsets ) {
-            $building_present{$building} = 1;
-        }
+        %building_present = map { $_ => 1 } @building_offsets;
 
         $current_buil_proc_task = 0;
         $max_buil_proc_tasks    = $#building_offsets;
 
-        for my $building ( @building_offsets ) {
-
-            #say $building unless $full_buil_run;
+        for my $building_offset ( @building_offsets ) {
 
             $current_buil_proc_task++;
             if ( ( time - $entry_time ) > $time_slice ) {
@@ -578,35 +570,25 @@ sub building_update_loop {
                 $entry_time = time;
             }
 
-            #say $proc->hexdump( $building, 0xD8 );
-            my $buf = _ReadMemory( $df_proc_handle, $building, 0xe8 );
+            my $buf = _ReadMemory( $df_proc_handle, $building_offset, 0xe8 );
 
-            next
-              if $buildings{$building}
-                  and defined $buildings{$building}[string]
-                  and $buildings{$building}[string] eq $buf;
-            $buildings{$building}[string] = $buf;
+            my $building = $buildings{$building_offset};
+            next if $building and defined $building->[string] and $building->[string] eq $buf;
+            $building->[string] = $buf;
 
-            # extract coordinates of current creature and skip if out of bounds
-            my $rx = unpack( "S", substr( $buf, 0x4, 0x4 ) );
-            next if ( $rx > $xcount * 16 );
-            my $rz = unpack( "S", substr( $buf, 0x1c, 0x4 ) );
-            next if ( $rz > $zcount + 1 );
-            my $ry     = unpack( "S", substr( $buf, 0x8, 0x4 ) );
-            my $vtable = unpack( "L", substr( $buf, 0,   4 ) );
+            # extract coordinates of current building
+            my ( $vtable, $rx, $ry, undef, undef, undef, undef, $rz ) = unpack "LLLLLLLL", $buf;
 
-            # update record of current creature
-            $buildings{$building}[b_x]            = $rx;
-            $buildings{$building}[b_y]            = $ry;
-            $buildings{$building}[b_vtable_const] = $vtable;
-            $buildings{$building}[b_vtable_id]    = $vtables{$vtable} || 0;
-
-            #warn sprintf "UNKNOWN BUILDING VTABLE: %x\n", $vtable unless $vtables{$vtable};
+            # update record of current building
+            $building->[b_x]            = $rx;
+            $building->[b_y]            = $ry;
+            $building->[b_vtable_const] = $vtable;
+            $building->[b_vtable_id]    = $vtables{$vtable} || 0;
 
             # get old and new cell location and compare
-            my $old_x = $buildings{$building}[b_cell_x];
-            my $old_y = $buildings{$building}[b_cell_y];
-            my $old_z = $buildings{$building}[b_z];
+            my $old_x = $building->[b_cell_x];
+            my $old_y = $building->[b_cell_y];
+            my $old_z = $building->[b_z];
             my $bx    = int $rx / 16;
             my $by    = int $ry / 16;
             if ( !defined $old_x || $bx != $old_x || $by != $old_y or $rz != $old_z ) {
@@ -627,9 +609,9 @@ sub building_update_loop {
 
                 # add entry to new cell and update cell coordinates
                 push @{ $cells[$bx][$by][building_list][$rz] }, $building;
-                $buildings{$building}[b_cell_x] = $bx;
-                $buildings{$building}[b_cell_y] = $by;
-                $buildings{$building}[b_z]      = $rz;
+                $building->[b_cell_x] = $bx;
+                $building->[b_cell_y] = $by;
+                $building->[b_z]      = $rz;
             }
         }
 
