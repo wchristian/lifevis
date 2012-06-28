@@ -1658,57 +1658,45 @@ sub render_models {
 
     $time{render_occlusion} = ( my $t_occlusion = time ) - $t_cells;
 
-    for my $cell ( @cells_to_draw ) {
-        my $bx         = $cell->[0];
-        my $by         = $cell->[1];
-        my $z          = $cell->[2];
+    for my $cell_to_draw ( @cells_to_draw ) {
+        my $bx = $cell_to_draw->[0];
+        my $by = $cell_to_draw->[1];
+
+        next if !$cells[$bx] or !$cells[$bx][$by];
+        my $cell = $cells[$bx][$by];
+
+        my $z = $cell_to_draw->[2];
         my $brightness = ( ( ( $z / ( $zcount - 1 ) ) * 0.6 ) + 0.3 );
 
         # draw creatures
-        if (    $cells[$bx]
-            and $cells[$bx][$by]
-            and $cells[$bx][$by][creature_list]
-            and defined $cells[$bx][$by][creature_list][$z] )
-        {
-            my $creature_list_size = @{ $cells[$bx][$by][creature_list][$z] };
-            for my $entry ( 0 .. $creature_list_size ) {
-                my $creature_id = $cells[$bx][$by][creature_list][$z][$entry];
+        if ( $cell->[creature_list] and defined $cell->[creature_list][$z] ) {
+            for my $creature_id ( @{ $cell->[creature_list][$z] } ) {
                 next if !defined $creature_id;
                 next unless $creatures_present{$creature_id};
 
-                next if $creatures{$creature_id}[flags] & 2;    # dead, i think
-                my $x = $creatures{$creature_id}[c_x];
-                my $y = $creatures{$creature_id}[c_y];
+                my $creature = $creatures{$creature_id};
+
+                next if $creature->[flags] & 2;    # dead, i think
+                my $x = $creature->[c_x];
+                my $y = $creature->[c_y];
                 glColor3f( $brightness, $brightness, $brightness );
                 glTranslatef( $x, $z, $y );
-                my $model_name;
-                given ( $creatures{$creature_id}[race] ) {
-                    when ( 166 ) {
-                        $model_name = "Creature";
-                    }
-                    default {
-                        $model_name = "Creature2";
-                    }
-                }
+                my $model_name = "Creature2";
+                $model_name = "Creature" if $creature->[race];
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[creature] );
 
-                # TODO : remove unneeded checks for definedness
-                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                    next if !defined $model_display_lists{$model_name}[$part];
-                    glCallList( $model_display_lists{$model_name}[$part] );
-                }
+                my @list = ( 0 .. $#{ $DRAW_MODEL{$model_name} } );
+                @list = grep { defined } @{ $model_display_lists{$model_name} }[@list];
+                glCallList( $_ ) for @list;
+
                 glTranslatef( -$x, -$z, -$y );
             }
         }
 
         # draw buildings
-        if (    $cells[$bx]
-            and $cells[$bx][$by]
-            and $cells[$bx][$by][building_list]
-            and defined $cells[$bx][$by][building_list][$z] )
-        {
-            for my $building_id ( keys %{ $cells[$bx][$by][building_list][$z] } ) {
+        if ( $cell->[building_list] and $cell->[building_list][$z] ) {
+            for my $building_id ( keys %{ $cell->[building_list][$z] } ) {
                 next unless $building_present{$building_id};
 
                 my $building = $buildings{$building_id};
@@ -1740,36 +1728,25 @@ sub render_models {
         }
 
         # draw items
-        if (    $cells[$bx]
-            and $cells[$bx][$by]
-            and $cells[$bx][$by][item_list]
-            and defined $cells[$bx][$by][item_list][$z] )
-        {
-            my $item_list_size = @{ $cells[$bx][$by][item_list][$z] };
-            for my $entry ( 0 .. $item_list_size ) {
-                my $item_id = $cells[$bx][$by][item_list][$z][$entry];
+        if ( $cell->[item_list] and defined $cell->[item_list][$z] ) {
+            for my $item_id ( @{ $cell->[item_list][$z] } ) {
                 next if !defined $item_id;
-                next if $items{$item_id}[invisible];
+                my $item = $items{$item_id};
 
-                my $x = $items{$item_id}[i_x];
-                my $y = $items{$item_id}[i_y];
+                next if $item->[invisible];
+
+                my $x = $item->[i_x];
+                my $y = $item->[i_y];
 
                 glColor3f( $brightness, $brightness, $brightness );
                 glTranslatef( $x, $z, $y );
-                my $model_name;
-                given ( $item_id ) {
-                    default {
-                        $model_name = "Items";
-                    }
-                }
+                my $model_name = "Items";
 
                 glBindTexture( GL_TEXTURE_2D, $texture_ID[items] );
 
-                # TODO : remove unneeded checks for definedness
-                for my $part ( 0 .. $#{ $DRAW_MODEL{$model_name} } ) {
-                    next if !defined $model_display_lists{$model_name}[$part];
-                    glCallList( $model_display_lists{$model_name}[$part] );
-                }
+                my @list = ( 0 .. $#{ $DRAW_MODEL{$model_name} } );
+                @list = grep { defined } @{ $model_display_lists{$model_name} }[@list];
+                glCallList( $_ ) for @list;
 
                 glTranslatef( -$x, -$z, -$y );
             }
