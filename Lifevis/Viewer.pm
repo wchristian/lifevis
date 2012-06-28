@@ -1848,15 +1848,24 @@ sub render_ui {
             push @tile_buf, sprintf 'Type: %d', $tiles[$zmouse][type][$xmouse][$ymouse];
         }
 
-        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+        if (    $tiles[$zmouse][occup]
+            and $tiles[$zmouse][occup][$xmouse]
+            and $tiles[$zmouse][occup][$xmouse][$ymouse] )
+        {
             push @tile_buf, sprintf 'Occup: 0b%059b', ( $tiles[$zmouse][occup][$xmouse][$ymouse] & 7 );
         }
 
-        if ( $tiles[$zmouse][desig] and $tiles[$zmouse][desig][$xmouse] and $tiles[$zmouse][desig][$xmouse][$ymouse] ) {
+        if (    $tiles[$zmouse][desig]
+            and $tiles[$zmouse][desig][$xmouse]
+            and $tiles[$zmouse][desig][$xmouse][$ymouse] )
+        {
             push @tile_buf, sprintf 'Desigs: 0b%059b', $tiles[$zmouse][desig][$xmouse][$ymouse];
         }
 
-        if ( $tiles[$zmouse][occup] and $tiles[$zmouse][occup][$xmouse] and $tiles[$zmouse][occup][$xmouse][$ymouse] ) {
+        if (    $tiles[$zmouse][occup]
+            and $tiles[$zmouse][occup][$xmouse]
+            and $tiles[$zmouse][occup][$xmouse][$ymouse] )
+        {
             push @tile_buf, sprintf 'Occup: 0b%059b', $tiles[$zmouse][occup][$xmouse][$ymouse];
         }
 
