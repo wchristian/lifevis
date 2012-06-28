@@ -590,7 +590,7 @@ sub building_update_loop {
             next if ( $rx > $xcount * 16 );
             my $rz = unpack( "S", substr( $buf, 0x1c, 0x4 ) );
             next if ( $rz > $zcount + 1 );
-            my $ry     = unpack( "S", substr( $buf, 0x10, 0x4 ) );
+            my $ry     = unpack( "S", substr( $buf, 0x8, 0x4 ) );
             my $vtable = unpack( "L", substr( $buf, 0,    4 ) );
 
             # update record of current creature
